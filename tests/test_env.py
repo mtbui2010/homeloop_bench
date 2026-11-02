@@ -154,3 +154,22 @@ def test_oracle_respects_order_pairs_against_its_natural_plan_order():
         tt = dict(t, order=order)
         r = run_episode(tt, "oracle", "ideal", 0, "en", None)
         assert r["success"] and r["order_ok"], (order, r["status"])
+
+
+def test_user_knows_what_they_asked_for():
+    t = feasible_tasks(1)[0]
+    env = EpisodeEnv(t, "ideal", 0, "en")
+    atoms = [a for s in env.subtasks if s["kind"] != "refuse" for a in s["goal"]["all"]]
+    assert env.user.wants == {"all": atoms}
+    env = EpisodeEnv(_task("fx-cor-000"), "ideal", 0, "en", privileged=True)
+    for c in (("move", {"target": "coffee_table@living"}), ("find", {"obj": "book_1"}), ("pick", {"obj": "book_1"}),
+              ("move", {"target": "bed@bedroom"})):
+        env.call(c[0], **c[1])
+    assert env.goal_changed and env.user.wants == env.current_goal()      # the corrected request
+    env = EpisodeEnv(_task("fx-ref-000"), "ideal", 0, "en")
+    assert env.user.wants is None                                           # nothing to restate in a refusal
+
+
+def test_object_memory_is_the_observed_memory():
+    env = EpisodeEnv(feasible_tasks(1)[0], "ideal", 0, "en")
+    assert tuple(env.object_memory()) == env.observe().memory

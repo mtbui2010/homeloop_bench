@@ -210,6 +210,7 @@ class EpisodeEnv:
                 else:
                     self.robot.schedule_interrupt(int(plan.get("after_calls", 0)), ev)
         self.subtasks = resolve_subtasks(td, self.world0)
+        self._tell_user()
         self.order = order_pairs(td.get("order")) if td.get("structure") == "ordered" else []
         self.goal_changed = False
         self.stop_k: Optional[int] = None        # call index of a stop event
@@ -278,18 +279,24 @@ class EpisodeEnv:
                        for pid, p in sorted(h.places.items()))
         people = tuple(PersonView(id=p.id, name=dict(p.name), usual_place=p.seat, role=p.role)
                        for p in sorted(h.people, key=lambda x: x.id))
-        from homeloop_robot.catalog import CLASSES
-        mem = []
-        for o in sorted(h.objects, key=lambda x: x.id):
-            c = CLASSES.get(o.cls)
-            mem.append(ObjView(id=o.id, cls=o.cls, name=dict(c.name) if c else {"en": o.cls, "ko": o.cls},
-                               attrs=dict(o.attrs or {}), usual_place=o.at))
+        mem = self.object_memory()
         ev, self._pending = tuple(self._pending), []
         return Observation(task_text=self.task_text, lang=self.lang, places=places, people=people,
                            memory=tuple(mem), robot=self.robot.observe(), last=self.last, events=ev,
                            history=tuple(self._hist), step=len(self.calls), t=r6(self.ep.clock.t),
                            calls_left=max(0, self.budgets.max_calls - len(self.calls)),
                            time_left_s=r6(max(0.0, self.budgets.max_sim_time_s - self.ep.clock.t)))
+
+    def object_memory(self) -> list:
+        """The object memory every planner observes: each object of the house with its usual place (the house
+        default, so an object the task's start state moved is not where memory says)."""
+        from homeloop_robot.catalog import CLASSES
+        mem = []
+        for o in sorted(self._world.house.objects, key=lambda x: x.id):
+            c = CLASSES.get(o.cls)
+            mem.append(ObjView(id=o.id, cls=o.cls, name=dict(c.name) if c else {"en": o.cls, "ko": o.cls},
+                               attrs=dict(o.attrs or {}), usual_place=o.at))
+        return mem
 
     def call(self, skill: str, /, **args) -> dict:
         # ``skill`` is positional-only: an LLM-written argument named "skill" or "self" reaches the robot,
@@ -327,6 +334,13 @@ class EpisodeEnv:
             self.over = True
         return pub
 
+    def _tell_user(self) -> None:
+        """The simulated user knows what they asked for (the feasible / clarify subtasks' goal atoms), so they
+        can answer questions about their own request (homeloop_robot docs/user_model.md). Planners never see it."""
+        if hasattr(self.user, "set_wants"):
+            atoms = [a for s in self.subtasks if s.get("kind") != "refuse" for a in s["goal"]["all"]]
+            self.user.set_wants({"all": atoms} if atoms else None)
+
     def _on_event(self, e, k: int) -> None:
         d = {"kind": e.kind, "text": e.text, "k": k}
         self._events.append(d)
@@ -336,6 +350,7 @@ class EpisodeEnv:
             self.order = []
             self._done_k = [None]
             self.goal_changed = True
+            self._tell_user()
         elif e.kind == "stop" and self.stop_k is None:
             self.stop_k = k
             self.goal_changed = True

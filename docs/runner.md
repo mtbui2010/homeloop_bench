@@ -16,7 +16,11 @@ One episode (`run_episode`):
    in the same episode get the same outcome (common random numbers; this lowers the variance of paired
    comparisons).
 2. The instruction goes through `user.hear_instruction` (ASR noise when the profile turns it on; `ideal`
-   does not).
+   does not). The user gives the task on their app and the robot's `ask` reaches them there wherever the robot
+   is (profile `user.dialog_channel`, homeloop_robot docs/user_model.md). The user model is told what was asked
+   for (`user.set_wants`: the feasible / clarify subtasks' goal atoms, again after a correction), so the
+   simulated user can restate their own request when asked (where an object goes, which one, a read-back);
+   planners never see it.
 3. The scripted interruption of the task (`user.interrupt`), or a random stop drawn by the user model, is
    armed on the robot: motion call number `after_calls + 1` returns `cancelled` and the event is delivered
    to the planner in the next observation. robot_agent planners get a correction through robot_agent's

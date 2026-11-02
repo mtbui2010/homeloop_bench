@@ -59,6 +59,14 @@ def _schema(r) -> list:
         errs.append(f"capability {r['capability']!r}")
     if r["source"] not in SOURCES:
         errs.append(f"source {r['source']!r}")
+    sbl = r.get("source_by_lang") or {}
+    if set(sbl) != {"en", "ko"} or any(v not in SOURCES for v in sbl.values()):
+        errs.append(f"source_by_lang {sbl!r}")
+    elif (r["source"] == "llm_paraphrase") != ("llm_paraphrase" in sbl.values()):
+        errs.append("source does not match source_by_lang")
+    pm = r.get("paraphrase_model") or {}
+    if any(bool(pm.get(lg)) != (sbl.get(lg) == "llm_paraphrase") for lg in ("en", "ko")):
+        errs.append(f"paraphrase_model {pm!r} does not match source_by_lang")
     if r["structure"] not in STRUCTS:
         errs.append(f"structure {r['structure']!r}")
     if r["refuse_reason"] not in (None, "unsafe", "infeasible"):
@@ -190,24 +198,32 @@ def validate(paths=None, workers: int = 1, out=print, policy_path=POLICY) -> tup
          f"below: {small}" if small else f"documented smaller: {documented}")
     # 7 paraphrases
     cache_shas = set()
-    cp = CACHE_DIR / "paraphrase.jsonl"
-    if cp.exists():
+    for cp in sorted(CACHE_DIR.glob("*.jsonl")):
         for l in open(cp, encoding="utf-8"):
             if l.strip():
                 cache_shas.add(json.loads(l)["sha"])
     p_bad = []
-    n_para = 0
+    n_para = Counter()
     for r in recs:
         if r["source"] != "llm_paraphrase":
             continue
-        n_para += 1
-        p = (r["meta"] or {}).get("paraphrase") or {}
-        if not p.get("model"):
-            p_bad.append((r["id"], "no model"))
-        for k in ("sha_req_en", "sha_req_ko"):
-            if p.get(k) not in cache_shas:
-                p_bad.append((r["id"], f"{k} not in the LLM cache"))
-    line(not p_bad, "7 llm_paraphrase records have a model and cached responses", f"{n_para} paraphrased; {p_bad[:3]}")
+        n_para["any"] += 1
+        mp = (r["meta"] or {}).get("paraphrase") or {}
+        tt = (r["meta"] or {}).get("template_text") or {}
+        for lg in ("en", "ko"):
+            if (r.get("source_by_lang") or {}).get(lg) != "llm_paraphrase":
+                if tt and tt.get(lg) != r["text"][lg]:
+                    p_bad.append((r["id"], f"{lg} text differs from its template but is labelled template"))
+                continue
+            n_para[lg] += 1
+            p = mp.get(lg) or {}
+            if not p.get("model") or p.get("model") != (r.get("paraphrase_model") or {}).get(lg):
+                p_bad.append((r["id"], f"{lg}: no model"))
+            for k in ("sha_req", "sha_judge") + (("sha_back",) if lg == "ko" else ()):
+                if p.get(k) not in cache_shas:
+                    p_bad.append((r["id"], f"{lg}.{k} not in the LLM cache"))
+    line(not p_bad, "7 llm_paraphrase texts have a model and cached responses (writer, judge, back-translation)",
+         f"{dict(n_para)} paraphrased; {p_bad[:3]}")
     # 8 houses
     houses = Counter(r["house"] for r in recs)
     held = [r["id"] for r in recs if r["house"] in HELD_OUT and r["split"] != "test"]

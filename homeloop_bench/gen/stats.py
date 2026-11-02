@@ -23,6 +23,9 @@ def stats(recs: list) -> dict:
         "ko": sum(1 for r in recs if (r["text"].get("ko") or "").strip()),
         "by_kind": by("kind"), "by_capability": by("capability"), "by_ambiguity": by("ambiguity"),
         "by_source": by("source"), "by_house": by("house"), "by_split": by("split"),
+        "by_source_lang": {lg: dict(sorted(Counter((r.get("source_by_lang") or {}).get(lg, r["source"])
+                                                   for r in recs).items())) for lg in ("en", "ko")},
+        "paraphrased_both": sum(1 for r in recs if set((r.get("source_by_lang") or {}).values()) == {"llm_paraphrase"}),
         "by_subtasks": {str(k): v for k, v in sorted(Counter(r.get("n_subtasks", 1) for r in recs).items())},
         "by_structure": by("structure"),
         "long_share": round(sum(1 for r in recs if is_long(r)) / max(1, n), 4),

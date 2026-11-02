@@ -74,8 +74,9 @@ def cmd_realism(a):
 
 def cmd_paraphrase(a):
     from ..gen.paraphrase import run
-    return run(url=a.url, model=a.model, frac=a.frac, rounds=a.rounds, workers=a.workers, apply=not a.no_apply,
-               offline=a.offline)
+    return run(url=a.url, model=a.model, ko_model=a.ko_model, ko_judge=a.ko_judge, frac=a.frac, rounds=a.rounds,
+               ko_rounds=a.ko_rounds, workers=a.workers, apply=not a.no_apply, offline=a.offline,
+               langs=tuple(a.langs.split(",")))
 
 
 def cmd_quality(a):
@@ -100,15 +101,19 @@ def main(argv=None):
     r.add_argument("--strict", action="store_true")
     p = sub.add_parser("paraphrase")
     p.add_argument("--url", default="http://127.0.0.1:11536")
-    p.add_argument("--model", default="qwen3-vl:8b-instruct")
-    p.add_argument("--frac", type=float, default=0.45)
-    p.add_argument("--rounds", type=int, default=3)
-    p.add_argument("--workers", type=int, default=4)
+    p.add_argument("--model", default="qwen3-vl:8b-instruct", help="English writer and judge")
+    p.add_argument("--ko-model", default="exaone3.5:latest", help="Korean writer")
+    p.add_argument("--ko-judge", default="qwen3-vl:30b-a3b-instruct", help="Korean judge and back-translator")
+    p.add_argument("--langs", default="en,ko")
+    p.add_argument("--frac", type=float, default=0.6)
+    p.add_argument("--rounds", type=int, default=3, help="English rounds")
+    p.add_argument("--ko-rounds", type=int, default=4)
+    p.add_argument("--workers", type=int, default=8)
     p.add_argument("--no-apply", action="store_true", help="only fill the cache")
     p.add_argument("--offline", action="store_true", help="use only cached responses (no LLM calls)")
     q = sub.add_parser("quality")
     q.add_argument("--url", default="http://127.0.0.1:11536")
-    q.add_argument("--model", default="qwen3-vl:8b-instruct")
+    q.add_argument("--model", default="qwen3-vl:30b-a3b-instruct", help="back-translator (the Korean judge model)")
     q.add_argument("--n", type=int, default=600)
     q.add_argument("--offline", action="store_true")
     a = ap.parse_args(argv)

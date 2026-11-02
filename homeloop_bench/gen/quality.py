@@ -23,7 +23,7 @@ from homeloop_robot.rng import derive_seed
 from ..data import QUALITY_DIR, REPO_DIR, SPLITS
 from .chrf import chrf
 from .dedup import norm
-from .paraphrase import LLM, Cache, has_phrase
+from .paraphrase import CACHE_KO, KO_JUDGE, LLM, Cache, has_phrase
 
 MARKERS = {"ordered": ["first", "then", "before", "after"], "conditional": ["if", "otherwise", "not"],
            "correction": ["no", "wait", "sorry", "mean", "actually", "not"]}
@@ -39,10 +39,14 @@ def _q(xs):
             "p25": round(xs[int(0.25 * (k - 1))], 2), "p75": round(xs[int(0.75 * (k - 1))], 2), "min": round(xs[0], 2)}
 
 
+def ko_source(r):
+    return (r.get("source_by_lang") or {}).get("ko", r["source"])
+
+
 def sample(recs, n, seed=GEN_SEED):
     by = defaultdict(list)
     for r in recs:
-        by[(r["source"], r["structure"])].append(r)
+        by[(ko_source(r), r["structure"])].append(r)
     out = []
     total = len(recs)
     for k in sorted(by):
@@ -52,7 +56,7 @@ def sample(recs, n, seed=GEN_SEED):
 
 
 def back_seed(r):
-    if r["source"] == "llm_paraphrase":
+    if ko_source(r) == "llm_paraphrase":
         return derive_seed(GEN_SEED, "bp", r["id"])
     return derive_seed(GEN_SEED, "bt", r["id"])
 
@@ -68,10 +72,12 @@ def score(r, back):
             "marker": marker}
 
 
-def run(url="http://127.0.0.1:11536", model="qwen3-vl:8b-instruct", n=600, offline=False, log=print) -> int:
+def run(url="http://127.0.0.1:11536", model=KO_JUDGE, n=600, offline=False, log=print) -> int:
+    """Back-translate the Korean text of >= 500 sampled tasks with the Korean judge model (the same requests the
+    paraphrase step made, so a rerun needs no GPU) and score it against the English text."""
     from ..tasks import read_records
     recs = [r for s in SPLITS for r in read_records(s)]
-    llm = LLM(url, model, Cache(), offline=offline)
+    llm = LLM(url, model, Cache(CACHE_KO), offline=offline)
     smp = sample(recs, n)
     from concurrent.futures import ThreadPoolExecutor
     with ThreadPoolExecutor(8) as pool:
@@ -79,7 +85,8 @@ def run(url="http://127.0.0.1:11536", model="qwen3-vl:8b-instruct", n=600, offli
     rows = []
     for r, (bt, sha) in zip(smp, backs):
         s = score(r, bt) if bt else {"chrf": 0.0, "entities": 0.0, "marker": False}
-        rows.append({"id": r["id"], "source": r["source"], "structure": r["structure"], "kind": r["kind"],
+        rows.append({"id": r["id"], "source": ko_source(r), "source_en": (r.get("source_by_lang") or {}).get("en"),
+                     "structure": r["structure"], "kind": r["kind"],
                      "capability": r["capability"], "en": r["text"]["en"], "ko": r["text"]["ko"], "back_en": bt,
                      "sha": sha, **s})
     ok = [x for x in rows if x["back_en"]]
@@ -122,16 +129,25 @@ def paraphrase_report(recs):
     if p.exists():
         run_info = json.load(open(p, encoding="utf-8"))
     para = [r for r in recs if r["source"] == "llm_paraphrase"]
-    chrfs = [r["meta"]["paraphrase"]["chrf_backtranslation"] for r in para]
+    by_lang = {lg: [r for r in para if (r.get("source_by_lang") or {}).get(lg) == "llm_paraphrase"] for lg in ("en", "ko")}
+    both = [r for r in by_lang["en"] if (r.get("source_by_lang") or {}).get("ko") == "llm_paraphrase"]
+    chrfs = [r["meta"]["paraphrase"]["ko"]["chrf_backtranslation"] for r in by_lang["ko"]]
     pairs = sorted(para, key=lambda r: derive_seed(GEN_SEED, "pairs", r["id"]))[:30]
-    return {"run": run_info, "n_records": len(recs), "n_paraphrased": len(para),
-            "share": round(len(para) / max(1, len(recs)), 4),
-            "by_structure": dict(sorted(Counter(r["structure"] for r in para).items())),
-            "by_kind": dict(sorted(Counter(r["kind"] for r in para).items())),
-            "chrf_backtranslation_accepted": _q(chrfs),
+    n = max(1, len(recs))
+    return {"run": run_info, "n_records": len(recs), "n_paraphrased": len(para), "share": round(len(para) / n, 4),
+            "n_paraphrased_en": len(by_lang["en"]), "n_paraphrased_ko": len(by_lang["ko"]), "n_paraphrased_both": len(both),
+            "share_en": round(len(by_lang["en"]) / n, 4), "share_ko": round(len(by_lang["ko"]) / n, 4),
+            "share_both": round(len(both) / n, 4),
+            "models": dict(sorted(Counter(f"{lg}:{r['paraphrase_model'][lg]}" for lg in ("en", "ko")
+                                          for r in by_lang[lg]).items())),
+            "by_structure": {lg: dict(sorted(Counter(r["structure"] for r in by_lang[lg]).items())) for lg in by_lang},
+            "by_kind": {lg: dict(sorted(Counter(r["kind"] for r in by_lang[lg]).items())) for lg in by_lang},
+            "chrf_backtranslation_accepted_ko": _q(chrfs),
             "pairs": [{"id": r["id"], "template": r["meta"]["template_text"], "paraphrase": r["text"],
-                       "back_en": r["meta"]["paraphrase"]["back_en"],
-                       "chrf": r["meta"]["paraphrase"]["chrf_backtranslation"]} for r in pairs]}
+                       "source_by_lang": r["source_by_lang"],
+                       "back_en": ((r["meta"]["paraphrase"] or {}).get("ko") or {}).get("back_en"),
+                       "chrf": ((r["meta"]["paraphrase"] or {}).get("ko") or {}).get("chrf_backtranslation")}
+                      for r in pairs]}
 
 
 def _write(path, obj):
@@ -147,14 +163,22 @@ def write_md(rep, para):
          "Raw numbers: `data/quality/paraphrase_quality.json`, `data/quality/ko_backtranslation_report.json`, "
          "`data/quality/paraphrase_run.json`.", "",
          "## Paraphrases", "",
-         f"- model: `{run_info.get('model', 'n/a')}` (local Ollama on GPU 0), prompt version {run_info.get('prompt_version')}",
-         f"- records selected for paraphrase: {run_info.get('selected')} (share {run_info.get('frac')}), "
-         f"rounds {run_info.get('rounds')}",
-         f"- accepted: English {run_info.get('accepted_en')}, Korean {run_info.get('accepted_ko')}, both "
-         f"{run_info.get('accepted_both')}; applied {run_info.get('applied')}",
-         f"- `llm_paraphrase` records: {para['n_paraphrased']} of {para['n_records']} ({para['share']:.1%})",
-         f"- Korean back-translation chrF of the accepted paraphrases: {para['chrf_backtranslation_accepted']}", "",
-         "Rejections per filter (a candidate can fail several):", "", "| filter | English | Korean |", "|---|---|---|"]
+         "- the two languages are paraphrased independently by local models (Ollama on GPU 0):"]
+    for lg, name in (("en", "English"), ("ko", "Korean")):
+        m = (run_info.get("models") or {}).get(lg) or {}
+        L.append(f"  - {name}: writer `{m.get('writer')}`, judge `{m.get('judge')}`"
+                 + (f", back-translation `{m.get('back_translation')}`" if m.get("back_translation") else "")
+                 + f", prompt {m.get('prompt_version')}, rounds {(run_info.get('rounds') or {}).get(lg)}")
+    L += [f"- records selected for paraphrase: {run_info.get('selected')} (share {run_info.get('frac')}); "
+          f"candidates asked: {run_info.get('asked')}; accepted: {run_info.get('accepted')}",
+          f"- paraphrased texts in the data: English {para['n_paraphrased_en']} ({para['share_en']:.1%}), Korean "
+          f"{para['n_paraphrased_ko']} ({para['share_ko']:.1%}), both {para['n_paraphrased_both']} "
+          f"({para['share_both']:.1%}); records with `source: llm_paraphrase` (at least one language): "
+          f"{para['n_paraphrased']} of {para['n_records']} ({para['share']:.1%})",
+          f"- Korean back-translation chrF of the accepted Korean paraphrases: {para['chrf_backtranslation_accepted_ko']}",
+          ""]
+    L += ["Rejections per filter (a candidate can fail several; judge_* = the judge's answer):", "",
+          "| filter | English | Korean |", "|---|---|---|"]
     rj = run_info.get("rejections") or {}
     for k in sorted(set(rj.get("en", {})) | set(rj.get("ko", {}))):
         L.append(f"| {k} | {rj.get('en', {}).get(k, 0)} | {rj.get('ko', {}).get(k, 0)} |")
@@ -177,8 +201,11 @@ def write_md(rep, para):
               "separately, not translated), so the score is a meaning-drift alarm, not a translation-quality score; "
               "the entity check is the stronger signal.", "", "## Sampled pairs", ""]
     for x in para["pairs"][:10]:
-        L.append(f"- `{x['id']}`: \"{x['template']['en']}\" -> \"{x['paraphrase']['en']}\"; "
-                 f"{x['template']['ko']} -> {x['paraphrase']['ko']} (chrF {x['chrf']})")
+        sb = x["source_by_lang"]
+        en = f"\"{x['template']['en']}\" -> \"{x['paraphrase']['en']}\"" if sb["en"] == "llm_paraphrase" else "EN template"
+        ko = f"{x['template']['ko']} -> {x['paraphrase']['ko']} (chrF {x['chrf']})" if sb["ko"] == "llm_paraphrase" \
+            else "KO template"
+        L.append(f"- `{x['id']}`: {en}; {ko}")
     (REPO_DIR / "docs").mkdir(exist_ok=True)
     (REPO_DIR / "docs" / "paraphrase_quality.md").write_text("\n".join(L) + "\n", encoding="utf-8")
 
@@ -248,10 +275,18 @@ def write_datasheet(recs, para=None, bt=None, realism=None):
           "SafeAgentBench, RoboGuard, RoboCup@Home GPSR, EmbodiedBench, HomeRobot OVMM) - [realism.md](realism.md).",
           "- Worlds are the homeloop_robot houses in seeded arrangements; the goal is checked against the oracle, "
           "which must solve every feasible and clarify task through the robot in the `ideal` profile.",
-          f"- LLM paraphrases: local `{run_info.get('model', 'qwen3-vl:8b-instruct')}` (Ollama on one GPU), generated "
-          "2026-11-02; filters, back-translation chrF and a same-meaning judge "
-          f"([paraphrase_quality.md](paraphrase_quality.md)); {para.get('n_paraphrased', 0)} tasks "
-          f"({para.get('share', 0):.1%}) are `llm_paraphrase`, the rest `template`.", "",
+          "- LLM paraphrases, generated 2026-11-02 with local models (Ollama on one GPU), each language on its own: "
+          "English by `qwen3-vl:8b-instruct` with a same-meaning judge (the same model); Korean by "
+          "`exaone3.5:latest` (LG EXAONE 3.5, Korean-specialised), checked by deterministic Korean filters (no "
+          "Chinese characters, no imperative with a question mark, no 반말, no wrong honorifics, every entity kept), "
+          "a back-translation chrF check and a judge (`qwen3-vl:30b-a3b-instruct`: same meaning, 해요체, the robot is "
+          "the one asked, no typos) ([paraphrase_quality.md](paraphrase_quality.md)). A rejected candidate leaves "
+          "that language's template text in place. Paraphrased texts: English "
+          f"{para.get('n_paraphrased_en', 0)} ({para.get('share_en', 0):.1%}), Korean {para.get('n_paraphrased_ko', 0)} "
+          f"({para.get('share_ko', 0):.1%}), both {para.get('n_paraphrased_both', 0)} ({para.get('share_both', 0):.1%}). "
+          "Each task records `source_by_lang` and `paraphrase_model` per language; the top-level `source` is "
+          f"`llm_paraphrase` when at least one language is paraphrased ({para.get('n_paraphrased', 0)} tasks, "
+          f"{para.get('share', 0):.1%}).", "",
           "## Preprocessing / cleaning", "",
           "- Exact duplicates (normalised text, per language) are removed everywhere; near duplicates across splits "
           "(Jaccard >= 0.9 of character n-grams) are removed.",
@@ -273,10 +308,11 @@ def write_datasheet(recs, para=None, bt=None, realism=None):
           "English language quality in general; any claim about real people (the users are scripted).",
           "- Known limits: the world is symbolic; utterances are template- or LLM-written, not recorded speech (the "
           "robot's ASR noise model adds recognition errors at run time); clarify answers are scripted; the "
-          "paraphrase model is an 8B local model, so some paraphrases are plainer than human speech.", "",
+          "paraphrase models are 8B-class local models, so some paraphrases are plainer than human speech.", "",
           "## Distribution", "",
-          "- Apache-2.0, with the code (`homeloop_bench`), in `homeloop_bench/data/tasks/*.jsonl`; the LLM cache "
-          "(`homeloop_bench/data/llm_cache/paraphrase.jsonl`) is shipped so the paraphrase step is reproducible.", "",
+          "- Apache-2.0, with the code (`homeloop_bench`), in `homeloop_bench/data/tasks/*.jsonl`; the LLM caches "
+          "(`homeloop_bench/data/llm_cache/paraphrase.jsonl` for English, `paraphrase_ko.jsonl` for Korean) are "
+          "shipped so the paraphrase step is reproducible without a GPU (`paraphrase --offline`).", "",
           "## Maintenance", "",
           "- Regenerate with `python -m homeloop_bench.data generate` + `paraphrase --offline`; any change must keep "
           "`validate --strict` and `realism --strict` green. Issues and corrections go to the repository's tracker.",

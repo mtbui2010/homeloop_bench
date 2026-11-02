@@ -35,6 +35,8 @@ class Task:
     mixed_kind: bool = False
     length_words: dict = field(default_factory=dict)
     activity_source: dict = field(default_factory=dict)
+    source_by_lang: dict = field(default_factory=dict)      # {"en": template | llm_paraphrase, "ko": ...}
+    paraphrase_model: dict = field(default_factory=dict)    # {"en": model or None, "ko": model or None}
 
     @classmethod
     def from_dict(cls, d: dict) -> "Task":

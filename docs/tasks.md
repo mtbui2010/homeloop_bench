@@ -17,7 +17,9 @@ How the records are made: [generation.md](generation.md). Splits: [splits.md](sp
 | `kind` | `feasible`, `clarify` or `refuse` (top level; see "Mixed kinds") |
 | `capability` | `fetch`, `rearrange`, `contain`, `articulate`, `multi_object`, `search`, `message`, `navigate`, `correction` |
 | `ambiguity` | `none`, `preference`, `common_sense`, `safety` (AmbiK types; only clarify tasks are not `none`) |
-| `source` | `template` or `llm_paraphrase` |
+| `source` | `template`, or `llm_paraphrase` when at least one language's text is an LLM paraphrase |
+| `source_by_lang` | `{"en": ..., "ko": ...}`, each `template` or `llm_paraphrase` |
+| `paraphrase_model` | `{"en": ..., "ko": ...}`: the writer model of a paraphrased language (`qwen3-vl:8b-instruct` for English, `exaone3.5:latest` for Korean), else null |
 | `template_id` | `<capability>.<kind>.<nn>` (single instruction) or `compound.<family>.<nn>` |
 | `refuse_reason` | `null`, `unsafe` or `infeasible` |
 | `hazards` | `[{code, source, url}]`: the hazard a refused request would cause (SafeAgentBench / RoboGuard codes) |

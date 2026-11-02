@@ -4,15 +4,15 @@
 python -m homeloop_bench.data generate            # template tasks -> homeloop_bench/data/tasks/{train,dev,test}.jsonl
 bash tools/llm_gpu0.sh start                       # local Ollama on GPU 0 (127.0.0.1:11536)
 python -m homeloop_bench.data paraphrase           # LLM paraphrases (cached, resumable); rewrites the task files
-python -m homeloop_bench.data quality              # paraphrase + Korean back-translation quality reports
+python -m homeloop_bench.data quality              # paraphrase + Korean back-translation quality reports (>= 500 tasks)
 bash tools/llm_gpu0.sh stop
 python -m homeloop_bench.data validate --strict --workers 8
 python -m homeloop_bench.data realism --strict
 python -m homeloop_bench.data stats --json
 ```
 
-Everything is seeded (`--gen-seed 2026`): the same code gives the same files. With the shipped LLM cache
-(`homeloop_bench/data/llm_cache/paraphrase.jsonl`), `paraphrase --offline` reproduces the paraphrases without a GPU.
+Everything is seeded (`--gen-seed 2026`): the same code gives the same files. With the shipped LLM caches
+(`homeloop_bench/data/llm_cache/*.jsonl`), `paraphrase --offline` reproduces the paraphrases without a GPU.
 
 ## Pipeline
 
@@ -75,26 +75,43 @@ remainder to `FALLBACK` families. The achieved label shares are in [datasheet.md
 
 ## Paraphrases
 
-`gen/paraphrase.py`, local LLM only (`tools/llm_gpu0.sh`: container `homeloop_ollama_gpu0`, GPU 0, the shared model
-volume mounted read-only), model `qwen3-vl:8b-instruct`:
+`gen/paraphrase.py`, local LLMs only (`tools/llm_gpu0.sh`: container `homeloop_ollama_gpu0`, GPU 0, the shared model
+volume mounted read-only). The two languages are paraphrased independently, each with its own writer and judge:
 
-- 60 % of the template records (stratified by split x structure x kind, chosen by seed) are candidates.
+| | writer | judge | back-translation | prompt |
+|---|---|---|---|---|
+| English | `qwen3-vl:8b-instruct` | the same model | - | p1 |
+| Korean | `exaone3.5:latest` (LG EXAONE 3.5, Korean-specialised) | `qwen3-vl:30b-a3b-instruct` | `qwen3-vl:30b-a3b-instruct` | k2 |
+
+The Korean writer and judge replaced `qwen3-vl:8b-instruct` for Korean after an A/B on 30 real inputs: the 8B model
+leaked Chinese characters, wrote imperatives with a question mark, flipped the speaker's role and changed meanings;
+only about 18 % of its Korean outputs passed (USER_FEEDBACK 9).
+
+- 60 % of the template records (stratified by split x structure x kind, chosen by seed) are candidates, the same
+  records for both languages.
 - One request per item and language: rewrite as a natural spoken request, keep every listed entity phrase (the
-  phrases the template used), add nothing, drop nothing, change words or structure (not only the ending); Korean in
-  해요체; compound requests keep their order words, conditions and self-corrections. Temperature 0.8, seed per item
-  and round, up to 3 rounds.
-- Filters: unchanged / too similar / **only the politeness ending changed** (USER_FEEDBACK 2); length ratio 0.5-2;
-  instruction leak; every entity phrase kept (English whole words, Korean with particles); no new catalog entity or
-  colour; no Chinese / Japanese characters; English without Hangul; Korean: >= 50 % Hangul, a request form, no 반말,
-  no imperative + question mark, no speaker-role flip (드릴게요); the R-g language rule; no duplicate or cross-split
-  near duplicate of any other text.
+  phrases the template used), add nothing, drop nothing, change words or structure (not only the ending);
+  compound requests keep their order words, conditions and self-corrections. The Korean prompt asks for 해요체
+  explicitly, no 반말 or 합쇼체, the robot as the one asked, people named as in the original (no 남편님), and no
+  imperative + question mark. Temperature 0.8, seed per item and round; up to 3 English and 4 Korean rounds.
+- Deterministic filters: unchanged / too similar / **only the politeness ending changed** (USER_FEEDBACK 2); length
+  ratio 0.5-2; instruction leak; every entity phrase kept (English whole words, Korean with particles); no new
+  catalog entity or colour; no Chinese / Japanese characters; English without Hangul. Korean also: >= 50 % Hangul;
+  a request form; no 반말 (patterns, and every sentence ending checked against 해 / 줘 / 돼 / 자 / 니 / 렴 / 겠니 /
+  줄래? / 어? / 아?); no imperative + question mark (주세요? / 줘요?); no speaker-role flip (드릴게요); no wrong
+  honorifics (남편님, 딸님, 아들님, 아내님; …께 가셔서 addressed to the robot); no 합쇼체; the R-g language rule;
+  no duplicate or cross-split near duplicate of any other text.
 - Korean meaning check: the paraphrase is translated back to English (temperature 0) and scored with chrF against
   the better of the English template and the back-translated Korean template (`CHRF_MIN = 35`, the preview's
   setting).
-- Same-meaning judge: the same model (temperature 0) answers whether the English paraphrase, and the back-translated
-  Korean paraphrase, ask for exactly the same things as the English template (objects, places, people, conditions,
-  order, self-corrections).
-- A record becomes `llm_paraphrase` only when both languages pass; `meta.template_text` keeps the template text and
-  `meta.paraphrase` the model, the chrF, the back-translation and the sha256 of every request (all in the cache).
+- Judges (temperature 0). English: does the paraphrase ask for exactly the same things as the template (objects,
+  places, people, conditions, order, self-corrections)? Korean, in Korean against the Korean template: same
+  meaning, the robot is the one asked, every sentence in 해요체, natural Korean without typos, non-words or wrong
+  honorifics; all four must be true.
+- A language whose candidates all fail keeps its template text. Every record has `source_by_lang` (`{en, ko}`, each
+  `template` or `llm_paraphrase`) and `paraphrase_model` (`{en, ko}`, the writer model or null); `source` is
+  `llm_paraphrase` when at least one language is paraphrased. `meta.template_text` keeps both template texts and
+  `meta.paraphrase.<lang>` the writer, judge, round and the sha256 of every request (writer, judge, back-translation;
+  all in the caches `homeloop_bench/data/llm_cache/paraphrase.jsonl` (English) and `paraphrase_ko.jsonl` (Korean)).
 
 Results: [paraphrase_quality.md](paraphrase_quality.md).

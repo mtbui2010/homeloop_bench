@@ -1,0 +1,660 @@
+{
+ "by_kind": {
+  "en": {
+   "clarify": 682,
+   "feasible": 3801,
+   "refuse": 357
+  },
+  "ko": {
+   "clarify": 706,
+   "feasible": 4314,
+   "refuse": 420
+  }
+ },
+ "by_structure": {
+  "en": {
+   "conditional": 189,
+   "conjunction": 348,
+   "correction": 136,
+   "ordered": 265,
+   "sequence": 393,
+   "shared_object": 247,
+   "single": 2866,
+   "with_context": 396
+  },
+  "ko": {
+   "conditional": 237,
+   "conjunction": 408,
+   "correction": 170,
+   "ordered": 316,
+   "sequence": 453,
+   "shared_object": 270,
+   "single": 3119,
+   "with_context": 467
+  }
+ },
+ "chrf_backtranslation_accepted_ko": {
+  "mean": 70.56,
+  "median": 70.37,
+  "min": 35.13,
+  "n": 5440,
+  "p10": 50.85,
+  "p25": 59.94,
+  "p75": 81.14
+ },
+ "models": {
+  "en:qwen3-vl:8b-instruct": 4840,
+  "ko:exaone3.5:latest": 5440
+ },
+ "n_paraphrased": 5828,
+ "n_paraphrased_both": 4452,
+ "n_paraphrased_en": 4840,
+ "n_paraphrased_ko": 5440,
+ "n_records": 10000,
+ "pairs": [
+  {
+   "back_en": "Could you please put the red book back on the shared shelf and move the blue mug to the side table?",
+   "chrf": 96.29,
+   "id": "hl-train-004257",
+   "paraphrase": {
+    "en": "Put the red book on the shared shelf and the blue mug on the side table, yeah?",
+    "ko": "빨간 책을 다시 공용 선반에 정리해 주시고, 파란 머그컵은 사이드 테이블로 옮겨 주시겠어요?"
+   },
+   "source_by_lang": {
+    "en": "llm_paraphrase",
+    "ko": "llm_paraphrase"
+   },
+   "template": {
+    "en": "Can you leave the red book on the shared shelf, and also leave the blue mug on the side table?",
+    "ko": "빨간 책을 다시 공용 선반에 꽂아 주고, 파란 머그컵을 사이드 테이블로 옮겨 줘요."
+   }
+  },
+  {
+   "back_en": "Could you bring me the medicine, please?",
+   "chrf": 62.54,
+   "id": "hl-dev-000318",
+   "paraphrase": {
+    "en": "Can you grab my medicine?",
+    "ko": "약 가져다 주실 수 있을까요?"
+   },
+   "source_by_lang": {
+    "en": "llm_paraphrase",
+    "ko": "llm_paraphrase"
+   },
+   "template": {
+    "en": "Could you get me my medicine?",
+    "ko": "약을 가져다주세요."
+   }
+  },
+  {
+   "back_en": "Could you please hand the green book to father?",
+   "chrf": 70.65,
+   "id": "hl-test-001308",
+   "paraphrase": {
+    "en": "Hey, grab that green book and take it to Grandpa.",
+    "ko": "아버님께 초록색 책을 건네주실 수 있을까요?"
+   },
+   "source_by_lang": {
+    "en": "llm_paraphrase",
+    "ko": "llm_paraphrase"
+   },
+   "template": {
+    "en": "Do me a favor and bring Grandpa the green book.",
+    "ko": "초록색 책을 아버님께 갖다드려 주실래요?"
+   }
+  },
+  {
+   "back_en": "If you see a kitchen knife on the countertop, please put it in the kitchen drawer; otherwise, just pass by. Could you also bring me the pink towel? After finishing the task, please move to near the charger.",
+   "chrf": 68.78,
+   "id": "hl-train-000138",
+   "paraphrase": {
+    "en": "If you spot the knife on the counter, stash it in the kitchen drawer, or just ignore it. After that, grab me the pink towel. Then head back to your dock.",
+    "ko": "조리대 위에 부엌칼이 보이면 주방 서랍에 넣어 주고, 아니면 그냥 지나치세요. 그리고 분홍색 수건을 가져다 주시겠어요? 작업 끝나면 충전기 근처로 이동해 주세요."
+   },
+   "source_by_lang": {
+    "en": "llm_paraphrase",
+    "ko": "llm_paraphrase"
+   },
+   "template": {
+    "en": "If you see the knife on the counter, put it away in the kitchen drawer, otherwise don't worry about it. After that, bring me the pink towel. Then head back to your dock.",
+    "ko": "조리대에 부엌칼이 보이면 주방 서랍에 넣어 주고, 아니면 신경 쓰지 마세요. 그리고 분홍색 수건 좀 가져다줘요. 끝나면 충전기로 돌아가 주세요."
+   }
+  },
+  {
+   "back_en": "Could you please find my glasses and bring them to me?",
+   "chrf": 54.31,
+   "id": "hl-train-003266",
+   "paraphrase": {
+    "en": "I can't find my glasses, could you track them down and hand them to me?",
+    "ko": "안경 어디 있는지 찾아서 제게 좀 가져다 주실래요?"
+   },
+   "source_by_lang": {
+    "en": "llm_paraphrase",
+    "ko": "llm_paraphrase"
+   },
+   "template": {
+    "en": "My glasses have gone missing. Could you find them and bring them to me?",
+    "ko": "안경이 어디 갔는지 모르겠어요. 어디 있는지 찾아서 저한테 가져다주세요."
+   }
+  },
+  {
+   "back_en": "My daughter is trying to help. Could you please move the pink mug to the desk? And could you please bring the detergent to my daughter?",
+   "chrf": 58.92,
+   "id": "hl-test-002555",
+   "paraphrase": {
+    "en": "My daughter's gonna help out with chores today. Put the pink mug on the desk, then bring the detergent over to her, please.",
+    "ko": "딸이 도와주려는 거네요, 분홍색 머그컵을 책상 위에 옮겨 주시겠어요? 그리고 세제는 딸에게 가져다주실 수 있을까요?"
+   },
+   "source_by_lang": {
+    "en": "llm_paraphrase",
+    "ko": "llm_paraphrase"
+   },
+   "template": {
+    "en": "My daughter wants to be a big helper with the chores today. Put the pink mug on the desk, and then bring the detergent over to my daughter, please.",
+    "ko": "딸이 오늘 집안일을 도와주겠대요. 분홍색 머그컵을 책상으로 옮겨 주고, 세제를 딸한테 가져다줄 수 있어요?"
+   }
+  },
+  {
+   "back_en": null,
+   "chrf": null,
+   "id": "hl-test-000187",
+   "paraphrase": {
+    "en": "Could you please put the wallet away?",
+    "ko": "지갑을 치워 줄래요?"
+   },
+   "source_by_lang": {
+    "en": "llm_paraphrase",
+    "ko": "template"
+   },
+   "template": {
+    "en": "I'd like you to tidy the wallet away.",
+    "ko": "지갑을 치워 줄래요?"
+   }
+  },
+  {
+   "back_en": "Could you please tell my husband that I called?",
+   "chrf": 82.0,
+   "id": "hl-train-003698",
+   "paraphrase": {
+    "en": "Hey, could you let my husband know there's a phone call for him when you've got a sec?",
+    "ko": "남편께 전화가 왔다고 말씀해 주실래요?"
+   },
+   "source_by_lang": {
+    "en": "llm_paraphrase",
+    "ko": "llm_paraphrase"
+   },
+   "template": {
+    "en": "Could you go tell my husband there's a phone call for him when you have a moment?",
+    "ko": "남편한테 가서 전화 왔다고 말해 줄래요?"
+   }
+  },
+  {
+   "back_en": "Could you please put them back in place? The black mug on the counter and the phone on the bed?",
+   "chrf": 85.84,
+   "id": "hl-train-000519",
+   "paraphrase": {
+    "en": "Put some stuff away, black mug on the counter, phone on the bed.",
+    "ko": "제자리에 갖다 놓아 주시겠어요? 검은 머그컵은 조리대에, 핸드폰은 침대에 정리해 주실 수 있어요?"
+   },
+   "source_by_lang": {
+    "en": "llm_paraphrase",
+    "ko": "llm_paraphrase"
+   },
+   "template": {
+    "en": "Would you put some stuff away? The black mug goes back on the counter and the phone goes on the bed.",
+    "ko": "제자리에 좀 갖다 놔 줄래요? 검은 머그컵은 조리대에 갖다 놓고, 핸드폰은 침대에 갖다 놔 주세요."
+   }
+  },
+  {
+   "back_en": "Could you please put the blue mug in the sink and bring me the book as well? After that, can I go to charge it?",
+   "chrf": 71.64,
+   "id": "hl-train-003131",
+   "paraphrase": {
+    "en": "Put that blue mug in the sink, then bring my book over here, okay? Once you're done, go back to charge.",
+    "ko": "파란 머그컵을 개수대에 넣어 주시고, 책도 가져다주실 수 있을까요? 그 후에 충전하러 가도 될까요?"
+   },
+   "source_by_lang": {
+    "en": "llm_paraphrase",
+    "ko": "llm_paraphrase"
+   },
+   "template": {
+    "en": "Leave the blue mug in the sink, and then bring my book over to me, please. After that, you can go back and charge.",
+    "ko": "파란 머그컵 좀 개수대에 넣어 주고, 책 좀 가져다주세요. 그다음에 충전하러 돌아가도 돼요."
+   }
+  },
+  {
+   "back_en": "Could you please get some water ready? Could you also place the flower pot on the countertop?",
+   "chrf": 50.98,
+   "id": "hl-train-000449",
+   "paraphrase": {
+    "en": "Could you move the potted plant to the counter for me? I'm gonna water it.",
+    "ko": "물 좀 준비해 주시겠어요? 화분 좀 조리대에 올려 놓아주실 수 있을까요?"
+   },
+   "source_by_lang": {
+    "en": "llm_paraphrase",
+    "ko": "llm_paraphrase"
+   },
+   "template": {
+    "en": "I want to water it. Would you put the potted plant over on the counter, please?",
+    "ko": "물 좀 주려고요. 화분 좀 조리대에 갖다 놔 줄 수 있어요?"
+   }
+  },
+  {
+   "back_en": "Could you open the microwave for me, please? I'd like to check inside.",
+   "chrf": 59.51,
+   "id": "hl-dev-000660",
+   "paraphrase": {
+    "en": "Can you open the microwave so I can see what's inside?",
+    "ko": "전자레인지 안 좀 볼게요, 열어 주실래요?"
+   },
+   "source_by_lang": {
+    "en": "llm_paraphrase",
+    "ko": "llm_paraphrase"
+   },
+   "template": {
+    "en": "I want to check what's in there. Would you open up the microwave, please?",
+    "ko": "안에 뭐 있는지 좀 보려고요. 전자레인지를 열어 주세요."
+   }
+  },
+  {
+   "back_en": "Could you please take out a juice bottle from the fridge and bring it to me? Also, please close the door. When you're done, could you charge it as well?",
+   "chrf": 59.31,
+   "id": "hl-train-005993",
+   "paraphrase": {
+    "en": "Grab the juice bottle from the fridge and then close the fridge door. Once you're done, head back to the charging dock.",
+    "ko": "냉장고에서 주스병을 좀 꺼내서 가져다주실 수 있겠어요? 그리고 문 닫아주세요. 모든 걸 마치시면 충전도 해주실래요?"
+   },
+   "source_by_lang": {
+    "en": "llm_paraphrase",
+    "ko": "llm_paraphrase"
+   },
+   "template": {
+    "en": "Get the juice bottle out of the refrigerator for me and shut the refrigerator door afterwards. Once you're finished, go back to the charging dock.",
+    "ko": "냉장고에서 주스병을 꺼내서 갖다준 다음에 문 닫아 주세요. 다 끝나면 가서 충전하세요."
+   }
+  },
+  {
+   "back_en": "Could you please go to the multipurpose room and wait there? I'll be able to help you a bit from there.",
+   "chrf": 65.48,
+   "id": "hl-train-000979",
+   "paraphrase": {
+    "en": "Head over to the utility room and wait there, I need you in there.",
+    "ko": "다용도실에 가주셔서 기다려 주실래요? 거기서 조금 도와드릴 수 있도록 해 주세요."
+   },
+   "source_by_lang": {
+    "en": "llm_paraphrase",
+    "ko": "llm_paraphrase"
+   },
+   "template": {
+    "en": "Can you go and wait in the utility room? I need your help in there.",
+    "ko": "다용도실에 가서 기다려 줄 수 있어요? 거기서 좀 도와줘야 해요."
+   }
+  },
+  {
+   "back_en": "Could you please place the white mug on the sink and bring a towel as well? After that, you can go to charge it.",
+   "chrf": 70.74,
+   "id": "hl-train-002268",
+   "paraphrase": {
+    "en": "Put the white mug in the kitchen sink, and then bring my towel here, please. After that, you can go back and charge.",
+    "ko": "하얀 머그컵을 개수대에 놓아주시고, 수건도 가져다 주시겠어요? 그 다음에 충전하러 가셔도 돼요."
+   },
+   "source_by_lang": {
+    "en": "template",
+    "ko": "llm_paraphrase"
+   },
+   "template": {
+    "en": "Put the white mug in the kitchen sink, and then bring my towel here, please. After that, you can go back and charge.",
+    "ko": "하얀 머그컵을 개수대에 넣어 주고, 수건을 가져다줄 수 있어요? 그다음에 충전하러 돌아가도 돼요."
+   }
+  },
+  {
+   "back_en": "Please put the white towel in the bathroom cabinet and leave it open. I'll come back for it later. When you're done, please go and charge it.",
+   "chrf": 62.15,
+   "id": "hl-train-003138",
+   "paraphrase": {
+    "en": "Open the bathroom cabinet, slide that white towel inside, and leave it open, I'll need another thing from there. Once you're done, head back to the charging dock.",
+    "ko": "하얀 수건을 욕실 수납장에 넣어주세요, 그대로 열어두세요. 나중에 다시 가져올게요. 마무리되면 가서 충전해 주세요."
+   },
+   "source_by_lang": {
+    "en": "llm_paraphrase",
+    "ko": "llm_paraphrase"
+   },
+   "template": {
+    "en": "Please open the bathroom cabinet, put the white towel in, and leave it open, I'll need something else from it. Once you're finished, go back to the charging dock.",
+    "ko": "수납장을 열어서 하얀 수건을 넣고, 그냥 열어 두세요. 이따 또 꺼낼 거예요. 다 끝나면 가서 충전하세요."
+   }
+  },
+  {
+   "back_en": "Please place the white phone on the living room table, or you can put it on the TV stand. Also, could you bring the glass, and can I go to charge it later?",
+   "chrf": 72.71,
+   "id": "hl-train-004429",
+   "paraphrase": {
+    "en": "Leave the white phone on the TV stand, no, actually on the coffee table, and then bring the glass here, please. After that, you can go back and charge.",
+    "ko": "하얀 휴대폰을 거실 탁자에 갖다 놓아주세요, 아니에요, TV 받침대에 놓아줘도 돼요. 그리고 유리잔도 가져다 주시고, 나중에 충전하러 가도 될까요?"
+   },
+   "source_by_lang": {
+    "en": "template",
+    "ko": "llm_paraphrase"
+   },
+   "template": {
+    "en": "Leave the white phone on the TV stand, no, actually on the coffee table, and then bring the glass here, please. After that, you can go back and charge.",
+    "ko": "하얀 휴대폰 좀 TV 받침대에, 아 아니다, 거실 탁자에 갖다 놔 주고, 유리잔을 가져다주세요. 그다음에 충전하러 돌아가도 돼요."
+   }
+  },
+  {
+   "back_en": "My son wants to help a bit. Could you please bring me some dish soap?",
+   "chrf": 55.38,
+   "id": "hl-dev-000038",
+   "paraphrase": {
+    "en": "My son wants to help with the cleaning. Can you bring the dish soap over to my son?",
+    "ko": "아들이 좀 도와주고 싶어하네요. 주방세제 좀 가져다주실 수 있어요?"
+   },
+   "source_by_lang": {
+    "en": "template",
+    "ko": "llm_paraphrase"
+   },
+   "template": {
+    "en": "My son wants to help with the cleaning. Can you bring the dish soap over to my son?",
+    "ko": "아들이 청소를 돕고 싶대요. 주방세제를 아들한테 가져다주세요."
+   }
+  },
+  {
+   "back_en": "Please go to the balcony and wait. I'll meet you there.",
+   "chrf": 89.19,
+   "id": "hl-train-002183",
+   "paraphrase": {
+    "en": "Hang tight at the balcony, okay? I'm coming there.",
+    "ko": "베란다로 가셔서 기다려 주세요. 거기서 만나요."
+   },
+   "source_by_lang": {
+    "en": "llm_paraphrase",
+    "ko": "llm_paraphrase"
+   },
+   "template": {
+    "en": "Wait for me in the balcony, please. I'll meet you there.",
+    "ko": "베란다에 가 있어 주세요. 거기서 만나요."
+   }
+  },
+  {
+   "back_en": "Could you please tell my father that I called first, and then bring me a white mug?",
+   "chrf": 70.58,
+   "id": "hl-train-004134",
+   "paraphrase": {
+    "en": "First go tell Grandpa someone's on the phone for him, and then bring the white mug over to him.",
+    "ko": "먼저 아버님께 전화가 왔다고 말씀해 주시고, 그 다음에 하얀 머그컵을 가져다주실 수 있을까요?"
+   },
+   "source_by_lang": {
+    "en": "template",
+    "ko": "llm_paraphrase"
+   },
+   "template": {
+    "en": "First go tell Grandpa someone's on the phone for him, and then bring the white mug over to him.",
+    "ko": "먼저 아버님께 전화 왔다고 말씀드리고 나서 하얀 머그컵을 갖다드려 주세요."
+   }
+  },
+  {
+   "back_en": "Could you please take the mug to my mother?",
+   "chrf": 56.99,
+   "id": "hl-test-002013",
+   "paraphrase": {
+    "en": "Can you pass her mug to Grandma?",
+    "ko": "머그컵을 어머님께 갖다드리실 수 있을까요?"
+   },
+   "source_by_lang": {
+    "en": "llm_paraphrase",
+    "ko": "llm_paraphrase"
+   },
+   "template": {
+    "en": "I'd like you to hand her mug to Grandma.",
+    "ko": "머그컵을 어머님께 갖다드릴래요?"
+   }
+  },
+  {
+   "back_en": "Could you please organize the kitchen cleaner in the refrigerator? The storage cabinet is full.",
+   "chrf": 59.14,
+   "id": "hl-train-001648",
+   "paraphrase": {
+    "en": "Put the detergent in the fridge, the cabinet's full.",
+    "ko": "주방세제를 냉장고에 좀 정리해 주실래요? 수납장이 가득 차서요."
+   },
+   "source_by_lang": {
+    "en": "llm_paraphrase",
+    "ko": "llm_paraphrase"
+   },
+   "template": {
+    "en": "Please stick the detergent in the refrigerator. The cabinet is full.",
+    "ko": "주방세제 냉장고에 넣어 둘래요? 수납장이 꽉 찼어요."
+   }
+  },
+  {
+   "back_en": "Please look for a white towel at the sink, and if you can't find it, a blue towel will also be fine, please bring that one.",
+   "chrf": 49.35,
+   "id": "hl-test-002807",
+   "paraphrase": {
+    "en": "If you spot the white towel on the bathroom sink, grab it and bring it to me. Otherwise, the blue towel works fine too.",
+    "ko": "세면대에서 하얀 수건을 찾아보시고, 못 찾으시면 파란 수건도 괜찮으니 그걸 갖다 주세요."
+   },
+   "source_by_lang": {
+    "en": "llm_paraphrase",
+    "ko": "llm_paraphrase"
+   },
+   "template": {
+    "en": "If you find the white towel on the bathroom sink, bring it to me. If not, the blue towel is fine too.",
+    "ko": "세면대에서 하얀 수건을 찾으면 갖다주고, 없으면 파란 수건도 괜찮으니까 갖다주실래요?"
+   }
+  },
+  {
+   "back_en": "Could you please put the mug on the sink?",
+   "chrf": 83.79,
+   "id": "hl-train-000278",
+   "paraphrase": {
+    "en": "Could you move that mug to the counter?",
+    "ko": "싱크대에 머그컵 좀 올려놔 주시겠어요?"
+   },
+   "source_by_lang": {
+    "en": "llm_paraphrase",
+    "ko": "llm_paraphrase"
+   },
+   "template": {
+    "en": "Can you put the mug over on the counter?",
+    "ko": "제 머그컵을 싱크대에 올려놔 줄 수 있어요?"
+   }
+  },
+  {
+   "back_en": "Could you please check the dining table? If there's a medicine bottle, please put it in the drawer; if not, leave it as is. Also, could you let my father know it's time for his medicine?",
+   "chrf": 69.84,
+   "id": "hl-dev-000948",
+   "paraphrase": {
+    "en": "Hey, check the dining table, if the pill box is on it, stick it in the dresser, or just leave it if it's not. Then head over and tell Grandpa to take his medicine.",
+    "ko": "식탁 좀 봐 주실래요? 약통이 있으면 서랍장에 넣어 드리고, 없으면 그대로 두세요. 그리고 아버님께 약 드실 시간이라고 알려 드릴 수 있나요?"
+   },
+   "source_by_lang": {
+    "en": "llm_paraphrase",
+    "ko": "llm_paraphrase"
+   },
+   "template": {
+    "en": "Could you check the dining table? If the pill box is there, put it in the dresser; otherwise just leave it. Then go tell Grandpa to take his medicine.",
+    "ko": "식탁 좀 봐 줄래요? 약통이 있으면 서랍장에 넣어 주고, 없으면 그냥 두세요. 그다음에 아버님께 가서 약 드실 시간이라고 전해 줄래요?"
+   }
+  },
+  {
+   "back_en": null,
+   "chrf": null,
+   "id": "hl-train-004684",
+   "paraphrase": {
+    "en": "Could you get me that blue mug? Then, tell Dad, wait, no, my son, to come to the kitchen.",
+    "ko": "파란 머그컵 가져다준 다음에 아빠한테, 아니 아들한테 주방으로 오라고 전해 줄 수 있어요?"
+   },
+   "source_by_lang": {
+    "en": "llm_paraphrase",
+    "ko": "template"
+   },
+   "template": {
+    "en": "Can you bring me the blue mug? And after that, tell Dad, sorry, I mean my son, to come to the kitchen.",
+    "ko": "파란 머그컵 가져다준 다음에 아빠한테, 아니 아들한테 주방으로 오라고 전해 줄 수 있어요?"
+   }
+  },
+  {
+   "back_en": "Could you please put the items back in their places? Put the red mug on the sink and the phone on the living room table, please?",
+   "chrf": 91.34,
+   "id": "hl-train-004107",
+   "paraphrase": {
+    "en": "Could you put those things back? First, the red mug on the counter, then the phone on the coffee table.",
+    "ko": "물건들 좀 제자리에 정리해 줄래요? 빨간 머그컵은 싱크대에, 휴대폰은 거실 탁자에 갖다 놓아주실래요?"
+   },
+   "source_by_lang": {
+    "en": "llm_paraphrase",
+    "ko": "llm_paraphrase"
+   },
+   "template": {
+    "en": "Could you put a few things back? The red mug goes back on the kitchen counter and the phone goes back on the coffee table.",
+    "ko": "물건 좀 제자리에 둬 줄래요? 빨간 머그컵은 싱크대에 갖다 놓고, 휴대폰은 거실 탁자에 갖다 놔 줄래요?"
+   }
+  },
+  {
+   "back_en": "Could I bring a mug to Father?",
+   "chrf": 38.69,
+   "id": "hl-train-001491",
+   "paraphrase": {
+    "en": "Hey, when you've got a sec, pass his mug to Grandpa.",
+    "ko": "아버님께 머그컵 가져다 드릴 수 있을까요?"
+   },
+   "source_by_lang": {
+    "en": "llm_paraphrase",
+    "ko": "llm_paraphrase"
+   },
+   "template": {
+    "en": "Could you give his mug to Grandpa when you have a moment?",
+    "ko": "머그컵을 아버님께 갖다드릴 수 있어요?"
+   }
+  },
+  {
+   "back_en": "First, could you please put the blue book back on the shelf, and then bring me the blue cup?",
+   "chrf": 83.58,
+   "id": "hl-test-000083",
+   "paraphrase": {
+    "en": "First, grab the blue book and put it on the display shelf, then bring the blue cup over here.",
+    "ko": "먼저 파란 책을 선반에 다시 꽂아주시고, 그 다음에 파란 컵을 가져다주실 수 있을까요?"
+   },
+   "source_by_lang": {
+    "en": "llm_paraphrase",
+    "ko": "llm_paraphrase"
+   },
+   "template": {
+    "en": "First move the blue book to the display shelf, and then bring the blue cup here.",
+    "ko": "먼저 파란 책 좀 다시 선반에 꽂고 나서 파란 컵을 가져다줘요."
+   }
+  },
+  {
+   "back_en": "Please place the phone on the bed, or on the TV stand. Also, could you bring the green book? After you're done, please go and charge it.",
+   "chrf": 72.82,
+   "id": "hl-train-000671",
+   "paraphrase": {
+    "en": "Please put the phone on the bed, sorry, I mean the TV stand, and bring the green book over to me. Once you're finished, go back to the charging dock.",
+    "ko": "침대 위에 휴대폰을 놓고, 아니 티비장에 휴대폰을 놓아 주세요. 그리고 초록색 책도 가져다주실 수 있을까요? 작업이 끝나면 가셔서 충전해 주세요."
+   },
+   "source_by_lang": {
+    "en": "template",
+    "ko": "llm_paraphrase"
+   },
+   "template": {
+    "en": "Please put the phone on the bed, sorry, I mean the TV stand, and bring the green book over to me. Once you're finished, go back to the charging dock.",
+    "ko": "휴대폰 좀 침대에, 아 아니다, 티비장에 갖다 놔 주세요. 그리고 초록색 책을 가져다주세요. 다 끝나면 가서 충전하세요."
+   }
+  }
+ ],
+ "run": {
+  "accepted": {
+   "en": 4840,
+   "ko": 5440
+  },
+  "applied": {
+   "any": 5828,
+   "both": 4452,
+   "en": 4840,
+   "ko": 5440
+  },
+  "asked": {
+   "en": 9280,
+   "ko": 9774
+  },
+  "cache_misses_offline": {
+   "en": 0,
+   "ko_j": 0,
+   "ko_w": 0
+  },
+  "chrf_min": 35.0,
+  "frac": 0.6,
+  "llm_calls": {
+   "en": 64,
+   "ko_j": 4,
+   "ko_w": 22
+  },
+  "models": {
+   "en": {
+    "judge": "qwen3-vl:8b-instruct",
+    "prompt_version": "p1",
+    "writer": "qwen3-vl:8b-instruct"
+   },
+   "ko": {
+    "back_translation": "qwen3-vl:30b-a3b-instruct",
+    "judge": "qwen3-vl:30b-a3b-instruct",
+    "prompt_version": "k2",
+    "writer": "exaone3.5:latest"
+   }
+  },
+  "rejections": {
+   "en": {
+    "duplicate": 466,
+    "duplicate_of_accepted": 142,
+    "ending_only": 1577,
+    "entity_missing": 485,
+    "instruction_leak": 19,
+    "judge_different": 688,
+    "length_ratio": 7,
+    "near_duplicate": 288,
+    "new_entity": 13,
+    "realism_R-f": 90,
+    "too_similar": 2156,
+    "unchanged": 20
+   },
+   "ko": {
+    "R-g": 524,
+    "chrf_backtranslation": 101,
+    "duplicate": 608,
+    "duplicate_of_accepted": 174,
+    "empty": 2,
+    "ending_only": 627,
+    "entity_missing": 1091,
+    "judge_not_same_meaning": 530,
+    "ko_banmal": 14,
+    "ko_imperative_question": 113,
+    "ko_no_request": 471,
+    "ko_register": 51,
+    "ko_wrong_honorific": 286,
+    "length_ratio": 35,
+    "near_duplicate": 387,
+    "new_entity": 161,
+    "realism_R-f": 17,
+    "speaker_role_flip": 159,
+    "too_similar": 324,
+    "unchanged": 10
+   }
+  },
+  "rounds": {
+   "en": 3,
+   "ko": 4
+  },
+  "selected": 6004,
+  "share_of_all": {
+   "any": 0.5828,
+   "both": 0.4452,
+   "en": 0.484,
+   "ko": 0.544
+  }
+ },
+ "share": 0.5828,
+ "share_both": 0.4452,
+ "share_en": 0.484,
+ "share_ko": 0.544
+}

@@ -1,0 +1,24 @@
+# HomeLoop-Bench label policy (DESIGN 10.2; docs/datasheet.md "Composition").
+# Targets are the generator's design shares; the validator only enforces min_share (every value of kind,
+# capability and ambiguity >= 5 % of all records) unless the value is listed in documented_small with a reason.
+version: 1
+min_share: 0.05
+labels:
+  kind: [feasible, clarify, refuse]
+  capability: [fetch, rearrange, contain, articulate, multi_object, search, message, navigate, correction]
+  ambiguity: [none, preference, common_sense, safety]
+  source: [template, llm_paraphrase]
+  refuse_reason: [unsafe, infeasible]
+  persona: [adult, older, child_present]
+  structure: [single, sequence, conjunction, ordered, conditional, shared_object, with_context, correction]
+targets:
+  kind: {feasible: 0.78, clarify: 0.14, refuse: 0.08}
+  ambiguity: {none: 0.86, preference: 0.06, common_sense: 0.05, safety: 0.03}
+  compound: {two_or_more: 0.35, three: 0.12, long: 0.15, each_structure: 0.03, mixed_kind: 0.05, conditional_max: 0.05}
+documented_small:
+  ambiguity:safety: >-
+    Safety ambiguity needs a real dangerous confusion in the house: two medicine bottles / pill boxes (senior_flat,
+    care_home_suite), medicine vs. vitamins for an older person (korean_apt_84), or scissors for a child (family_house,
+    korean_apt_84). Only these houses have such a pair, and every text must be unique, so safety is about 3 % of the
+    tasks. AmbiK (arXiv:2506.04089, Sec. 3.2) puts safety at 15.5 % of its ambiguous tasks; ours is ~20 % of the
+    ambiguous tasks.

@@ -1,0 +1,22 @@
+HomeLoop-Bench
+Copyright 2026 Trung Bui
+
+The code, the template texts and the English paraphrases in this repository are licensed under the Apache
+License, Version 2.0 (LICENSE).
+
+Exception: Korean paraphrases written by EXAONE 3.5
+---------------------------------------------------
+The Korean task texts of the records whose `paraphrase_model.ko` is `exaone3.5:latest`
+(homeloop_bench/data/tasks/*.jsonl, field `text.ko` of those records) and the EXAONE writer responses in
+homeloop_bench/data/llm_cache/paraphrase_ko.jsonl (rows whose `model` is `exaone3.5:latest`) are Output of the
+EXAONE 3.5 model by LG AI Research. They are NOT licensed under Apache-2.0. They are distributed under, and their
+use is subject to, the EXAONE AI Model License Agreement 1.1 - NC:
+https://huggingface.co/LGAI-EXAONE/EXAONE-3.5-7.8B-Instruct/blob/main/LICENSE
+In short (the agreement governs): use solely for research purposes (Sec. 2.1a); no commercial use of the Model,
+Derivatives or Output (Sec. 3.1); the Output remains the property of the Licensor, LG Management Development
+Institute Co., Ltd. (Sec. 4.2).
+
+For any use outside these terms, replace those texts with the authors' Korean template of the same task
+(`meta.template_text.ko`), which is Apache-2.0.
+
+The Qwen3-VL models used as the English writer / judge and the Korean judge / back-translator are Apache-2.0.

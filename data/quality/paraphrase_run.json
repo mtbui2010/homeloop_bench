@@ -1,29 +1,29 @@
 {
  "accepted": {
   "en": 4840,
-  "ko": 5440
+  "ko": 5193
  },
  "applied": {
-  "any": 5828,
-  "both": 4452,
+  "any": 5781,
+  "both": 4252,
   "en": 4840,
-  "ko": 5440
+  "ko": 5193
  },
  "asked": {
   "en": 9280,
-  "ko": 9774
+  "ko": 10386
  },
  "cache_misses_offline": {
   "en": 0,
   "ko_j": 0,
-  "ko_w": 0
+  "ko_w": 614
  },
  "chrf_min": 35.0,
  "frac": 0.6,
  "llm_calls": {
-  "en": 64,
-  "ko_j": 4,
-  "ko_w": 22
+  "en": 0,
+  "ko_j": 0,
+  "ko_w": 0
  },
  "models": {
   "en": {
@@ -55,22 +55,32 @@
   },
   "ko": {
    "R-g": 524,
-   "chrf_backtranslation": 101,
-   "duplicate": 608,
-   "duplicate_of_accepted": 174,
-   "empty": 2,
+   "chrf_backtranslation": 89,
+   "duplicate": 606,
+   "duplicate_of_accepted": 173,
+   "empty": 614,
    "ending_only": 627,
    "entity_missing": 1091,
-   "judge_not_same_meaning": 530,
+   "judge_not_same_meaning": 439,
+   "ko_added_detail": 10,
+   "ko_added_report": 18,
    "ko_banmal": 14,
+   "ko_goal_verb_closed": 5,
+   "ko_goal_verb_held_by": 321,
+   "ko_goal_verb_open": 26,
+   "ko_goal_verb_said_to": 27,
+   "ko_grammar": 3,
+   "ko_handover_as_place": 181,
    "ko_imperative_question": 113,
    "ko_no_request": 471,
-   "ko_register": 51,
+   "ko_permission_not_request": 1,
+   "ko_register": 311,
+   "ko_speaker_honorific": 85,
    "ko_wrong_honorific": 286,
    "length_ratio": 35,
-   "near_duplicate": 387,
+   "near_duplicate": 385,
    "new_entity": 161,
-   "realism_R-f": 17,
+   "realism_R-f": 16,
    "speaker_role_flip": 159,
    "too_similar": 324,
    "unchanged": 10
@@ -82,9 +92,9 @@
  },
  "selected": 6004,
  "share_of_all": {
-  "any": 0.5828,
-  "both": 0.4452,
+  "any": 0.5781,
+  "both": 0.4252,
   "en": 0.484,
-  "ko": 0.544
+  "ko": 0.5193
  }
 }

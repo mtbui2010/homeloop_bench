@@ -4,6 +4,7 @@ import yaml
 
 from homeloop_bench.gen.realism import report
 from homeloop_bench.gen.sample import Gen
+from homeloop_bench.gen.resplit import resplit
 from homeloop_bench.gen.split import assign_ids
 from homeloop_bench.gen.validate import validate
 
@@ -13,8 +14,8 @@ def test_small_generated_dataset_validates(tmp_path):
     out = g.run()
     paths = {}
     recs = []
-    for s, rs in out.items():
-        rs = assign_ids(rs, s, 77)
+    first = [r for s, rs in out.items() for r in assign_ids(rs, s, 77)]
+    for s, rs in resplit(first, 77, sizes={"train": 60, "dev": 20, "test": 40}).items():   # the pipeline's last step
         recs += rs
         p = tmp_path / f"{s}.jsonl"
         with open(p, "w", encoding="utf-8") as f:

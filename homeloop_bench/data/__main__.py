@@ -2,6 +2,7 @@
 
 generate    build the template tasks and write data/tasks/{train,dev,test}.jsonl
 paraphrase  LLM paraphrases (local Ollama on GPU 0 via tools/llm_gpu0.sh; cached, resumable)
+resplit     the final split by task identity (gen/resplit.py): no goal or near-duplicate text across splits
 validate    the dataset checks (--strict: warnings fail too)
 stats       counts per label (--json)
 realism     realism rules R-a..R-h (--strict); writes <repo>/data/quality/realism_report.json
@@ -41,6 +42,19 @@ def cmd_generate(a):
         _dump(recs, TASKS_DIR / f"{s}.jsonl")
         print(f"{s}: {len(recs)} -> {TASKS_DIR / (s + '.jsonl')}")
     print(json.dumps({"rejected": g.stats["rejected"]}, sort_keys=True))
+    return 0
+
+
+def cmd_resplit(a):
+    from ..gen.resplit import leakage, resplit
+    recs = _all()
+    before = leakage(recs)
+    out = resplit(recs, a.gen_seed)
+    for s in SPLITS:
+        _dump(out[s], TASKS_DIR / f"{s}.jsonl")
+    after = leakage([r for s in SPLITS for r in out[s]])
+    print(json.dumps({"sizes": {s: len(out[s]) for s in SPLITS}, "identity_leak_before": before["identity"],
+                      "identity_leak_after": after["identity"]}, sort_keys=True))
     return 0
 
 
@@ -95,6 +109,8 @@ def main(argv=None):
     v = sub.add_parser("validate")
     v.add_argument("--strict", action="store_true")
     v.add_argument("--workers", type=int, default=1)
+    rs = sub.add_parser("resplit")
+    rs.add_argument("--gen-seed", type=int, default=2026)
     s = sub.add_parser("stats")
     s.add_argument("--json", action="store_true")
     r = sub.add_parser("realism")
@@ -118,7 +134,7 @@ def main(argv=None):
     q.add_argument("--offline", action="store_true")
     a = ap.parse_args(argv)
     return {"generate": cmd_generate, "validate": cmd_validate, "stats": cmd_stats, "realism": cmd_realism,
-            "paraphrase": cmd_paraphrase, "quality": cmd_quality}[a.cmd](a)
+            "paraphrase": cmd_paraphrase, "quality": cmd_quality, "resplit": cmd_resplit}[a.cmd](a)
 
 
 if __name__ == "__main__":

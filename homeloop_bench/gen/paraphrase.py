@@ -305,6 +305,73 @@ def ko_banmal_end(sentence: str) -> bool:
     return bool(_BANMAL_END.search(s)) and not _POLITE_END.search(s)
 
 
+# deterministic Korean meaning checks (review round 1): a paraphrase must keep the verb of every goal predicate,
+# must not turn a handover into "put it next to me", must not honorify the speaker's own state (the speaker
+# talking as if about someone else, or as the robot), must not turn a required action into a permission, and must
+# not add a find-and-report task or a manner / condition the template does not have
+KO_GOAL_VERB = {
+    "open": re.compile(r"열"),
+    "closed": re.compile(r"닫"),
+    "held_by": re.compile(r"가져다|갖다|가져와|가져올|가져가|건네|드려|드릴|전해|옮겨"),
+    "said_to": re.compile(r"전해|말해|말씀|알려|얘기|여쭤|물어|전달|오라고|오시라고|가라고|하라고|하시라고"),
+}
+KO_NEXT_TO = re.compile(r"(옆에|곁에)\s*(\S+\s*)?(놓|두|둬)")
+KO_SELF_HON = re.compile(r"드실|드셔|아프셔|아프시|힘드시|시군요|셨군요|잡수|주무시|계시군요|피곤하시|하시네요|가시네요|"
+                         r"오셨네요|바쁘시")
+KO_PERMIT = re.compile(r"(열어|닫아|꺼|켜)\s*(두어도|둬도|놔도|놓아도|줘도|주셔도)")
+KO_FIND_TELL = re.compile(r"어디(에)?\s*(있는지|있으면)\s*\S*\s*(알려|말씀|말해)")
+KO_ADDED = re.compile(r"조용히|천천히|조심히|필요하시면|필요하면 말")
+KO_GRAMMAR = re.compile(r"(에게|한테|께)랑")
+
+
+def _goal_preds(rec: dict) -> set:
+    """Predicates the planner must make true (non-refuse subtasks, both branches of a condition)."""
+    def walk(a, out):
+        if not isinstance(a, dict):
+            return
+        if a.get("pred") and a["pred"] != "unmoved":
+            out.add(a["pred"])
+        for k in ("all", "any"):
+            for x in a.get(k) or []:
+                walk(x, out)
+    out: set = set()
+    subs = rec.get("subtasks") or [{"kind": rec.get("kind"), "goal": rec.get("goal") or {}}]
+    for s in subs:
+        if s.get("kind") == "refuse":
+            continue
+        walk(s.get("goal") or {}, out)
+        cond = s.get("condition") or {}
+        for br in ("then", "else"):
+            for x in cond.get(br) or []:
+                walk(x, out)
+    return out
+
+
+def ko_meaning_filters(rec: dict, para: str, tpl: str) -> list:
+    """Deterministic Korean checks of a paraphrase against its template (reasons, empty = pass)."""
+    why = []
+    preds = _goal_preds(rec)
+    for pred, rx in KO_GOAL_VERB.items():
+        if pred in preds and rx.search(tpl) and not rx.search(para):
+            why.append(f"ko_goal_verb_{pred}")
+    if "held_by" in preds and KO_NEXT_TO.search(para) and not KO_NEXT_TO.search(tpl):
+        why.append("ko_handover_as_place")
+    m = KO_SELF_HON.findall(para)
+    if m and not any(x in tpl for x in m):
+        why.append("ko_speaker_honorific")
+    if KO_PERMIT.search(para) and not KO_PERMIT.search(tpl):
+        why.append("ko_permission_not_request")
+    if KO_FIND_TELL.search(para) and not KO_FIND_TELL.search(tpl):
+        why.append("ko_added_report")
+    if KO_ADDED.search(para) and not KO_ADDED.search(tpl):
+        why.append("ko_added_detail")
+    if KO_GRAMMAR.search(para):
+        why.append("ko_grammar")
+    if re.search(r"습니다|습니까", para) and not re.search(r"습니다|습니까", tpl):
+        why.append("ko_register")
+    return why
+
+
 def filters(rec: dict, lang: str, para: str, near: NearDupIndex | None = None, seen: dict | None = None) -> list:
     """Reasons to reject a paraphrase (empty list = accepted)."""
     global _NAMES
@@ -364,14 +431,25 @@ def filters(rec: dict, lang: str, para: str, near: NearDupIndex | None = None, s
             why.append("ko_banmal")
         if KO_BAD_HON.search(para) or KO_ROBOT_HON.search(para):
             why.append("ko_wrong_honorific")       # 남편님 / 딸님, or subject honorifics on the robot (…께 가셔서)
+        why += ko_meaning_filters(rec, para, tpl)
     compound = rec.get("n_subtasks", 1) > 1 or rec.get("structure", "single") != "single"
     if check_text(para, lang, compound):
         why.append("R-g")
     if seen is not None and norm(para, lang) in seen[lang]:
         why.append("duplicate")
-    if near is not None and near.find(para, lang, other_than=rec["split"]) is not None:
+    if near is not None and near.find(para, lang, other_than=gsplit(rec)) is not None:
         why.append("near_duplicate")
     return why
+
+
+def gid(r: dict) -> str:
+    """The generation-time id (``meta.gen_id``, set by ``data resplit``): seeds and selection use it, so the LLM
+    cache stays valid after the identity split renumbers the tasks."""
+    return (r.get("meta") or {}).get("gen_id") or r["id"]
+
+
+def gsplit(r: dict) -> str:
+    return (r.get("meta") or {}).get("gen_split") or r["split"]
 
 
 # ── selection ────────────────────────────────────────────────────────────────────────────────────────
@@ -380,12 +458,12 @@ def select(recs: list, frac: float, gen_seed: int = 2026) -> list:
     by = {}
     for r in recs:
         if r["source"] == "template":
-            by.setdefault((r["split"], r["structure"], r["kind"]), []).append(r)
+            by.setdefault((gsplit(r), r["structure"], r["kind"]), []).append(r)
     out = []
     for k, rs in sorted(by.items()):
-        rs = sorted(rs, key=lambda r: derive_seed(gen_seed, "para", r["id"]))
+        rs = sorted(rs, key=lambda r: derive_seed(gen_seed, "para", gid(r)))
         out += rs[:round(len(rs) * frac)]
-    return sorted(out, key=lambda r: r["id"])
+    return sorted(out, key=gid)
 
 
 def _inp(rec, lang, text=None):
@@ -431,7 +509,7 @@ def _rounds(lang, sel, writer, judge, back, rounds, seen, near, gen_seed, batch,
     back_tpl = {}
     if lang == "ko":
         back_tpl = dict(zip([r["id"] for r in sel],
-                            batch(back, [("back", {"text": r["text"]["ko"]}, derive_seed(gen_seed, "bt", r["id"]))
+                            batch(back, [("back", {"text": r["text"]["ko"]}, derive_seed(gen_seed, "bt", gid(r)))
                                          for r in sel])))
     pending = list(sel)
     asked = 0
@@ -440,13 +518,13 @@ def _rounds(lang, sel, writer, judge, back, rounds, seen, near, gen_seed, batch,
         if not todo:
             break
         asked += len(todo)
-        outs = batch(writer, [(task, _inp(r, lang), derive_seed(gen_seed, lang, rnd, r["id"])) for r in todo])
+        outs = batch(writer, [(task, _inp(r, lang), derive_seed(gen_seed, lang, rnd, gid(r))) for r in todo])
         whys = [filters(r, lang, text, near, seen) for r, (text, _sha) in zip(todo, outs)]
         whys = [w_ or realism_ok(r, lang, text) for r, (text, _sha), w_ in zip(todo, outs, whys)]
         backs = {}
         if lang == "ko":
             cand = [(r, o) for r, o, wy in zip(todo, outs, whys) if not wy]
-            bres = batch(back, [("back", {"text": o[0]}, derive_seed(gen_seed, "bp", r["id"])) for r, o in cand])
+            bres = batch(back, [("back", {"text": o[0]}, derive_seed(gen_seed, "bp", gid(r))) for r, o in cand])
             backs = {r["id"]: b for (r, _), b in zip(cand, bres)}
         still, jobs, pend = [], [], []
         for r, (text, sha), why in zip(todo, outs, whys):
@@ -457,13 +535,13 @@ def _rounds(lang, sel, writer, judge, back, rounds, seen, near, gen_seed, batch,
                 sc = max(chrf(bt, r["text"]["en"]), chrf(bt, ref_tpl) if ref_tpl else 0.0) if bt else 0.0
                 if sc < CHRF_MIN:
                     why = why + ["chrf_backtranslation"]
-            if not why and (norm(text, lang) in seen[lang] or near.find(text, lang, other_than=r["split"]) is not None):
+            if not why and (norm(text, lang) in seen[lang] or near.find(text, lang, other_than=gsplit(r)) is not None):
                 why = ["duplicate_of_accepted"]
             if not why:
                 if lang == "en":   # the same-meaning judge: English paraphrase vs the English template
-                    jobs.append(("judge", {"a": r["text"]["en"], "text": text}, derive_seed(gen_seed, "judge", "en", r["id"])))
+                    jobs.append(("judge", {"a": r["text"]["en"], "text": text}, derive_seed(gen_seed, "judge", "en", gid(r))))
                 else:              # Korean paraphrase vs the Korean template, in Korean (meaning, 해요체, role, spelling)
-                    jobs.append(("judge_ko", {"a": r["text"]["ko"], "text": text}, derive_seed(gen_seed, "judge", "ko", r["id"])))
+                    jobs.append(("judge_ko", {"a": r["text"]["ko"], "text": text}, derive_seed(gen_seed, "judge", "ko", gid(r))))
                 pend.append((r, text, sha, sc, bt, bsha))
                 continue
             for x in why:
@@ -475,14 +553,14 @@ def _rounds(lang, sel, writer, judge, back, rounds, seen, near, gen_seed, batch,
                 rej["judge_" + v] += 1
                 still.append(r)
                 continue
-            if norm(text, lang) in seen[lang] or near.find(text, lang, other_than=r["split"]) is not None:
+            if norm(text, lang) in seen[lang] or near.find(text, lang, other_than=gsplit(r)) is not None:
                 rej["duplicate_of_accepted"] += 1
                 still.append(r)
                 continue
             acc[r["id"]] = {"text": text, "sha": sha, "round": rnd, "chrf": sc, "back": bt, "back_sha": bsha,
                             "judge_sha": jsha, "back_template_sha": (back_tpl.get(r["id"]) or (None, None))[1]}
             seen[lang].add(norm(text, lang))
-            near.add(r["id"] + ":p" + lang, text, lang, r["split"])
+            near.add(r["id"] + ":p" + lang, text, lang, gsplit(r))
         pending = still
         log(f"round {rnd} {lang}: {len(todo)} asked, {len(todo) - len(still)} accepted, {len(acc)} so far; "
             f"llm calls {writer.n_calls + (judge.n_calls if judge is not writer else 0)}")
@@ -508,7 +586,7 @@ def run(url="http://127.0.0.1:11536", model=EN_MODEL, ko_model=KO_WRITER, ko_jud
     for r in recs:
         for lg in ("en", "ko"):
             seen[lg].add(norm(r["text"][lg], lg))
-            near.add(r["id"] + ":" + lg, r["text"][lg], lg, r["split"])
+            near.add(r["id"] + ":" + lg, r["text"][lg], lg, gsplit(r))
     pool = ThreadPoolExecutor(max(1, workers))
 
     def batch(client, jobs):
@@ -525,7 +603,7 @@ def run(url="http://127.0.0.1:11536", model=EN_MODEL, ko_model=KO_WRITER, ko_jud
     models = {"en": model, "ko": ko_model}
     used = {"en": set(), "ko": set()}
     n_app = Counter()
-    for i in sorted(byid):
+    for i in sorted(byid, key=lambda k: gid(byid[k])):
         r = byid[i]
         new, mp = dict(r["text"]), {}
         for lg in langs:

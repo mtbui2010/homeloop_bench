@@ -143,3 +143,27 @@ def test_realism_filter_rejects_a_broken_self_correction():
     broken = tpl["en"].replace(lex.color(c["first"], "en"), "@@").replace(lex.color(c["final"], "en"),
                                                                             lex.color(c["first"], "en")).replace("@@", lex.color(c["final"], "en"))
     assert P.realism_ok(dict(rec, text=dict(tpl)), "en", broken)
+
+
+def _rec(goal_atoms, ko_tpl):
+    return {"kind": "feasible", "subtasks": [{"kind": "feasible", "goal": {"all": goal_atoms}}], "text": {"ko": ko_tpl}}
+
+
+def test_ko_meaning_filters_catch_the_review_cases():
+    hand = _rec([{"pred": "held_by", "args": ["glass_1", "user"]}], "하얀 유리잔을 가져다줄래요?")
+    assert "ko_handover_as_place" in P.ko_meaning_filters(hand, "하얀 유리잔도 옆에 놓아주실래요?", hand["text"]["ko"])
+    assert "ko_goal_verb_held_by" in P.ko_meaning_filters(hand, "하얀 유리잔 좀 도와줄 수 있어요?", hand["text"]["ko"])
+    pills = _rec([{"pred": "held_by", "args": ["pills_1", "user"]}], "약 먹을 시간이에요. 약 갖다줄래요?")
+    assert "ko_speaker_honorific" in P.ko_meaning_filters(pills, "약 드실 시간이네요, 약 좀 가져다 주시겠어요?",
+                                                          pills["text"]["ko"])
+    op = _rec([{"pred": "in", "args": ["towel_1", "dresser@bedroom"]}, {"pred": "open", "args": ["dresser@bedroom"]}],
+              "서랍장을 열고 하얀 수건을 넣어 주세요.")
+    why = P.ko_meaning_filters(op, "하얀 수건을 서랍장 안에 조용히 넣어 주실 수 있을까요? 그냥 열어 두어도 괜찮습니다만", op["text"]["ko"])
+    assert {"ko_permission_not_request", "ko_added_detail", "ko_register"} <= set(why)
+    msg = _rec([{"pred": "said_to", "args": ["daughter", "dinner_ready"]}], "딸한테 저녁 다 됐다고 말해 주세요.")
+    assert "ko_grammar" in P.ko_meaning_filters(msg, "딸에게랑 어머님께 저녁이 다 됐다고 말씀해 주세요.", msg["text"]["ko"])
+    find = _rec([{"pred": "held_by", "args": ["towel_1", "user"]}], "수건 좀 찾아서 갖다주세요.")
+    assert "ko_added_report" in P.ko_meaning_filters(find, "수건 좀 찾아서 어디에 있는지 알려주시고 가져다주세요.",
+                                                     find["text"]["ko"])
+    # a faithful paraphrase passes
+    assert P.ko_meaning_filters(hand, "하얀 유리잔 좀 저한테 갖다줄 수 있어요?", hand["text"]["ko"]) == []

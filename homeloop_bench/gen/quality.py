@@ -20,10 +20,10 @@ from statistics import mean, median
 
 from homeloop_robot.rng import derive_seed
 
-from ..data import QUALITY_DIR, REPO_DIR, SPLITS
+from ..data import QUALITY_DIR, REPO_DIR, SOURCE_CHECKOUT, SPLITS
 from .chrf import chrf
 from .dedup import norm
-from .paraphrase import CACHE_KO, KO_JUDGE, LLM, Cache, has_phrase
+from .paraphrase import CACHE_KO, KO_JUDGE, LLM, Cache, gid, has_phrase
 
 MARKERS = {"ordered": ["first", "then", "before", "after"], "conditional": ["if", "otherwise", "not"],
            "correction": ["no", "wait", "sorry", "mean", "actually", "not"]}
@@ -50,15 +50,15 @@ def sample(recs, n, seed=GEN_SEED):
     out = []
     total = len(recs)
     for k in sorted(by):
-        rs = sorted(by[k], key=lambda r: derive_seed(seed, "quality", r["id"]))
+        rs = sorted(by[k], key=lambda r: derive_seed(seed, "quality", gid(r)))
         out += rs[:max(3, round(n * len(rs) / total))]
     return sorted(out, key=lambda r: r["id"])
 
 
 def back_seed(r):
     if ko_source(r) == "llm_paraphrase":
-        return derive_seed(GEN_SEED, "bp", r["id"])
-    return derive_seed(GEN_SEED, "bt", r["id"])
+        return derive_seed(GEN_SEED, "bp", gid(r))
+    return derive_seed(GEN_SEED, "bt", gid(r))
 
 
 def score(r, back):
@@ -132,7 +132,7 @@ def paraphrase_report(recs):
     by_lang = {lg: [r for r in para if (r.get("source_by_lang") or {}).get(lg) == "llm_paraphrase"] for lg in ("en", "ko")}
     both = [r for r in by_lang["en"] if (r.get("source_by_lang") or {}).get("ko") == "llm_paraphrase"]
     chrfs = [r["meta"]["paraphrase"]["ko"]["chrf_backtranslation"] for r in by_lang["ko"]]
-    pairs = sorted(para, key=lambda r: derive_seed(GEN_SEED, "pairs", r["id"]))[:30]
+    pairs = sorted(para, key=lambda r: derive_seed(GEN_SEED, "pairs", gid(r)))[:30]
     n = max(1, len(recs))
     return {"run": run_info, "n_records": len(recs), "n_paraphrased": len(para), "share": round(len(para) / n, 4),
             "n_paraphrased_en": len(by_lang["en"]), "n_paraphrased_ko": len(by_lang["ko"]), "n_paraphrased_both": len(both),
@@ -206,8 +206,23 @@ def write_md(rep, para):
         ko = f"{x['template']['ko']} -> {x['paraphrase']['ko']} (chrF {x['chrf']})" if sb["ko"] == "llm_paraphrase" \
             else "KO template"
         L.append(f"- `{x['id']}`: {en}; {ko}")
-    (REPO_DIR / "docs").mkdir(exist_ok=True)
-    (REPO_DIR / "docs" / "paraphrase_quality.md").write_text("\n".join(L) + "\n", encoding="utf-8")
+    if SOURCE_CHECKOUT:                      # docs belong to the source checkout, never to site-packages
+        (REPO_DIR / "docs").mkdir(exist_ok=True)
+        (REPO_DIR / "docs" / "paraphrase_quality.md").write_text("\n".join(L) + "\n", encoding="utf-8")
+
+
+def _robot_commit() -> str:
+    """git describe of the homeloop_robot checkout the data is validated against ("unknown" outside git)."""
+    import subprocess
+    from pathlib import Path
+
+    import homeloop_robot
+    try:
+        r = subprocess.run(["git", "-C", str(Path(homeloop_robot.__file__).parent), "describe", "--always",
+                            "--abbrev=12"], capture_output=True, text=True, timeout=10)
+        return r.stdout.strip() or "unknown"
+    except (OSError, subprocess.SubprocessError):
+        return "unknown"
 
 
 # ── datasheet (Gebru et al., "Datasheets for Datasets", arXiv:1803.09010) ───────────────────────────────
@@ -241,7 +256,9 @@ def write_datasheet(recs, para=None, bt=None, realism=None):
          "## Composition", "",
          f"- {n} tasks: train {s['by_split'].get('train', 0)}, dev {s['by_split'].get('dev', 0)}, test "
          f"{s['by_split'].get('test', 0)} ([splits.md](splits.md)); every task has English and Korean text "
-         f"(en {s['en']}, ko {s['ko']}).",
+         f"(en {s['en']}, ko {s['ko']}). The split is by task identity: no (house, kind, subtasks, goals) "
+         "combination and no near-duplicate text appears in two splits (`validate` check 10), so test goals are "
+         "unseen in train. Test holds the two held-out houses and the test-only templates.",
          f"- {len(s['by_house'])} house layouts of homeloop_robot; `korean_apt_84` and `care_home_suite` only in test.",
          "- A task = a world (`house`, `seed_state`), the instruction in both languages, the goal, labels, the "
          "simulated user's script and, for compound tasks, the subtasks ([tasks.md](tasks.md)).",
@@ -294,6 +311,13 @@ def write_datasheet(recs, para=None, bt=None, realism=None):
           "hold for every task (`data/quality/realism_report.json`" +
           (f": {realism.get('violations', 0)} violations, {realism.get('intentional', 0)} intentional refused "
            "requests" if realism else "") + ").",
+          "- Korean paraphrases also pass deterministic meaning checks against their template: every goal verb kept "
+          "(열- for open, 닫- for close, a giving verb for a hand-over, a telling verb for a message), no hand-over "
+          "turned into \"put it next to me\", no honorifics on the speaker's own state, no required action turned "
+          "into a permission, no added find-and-report task, manner or condition (`gen/paraphrase.ko_meaning_filters`).",
+          "- Korean paraphrase error rate: a hand audit of about 200 Korean paraphrases is planned and NOT done yet; "
+          "no error rate is claimed. A reviewer's spot check of 18 Korean paraphrases before these checks found 5 "
+          "with a changed meaning or broken grammar; the checks above were written for those error types.",
           "- Korean in 해요체; colloquially dropped object particles in "
           f"{(realism or {}).get('ko_particle_dropped_share', 0):.1%} of the Korean texts (<= 30 %).", ""]
     if bt:
@@ -310,11 +334,39 @@ def write_datasheet(recs, para=None, bt=None, realism=None):
           "robot's ASR noise model adds recognition errors at run time); clarify answers are scripted; the "
           "paraphrase models are 8B-class local models, so some paraphrases are plainer than human speech.", "",
           "## Distribution", "",
-          "- Apache-2.0, with the code (`homeloop_bench`), in `homeloop_bench/data/tasks/*.jsonl`; the LLM caches "
-          "(`homeloop_bench/data/llm_cache/paraphrase.jsonl` for English, `paraphrase_ko.jsonl` for Korean) are "
-          "shipped so the paraphrase step is reproducible without a GPU (`paraphrase --offline`).", "",
+          "- The code, the template texts and the English paraphrases are Apache-2.0. The tasks are in "
+          "`homeloop_bench/data/tasks/*.jsonl`; the LLM caches (`homeloop_bench/data/llm_cache/paraphrase.jsonl` "
+          "for English, `paraphrase_ko.jsonl` for Korean) are shipped so the paraphrase step is reproducible "
+          "without a GPU (`paraphrase --offline`).",
+          f"- The Korean paraphrases written by EXAONE 3.5 ({para.get('n_paraphrased_ko', 0)} tasks with "
+          "`paraphrase_model.ko = exaone3.5:latest`, and the EXAONE writer rows of `paraphrase_ko.jsonl`) are Output "
+          "of the EXAONE model and are NOT under Apache-2.0: they are distributed under the EXAONE AI Model License "
+          "Agreement 1.1 - NC (research use only, Sec. 2.1a; no commercial use of the Model or its Output, Sec. 3.1; "
+          "Output remains the property of LG Management Development Institute, Sec. 4.2; "
+          "https://huggingface.co/LGAI-EXAONE/EXAONE-3.5-7.8B-Instruct/blob/main/LICENSE). See NOTICE. For "
+          "commercial use, take `meta.template_text.ko` for those tasks (the authors' template).",
+          "", "### Licences of the generating models", "",
+          "| model | used for | licence |", "|---|---|---|",
+          "| qwen3-vl:8b-instruct (Qwen3-VL-8B-Instruct) | English paraphrases and judge | Apache-2.0 |",
+          "| qwen3-vl:30b-a3b-instruct (Qwen3-VL-30B-A3B-Instruct) | Korean judge, back-translation | Apache-2.0 |",
+          "| exaone3.5:latest (EXAONE 3.5) | Korean paraphrases | EXAONE AI Model License 1.1 - NC |", "",
           "## Maintenance", "",
-          "- Regenerate with `python -m homeloop_bench.data generate` + `paraphrase --offline`; any change must keep "
-          "`validate --strict` and `realism --strict` green. Issues and corrections go to the repository's tracker.",
+          "- Version 0.1.0 (`homeloop_bench/__init__.py`), built and validated against homeloop_robot 0.1.0 at "
+          f"commit {_robot_commit()}: the houses, the catalog and the oracle come from homeloop_robot, so the "
+          "tasks are not self-contained without that exact version. Every run records both git commits "
+          "(`summary.json` `config.versions`).",
+          "- Pipeline: `python -m homeloop_bench.data generate`, `paraphrase --offline`, `resplit`; any change must "
+          "keep `validate --strict` and `realism --strict` green.",
+          "- Errata and new versions: listed in the repository's changelog with a new version number; older versions "
+          "stay available as git tags. Contact and contributions: the repository's issue tracker and pull requests "
+          "(the public URL is added at release).",
+          "- Funding: to be stated by the authors at release (not filled in by the generator).",
+          "", "## Ethics", "",
+          "- Ethical review: not applicable; no human subjects were involved and no data about people was collected.",
+          "- Consent: not applicable; the household members are scripted roles (mom, grandpa, the caregiver), not "
+          "real people.",
+          "- Offensive content: none intended. Refused requests describe household hazards (e.g. bleach in the "
+          "fridge) so that a planner learns to decline them; they are not instructions to cause harm.",
           ""]
-    (REPO_DIR / "docs" / "datasheet.md").write_text("\n".join(L), encoding="utf-8")
+    if SOURCE_CHECKOUT:
+        (REPO_DIR / "docs" / "datasheet.md").write_text("\n".join(L), encoding="utf-8")

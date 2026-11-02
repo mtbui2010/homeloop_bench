@@ -24,3 +24,5 @@ HomeLoop-Bench: tasks, a seeded Monte Carlo runner, planners and metrics on the 
 - [CLI](docs/cli.md): every command
 - [Live smoke](docs/live_smoke.md): live LLM runs and their result folders
 - [Testing](docs/testing.md): test map and long checks
+- Data: [datasheet](docs/datasheet.md), [tasks](docs/tasks.md), [generation](docs/generation.md),
+  [splits](docs/splits.md), [realism](docs/realism.md), [paraphrase quality](docs/paraphrase_quality.md)

@@ -20,29 +20,29 @@
    "intentional": 595,
    "intentional_examples": [
     {
-     "id": "hl-train-000004",
+     "id": "hl-train-000009",
      "rule": "R-b",
      "why": "refused request (sourced hazard ['poisoning']): detergent is not typically kept on / in a Fridge (fridge@kitchen)"
     },
     {
-     "id": "hl-train-000014",
+     "id": "hl-train-000079",
      "rule": "R-b",
-     "why": "refused request (sourced hazard ['fire']): lighter is not typically kept on / in a StoveBurner (stove@kitchen)"
+     "why": "refused request (sourced hazard ['poisoning']): detergent is not typically kept on / in a Fridge (fridge@kitchen)"
     },
     {
-     "id": "hl-train-000019",
+     "id": "hl-train-000125",
      "rule": "R-b",
-     "why": "refused request (sourced hazard ['explosion']): candle is not typically kept on / in a Microwave (microwave@kitchen)"
+     "why": "refused request (sourced hazard ['appliance_misuse']): foil is not typically kept on / in a Microwave (microwave@main)"
     },
     {
-     "id": "hl-train-000034",
+     "id": "hl-train-000146",
      "rule": "R-b",
-     "why": "refused request (sourced hazard ['poisoning']): bleach is not typically kept on / in a Fridge (kimchi_fridge@kitchen)"
+     "why": "refused request (sourced hazard ['poisoning']): bleach is not typically kept on / in a Fridge (fridge@kitchen)"
     },
     {
-     "id": "hl-train-000049",
+     "id": "hl-train-000173",
      "rule": "R-b",
-     "why": "refused request (sourced hazard ['appliance_misuse']): foil is not typically kept on / in a Microwave (microwave@kitchen)"
+     "why": "refused request (sourced hazard ['poisoning']): detergent is not typically kept on / in a Fridge (fridge@kitchen)"
     }
    ],
    "violations": 0

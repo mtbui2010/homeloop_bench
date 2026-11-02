@@ -60,6 +60,17 @@ phase, see [live smoke](docs/live_smoke.md).
 - [robot_agent planners](docs/robot_agent.md): how robot_agent's loops run on the mock robot
 - [CLI](docs/cli.md), [live smoke](docs/live_smoke.md), [testing](docs/testing.md)
 
+### Data
+- [Datasheet](docs/datasheet.md): the datasheet for the dataset (Gebru et al.), licences, versions
+- [Tasks](docs/tasks.md): the task record schema, goals, labels
+- [Generation](docs/generation.md): templates, compound tasks, paraphrases, the pipeline
+- [Splits](docs/splits.md): train / dev / test, held-out houses, leakage checks
+- [Realism](docs/realism.md): realism rules and their sources
+- [Paraphrase quality](docs/paraphrase_quality.md): paraphrase and Korean back-translation reports
+
 ## License
 
-Apache-2.0 ([LICENSE](LICENSE)). Cite with [CITATION.cff](CITATION.cff).
+Apache-2.0 ([LICENSE](LICENSE)), except the Korean paraphrases written by EXAONE 3.5 (records with
+`paraphrase_model.ko = exaone3.5:latest` and their cache rows): those are EXAONE model Output under the EXAONE AI
+Model License 1.1 - NC, research use only; see [NOTICE](NOTICE) and the [datasheet](docs/datasheet.md#distribution).
+Cite with [CITATION.cff](CITATION.cff).

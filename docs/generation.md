@@ -6,6 +6,7 @@ bash tools/llm_gpu0.sh start                       # local Ollama on GPU 0 (127.
 python -m homeloop_bench.data paraphrase           # LLM paraphrases (cached, resumable); rewrites the task files
 python -m homeloop_bench.data quality              # paraphrase + Korean back-translation quality reports (>= 500 tasks)
 bash tools/llm_gpu0.sh stop
+python -m homeloop_bench.data resplit              # final split by task identity (docs/splits.md), renumbers the ids
 python -m homeloop_bench.data validate --strict --workers 8
 python -m homeloop_bench.data realism --strict
 python -m homeloop_bench.data stats --json

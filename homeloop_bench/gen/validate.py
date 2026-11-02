@@ -6,6 +6,7 @@ Numbered checks with PASS / FAIL (WARN lines fail only under --strict); exit 0 o
   6 label shares >= 5 % unless documented   7 paraphrases have a model and a cached LLM response
   8 >= 6 houses, held-out houses only in test, test-only template ids only in test
   9 compound fields (DESIGN 14): goal = conjunction of subtask goals, kinds, order indices
+  10 no task identity (house, kind, subtasks, goals, order) in two splits (gen/resplit.py)
 """
 
 from __future__ import annotations
@@ -235,5 +236,13 @@ def validate(paths=None, workers: int = 1, out=print, policy_path=POLICY) -> tup
     # 9 compound fields
     c_bad = [(r["id"], e) for r in recs for e in _compound(r)]
     line(not c_bad, "9 subtasks: goal = conjunction, n_subtasks, order pairs", f"{len(c_bad)}: {c_bad[:3]}")
+    # 10 goal-level leakage: no task identity (house, kind, subtasks, goals, order) in two splits
+    from .resplit import identity
+    where: dict = {}
+    for r in recs:
+        where.setdefault(identity(r), set()).add(r["split"])
+    leak = [r["id"] for r in recs if len(where[identity(r)]) > 1]
+    line(not leak, "10 no task identity (house, kind, subtasks, goals, order) shared by two splits",
+         f"{len(leak)} tasks, e.g. {leak[:3]}")
     out(f"== validate: {fails} FAIL, {warns} WARN")
     return fails, warns

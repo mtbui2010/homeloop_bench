@@ -13,7 +13,8 @@ def _all():
 
 def test_split_sizes_and_ids():
     recs = _all()
-    assert Counter(r["split"] for r in recs) == SIZES
+    from homeloop_bench.gen.resplit import RESPLIT_SIZES
+    assert Counter(r["split"] for r in recs) == RESPLIT_SIZES
     assert len({r["id"] for r in recs}) == len(recs) == 10000
 
 

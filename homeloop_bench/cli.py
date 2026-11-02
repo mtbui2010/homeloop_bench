@@ -30,10 +30,11 @@ def _budgets(a):
 
 
 def cmd_run(a) -> int:
-    from .planners import REGISTRY
-    from .runner import PlannerConfigError, run_many
-    if a.planner not in REGISTRY:
-        print(f"unknown planner {a.planner!r}; see `homeloop-bench planners`", file=sys.stderr)
+    from .planners import REGISTRY, is_spec
+    from .runner import InfraError, PlannerConfigError, run_many
+    if a.planner not in REGISTRY and not is_spec(a.planner):
+        print(f"unknown planner {a.planner!r}; see `homeloop-bench planners` (or give package.module:ClassName)",
+              file=sys.stderr)
         return 2
     try:
         s = run_many(a.planner, a.split, a.limit, a.profile, a.seeds, a.lang, a.llm, a.out, model=a.model,
@@ -41,9 +42,23 @@ def cmd_run(a) -> int:
     except PlannerConfigError as e:
         print(str(e), file=sys.stderr)
         return 2
+    except InfraError as e:
+        print(f"run aborted, no summary written: {e}", file=sys.stderr)
+        return 3
     print(json.dumps({k: s[k] for k in ("n_episodes", "success", "success_ci95", "false_success",
-                                         "goal_condition_success", "help_rate", "rejection_rate")},
+                                         "goal_condition_success", "help_rate", "rejection_rate", "n_error",
+                                         "smoke")},
                      sort_keys=True))
+    return error_rc(s)
+
+
+def error_rc(s: dict) -> int:
+    """Non-zero when more than ERROR_RATE_MAX of the episodes crashed (status "error")."""
+    from .runner import ERROR_RATE_MAX
+    if s.get("n_episodes") and (s.get("error_rate") or 0.0) > ERROR_RATE_MAX:
+        print(f"{s['n_error']} of {s['n_episodes']} episodes crashed (status error, {s.get('errors_by_type')}); "
+              f"the scores are not a planner result", file=sys.stderr)
+        return 4
     return 0
 
 
@@ -53,8 +68,8 @@ def _success_map(dir_) -> dict:
 
 
 def cmd_compare(a) -> int:
-    from .metrics import mcnemar
-    res = mcnemar(_success_map(a.dir_a), _success_map(a.dir_b))
+    from .metrics import compare
+    res = compare(_success_map(a.dir_a), _success_map(a.dir_b))
     res["a"], res["b_dir"] = str(a.dir_a), str(a.dir_b)
     if a.json:
         print(json.dumps(res, sort_keys=True))
@@ -65,6 +80,16 @@ def cmd_compare(a) -> int:
     fmt = lambda x: "n/a" if x is None else (f"{x:.4f}" if isinstance(x, float) else str(x))  # noqa: E731
     print(f"| {res['n_pairs']} | {fmt(res['success_a'])} | {fmt(res['success_b'])} | {res['b']} | {res['c']} | "
           f"{fmt(res['statistic'])} | {fmt(res['p_value'])} | {res['method']} |")
+    if "task_permutation" in res:
+        m, pt = res["task_majority_mcnemar"], res["task_permutation"]
+        print(f"\n{res['max_seeds_per_task']} seeds per task: seeds of one task are correlated, so use the "
+              f"task-level tests below for claims (docs/metrics.md).")
+        print("| test | n | statistic | p |")
+        print("|---|---|---|---|")
+        print(f"| McNemar on per-task majority ({m['method']}) | {m['n_pairs']} tasks | {fmt(m['statistic'])} | "
+              f"{fmt(m['p_value'])} |")
+        print(f"| task sign-flip permutation ({pt['n_perm']} perms) | {pt['n_tasks']} tasks | {fmt(pt['statistic'])} | "
+              f"{fmt(pt['p_value'])} |")
     return 0
 
 
@@ -113,16 +138,25 @@ def live_dir(root, planner: str, model: str, lang: str) -> Path:
 
 
 def cmd_live_smoke(a) -> int:
-    from .runner import run_many
+    from .runner import InfraError, PlannerConfigError, run_many
     root = Path(a.root)
     rc = 0
     for p in [x.strip() for x in a.planners.split(",") if x.strip()]:
         for lang in [x.strip() for x in a.langs.split(",") if x.strip()]:
             out = live_dir(root, p, a.model, lang)
-            s = run_many(p, a.split, a.limit, a.profile, a.seeds, lang, a.llm, out, model=a.model,
-                         tasks_file=a.tasks, progress=True)
+            try:
+                s = run_many(p, a.split, a.limit, a.profile, a.seeds, lang, a.llm, out, model=a.model,
+                             tasks_file=a.tasks, progress=True)
+            except PlannerConfigError as e:
+                print(str(e), file=sys.stderr)
+                return 2
+            except InfraError as e:
+                print(f"live smoke aborted at {p} / {lang}, no summary written: {e}", file=sys.stderr)
+                return 3
             print(json.dumps({"planner": p, "lang": lang, "dir": str(out), "success": s["success"],
-                              "n_episodes": s["n_episodes"], "false_success": s["false_success"]}, sort_keys=True))
+                              "n_episodes": s["n_episodes"], "false_success": s["false_success"],
+                              "n_error": s["n_error"]}, sort_keys=True))
+            rc = rc or error_rc(s)
     return rc
 
 

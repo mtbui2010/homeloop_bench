@@ -354,7 +354,7 @@ def understand(text: str, lang: str, info: dict) -> dict:
     for a in atoms:
         h = _hazard(a, info)
         if h:
-            refused.append(h)
+            refused.append(f"{h} ({a[1][0]})" if a[1] else h)
     safe = [a for a in atoms if not _hazard(a, info)]
     return {"atoms": safe, "all_atoms": atoms, "ambiguous": amb, "refused": refused,
             "unparsed": not atoms and not refused}

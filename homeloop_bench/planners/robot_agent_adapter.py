@@ -21,6 +21,8 @@ from __future__ import annotations
 
 import contextlib
 import importlib
+import os
+import shutil
 import tempfile
 import types
 from pathlib import Path
@@ -38,7 +40,7 @@ class RobotProxy:
 
     def __init__(self, env):
         self.env = env
-        self.world = env.world
+        self.world = env._world          # the robot side of the bridge (homeloop_robot backend), not the planner
 
     def call(self, skill: str, **args):
         from homeloop_robot.types import FailureCode, SkillResult
@@ -219,7 +221,7 @@ class _RobotAgentPlanner:
         cur = (lambda: state)
         pairs = [(AL, "current", cur), (LP, "current", cur), (state_mod, "current", cur),
                  (AL, "host_id", lambda: "homeloop"), (LP, "host_id", lambda: "homeloop"),
-                 (sc, "ENV", env_for(env.world)), (ra_llm, "init_llm_client", lambda cfg=None, **k: client)]
+                 (sc, "ENV", env_for(env.world0)), (ra_llm, "init_llm_client", lambda cfg=None, **k: client)]
         if not fake:
             pairs += _count_embodiplan(env)
         old_backend = getattr(hb, "_backend", None)
@@ -265,6 +267,8 @@ class _RobotAgentPlanner:
         finally:
             fk.CURRENT["env"] = None
             hb.set_backend(old_backend)
+            if not os.environ.get("HOMELOOP_KEEP_RA_LOGS"):
+                shutil.rmtree(tmp, ignore_errors=True)     # run logs, live.jsonl, mem.json of this episode
         if env.status is None:
             if env.stop_k is not None:
                 env.finish("done", "stopped")

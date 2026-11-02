@@ -1,4 +1,7 @@
-"""Planner registry (docs/planners.md). Listing never imports robot_agent."""
+"""Planner registry (docs/planners.md). Listing never imports robot_agent.
+
+A planner name is a registry key (``oracle``, ``robot_agent:sage``, ...) or a third-party class given as
+``package.module:ClassName`` (docs/planners.md "Your own planner")."""
 
 from __future__ import annotations
 
@@ -41,17 +44,47 @@ def list_planners() -> list:
     return [(n, d, (ra or not n.startswith("robot_agent:"))) for n, (_m, _c, d, _l) in REGISTRY.items()]
 
 
+def is_spec(name: str) -> bool:
+    """``package.module:ClassName`` (a third-party planner), not a registry key."""
+    if name in REGISTRY or ":" not in name:
+        return False
+    mod, _, cls = name.partition(":")
+    return bool(mod) and bool(cls) and cls.isidentifier() and all(p.isidentifier() for p in mod.split("."))
+
+
+def _unknown(name: str) -> KeyError:
+    return KeyError(f"unknown planner {name!r}; known: {', '.join(REGISTRY)}, or package.module:ClassName")
+
+
 def needs_llm(name: str) -> bool:
+    if is_spec(name):
+        return bool(getattr(planner_class(name), "needs_llm", False))
     if name not in REGISTRY:
-        raise KeyError(f"unknown planner {name!r}; known: {', '.join(REGISTRY)}")
+        raise _unknown(name)
     return REGISTRY[name][3]
 
 
 def planner_class(name: str):
+    if is_spec(name):
+        mod, _, cls = name.partition(":")
+        return getattr(importlib.import_module(mod), cls)
     if name not in REGISTRY:
-        raise KeyError(f"unknown planner {name!r}; known: {', '.join(REGISTRY)}")
+        raise _unknown(name)
     mod, cls, _d, _l = REGISTRY[name]
     return getattr(importlib.import_module(f"{__name__}.{mod}"), cls)
+
+
+def planner_available(name: str) -> tuple:
+    """(ok, reason): the planner can run here (robot_agent importable, a third-party class importable)."""
+    if name.startswith("robot_agent:") and name in REGISTRY:
+        return (True, "") if robot_agent_available() else (False, "robot_agent not importable (add it to PYTHONPATH)")
+    try:
+        planner_class(name)
+    except KeyError as e:
+        return False, str(e.args[0] if e.args else e)
+    except (ImportError, AttributeError) as e:
+        return False, f"{type(e).__name__}: {e}"
+    return True, ""
 
 
 def make_planner(name: str, llm=None, **kw):

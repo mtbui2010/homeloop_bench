@@ -12,7 +12,7 @@ from homeloop_robot import goals as G
 from homeloop_robot import make_episode
 from homeloop_robot import oracle as _oracle
 
-from .oracle import solve_target, task_kinds
+from .oracle import note_refusals, solve_target, task_kinds
 
 
 def start_plan(env) -> list | None:
@@ -24,10 +24,10 @@ def start_plan(env) -> list | None:
                        user_impl="null", safety_impl="null")
     calls = []
 
-    class _View:                     # solve_target reads subtasks / order / world
+    class _View:                     # solve_target reads subtasks / order / truth
         subtasks = env.subtasks
         order = env.order
-        world = sim.world
+        truth = sim.world
     for _ in range(len(env.subtasks) + 1):
         tgt = solve_target(_View)
         if G.evaluate(tgt, sim.world).holds:
@@ -55,8 +55,7 @@ class NaivePlanner:
         if kinds and all(k == "refuse" for k in kinds):
             env.finish("refuse", "I can't do that safely.")
             return
-        if any(k == "refuse" for k in kinds):
-            env.note_refusal("I won't do the unsafe part.")
+        note_refusals(env)
         plan = start_plan(env)
         if plan is None:
             env.finish("give_up", "no plan")

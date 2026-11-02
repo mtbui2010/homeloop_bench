@@ -2,8 +2,9 @@
 
 Reads the TRUE world and the hidden goal. After every call it re-solves from the true state with
 ``homeloop_robot.oracle.solve``; per (skill, args) at most 3 consecutive attempts; ``wait(5)`` before
-retrying perception_unavailable / blocked; an ``ask`` for help while a path is blocked (STRANDS-style
-human help). Clarify tasks: it asks the gold question once (for the help metrics) and then acts on the true
+retrying perception_unavailable / blocked; an ``ask`` for help with a blocked path when the user can hear
+the robot (STRANDS-style human help), else a wait. The follow-up policy is
+``homeloop_robot.oracle.recovery_call``, shared with ``homeloop_robot.oracle.rollout``. Clarify tasks: it asks the gold question once (for the help metrics) and then acts on the true
 intent. Refuse tasks: ``finish("refuse")``; mixed tasks: it declines the refuse part and does the rest.
 It finishes ``done`` only when the judge would score success, so its false-success rate is 0.
 """
@@ -26,12 +27,22 @@ def solve_target(env) -> dict:
     use = [i for i, s in enumerate(subs) if s["kind"] != "refuse"]
     if env.order:
         from homeloop_robot import goals as G
-        done = {i: G.evaluate(subs[i]["goal"], env.world).holds for i in use}
+        done = {i: G.evaluate(subs[i]["goal"], env.truth).holds for i in use}
         use = [i for i in use if all(done.get(a, True) for a, b in env.order if b == i)]
     atoms = []
     for i in use:
         atoms += [a for a in subs[i]["goal"]["all"] if a.get("pred") != "unmoved"]
     return {"all": atoms}
+
+
+def note_refusals(env) -> None:
+    """Decline every refuse subtask of a mixed task by index and object (the judge ties a refusal to its
+    subtask)."""
+    for i, s in enumerate(env.subtasks):
+        if s["kind"] != "refuse":
+            continue
+        objs = [a["args"][0] for a in s["goal"]["all"] if a.get("pred") == "unmoved" and a.get("args")]
+        env.note_refusal("I won't do the unsafe part.", subtask=i, obj=objs[0] if objs else None)
 
 
 def gold_question(env):
@@ -56,8 +67,7 @@ class OraclePlanner:
         if kinds and all(k == "refuse" for k in kinds):
             env.finish("refuse", "I can't do that safely.")
             return
-        if any(k == "refuse" for k in kinds):
-            env.note_refusal("I won't do the unsafe part.")
+        note_refusals(env)
         is_clarify = env.task.get("kind") == "clarify" or "clarify" in kinds
         q = gold_question(env)
         if is_clarify and q:
@@ -95,8 +105,6 @@ class OraclePlanner:
                 return
             if code == "cancelled":
                 continue                         # the event (stop / correction) is handled at the top
-            if code == "blocked" and c.skill == "move":
-                env.call("ask", question="Could you please clear the way for me?" if env.lang == "en"
-                         else "지나갈 수 있게 길을 좀 비켜 주시겠어요?", lang=env.lang)
-            elif code in ("perception_unavailable", "blocked"):
-                env.call("wait", seconds=5)
+            rc = _oracle.recovery_call(code, c.skill, w, env.user, env.ep.clock.t, env.lang)
+            if rc is not None:
+                env.call(rc.skill, **rc.args)

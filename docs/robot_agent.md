@@ -11,6 +11,20 @@ without it and marks these planners unavailable.
 | `robot_agent:grace` | `ClosedLoop(agent, planner="grace")` |
 | `robot_agent:llm_direct` | `ClosedLoop(agent, planner="llm_direct")` |
 
+## Versions
+
+| repository | URL | tested commit |
+|---|---|---|
+| robot_agent | https://github.com/mtbui2010/robot_agent | `895561b88987457b80cf35d9d733b29676a3f82d` (2026-11-02) |
+| embodiplan | https://github.com/mtbui2010/pyplanner | `a69064255c697ea27c596425ed0efebb6af3c4ba` (2026-11-02) |
+
+The repositories may not be public yet; access is needed to run these planners. The adapter patches robot_agent
+internals (`state.current`, `assist_loop.current`, `skill_configs.ENV`, `connect.llm.init_llm_client`), so a change
+upstream can change results: every run records the git commits of robot_agent and embodiplan in `summary.json`
+(`config.versions.robot_agent_git`, `embodiplan_git`), next to homeloop_bench / homeloop_robot and, for a URL run,
+the Ollama model digest (`config.model_digest`). Each episode's robot_agent logs go to a temporary directory that is
+removed after the episode (`HOMELOOP_KEEP_RA_LOGS=1` keeps them).
+
 ## Per episode
 
 1. `homeloop_robot.configs.backend.set_backend(RobotProxy(env))`. The proxy's `call` goes through

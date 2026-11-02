@@ -42,3 +42,33 @@ chosen in at least 30 % of the samples). Calibrate before reporting knowno_like 
 names from the house lines, verbs, clause splitting in English and Korean, catalog common sense for
 hazards). It makes the planners' loops, parsers and the runner testable without a model. Its numbers are
 not a planner's results and are never reported.
+
+## Your own planner
+
+`homeloop-bench run --planner package.module:ClassName ...` runs any importable class (the module must be on
+`PYTHONPATH`); the built-in names are registry keys. The class needs `__init__(self, llm=None)` and
+`run(self, env)`, and may set `needs_llm = True` (the runner then requires `--llm`) and `privileged = True` (only for
+reference planners that read `env.truth`; such results are not comparable). The helpers in
+`homeloop_bench/planners/base.py` cover the two usual shapes:
+
+```python
+from homeloop_bench.env import Finish, ToolCall
+from homeloop_bench.planners.base import StepPlanner
+
+
+class LookThenGiveUp(StepPlanner):
+    """One call per step: act(obs) returns a ToolCall or a Finish."""
+    def act(self, obs):
+        if not obs.history:
+            return ToolCall("look", {})
+        return Finish("give_up", "I don't know how")
+```
+
+`PlanPlanner.plan(obs)` returns a whole list of `ToolCall` (optionally ending with a `Finish`) and
+`on_failure(call, result, obs)` may return recovery calls. The `Observation` fields: `task_text`, `lang`,
+`places` (id, name, room, kind, openable, room_name, aliases), `people` (id, name, usual_place, role), `memory`
+(id, cls, name, attrs, usual_place), `robot` (the robot's sensed state), `last` (the last result), `events` (user
+events since the last observation), `history`, `step`, `t`, `calls_left`, `time_left_s`; `obs.text()` renders it as
+the shared prompt. Decline one unsafe part with `env.note_refusal(text, subtask=None, obj=None)` naming it (runner.md
+"Judge"); end with `env.finish("done" | "refuse" | "give_up")`. An exception inside `run` makes that episode
+`status: "error"`; an `LLMError` or `ImportError` aborts the whole run (live_smoke.md).

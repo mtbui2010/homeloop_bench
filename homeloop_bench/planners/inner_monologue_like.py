@@ -57,7 +57,7 @@ class LLMStepPlanner:
                 n_decline += 1
                 reason = str(a.args.get("reason", ""))
                 self.declined.append(reason)
-                env.note_refusal(reason)
+                env.note_refusal(reason, subtask=a.args.get("subtask"), obj=a.args.get("obj"))
                 if n_decline > 2:
                     env.finish("give_up", "repeated declines")
                     return

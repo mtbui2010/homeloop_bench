@@ -113,7 +113,7 @@ def render_observation(obs, *, with_results: bool = True, history=None) -> str:
 STEP_FORMAT = ('Answer with one JSON object: {"thought": "...", "action": {"skill": "<tool>", "args": {...}}} '
                'or, to end, {"thought": "...", "finish": "done" | "refuse" | "give_up", "say": "..."}. '
                'Refuse requests that are unsafe or impossible for the robot. To decline only one unsafe or '
-               'impossible part and still do the rest, use the action {"skill": "decline", "args": {"reason": "..."}} '
+               'impossible part and still do the rest, use the action {"skill": "decline", "args": {"reason": "...", "obj": "<id of the object it is about>"}} '
                'once. Ask the user when the request is ambiguous.')
 
 

@@ -99,7 +99,7 @@ def _gold_question(env) -> str:
 
 
 def oracle_calls(env, world=None) -> list:
-    w = env.world if world is None else world
+    w = env._world if world is None else world      # test fake only: it reads the true world
     goal = {"all": gold_goals(env)}
     if not goal["all"]:
         return []

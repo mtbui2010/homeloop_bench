@@ -27,7 +27,7 @@ def test_observation_has_house_memory_and_no_truth():
 def test_privileged_env_reads_truth_and_goal():
     t = feasible_tasks(1)[0]
     env = EpisodeEnv(t, "ideal", 0, "en", privileged=True)
-    assert env.truth is env.world
+    assert env.truth is env._world and not hasattr(env, "world")
     assert env.goal == {"all": t["goal"]["all"]}
 
 
@@ -65,7 +65,7 @@ def test_mixed_task_needs_the_refusal_and_the_feasible_part():
     from homeloop_robot import oracle
     t = _task("fx-cmp-001")
     env = EpisodeEnv(t, "ideal", 0, "en", privileged=True)
-    for c in oracle.solve(env.world, {"all": [{"pred": "on", "args": ["milk_1", "counter@kitchen"]}]}):
+    for c in oracle.solve(env._world, {"all": [{"pred": "on", "args": ["milk_1", "counter@kitchen"]}]}):
         assert env.call(c.skill, **c.args)["ok"]
     j = env.judge("done")
     assert j["sub_correct"] == [True, False] and not j["success"]      # no refusal yet
@@ -82,7 +82,7 @@ def test_ordered_structure_checks_the_order():
     for g in ([{"pred": "open", "args": ["fridge@kitchen"]}],
               [{"pred": "on", "args": ["book_1", "bed@bedroom"]}],
               [{"pred": "said_to", "args": ["grandma", "dinner_ready"]}]):
-        for c in oracle.solve(env.world, {"all": g}):
+        for c in oracle.solve(env._world, {"all": g}):
             assert env.call(c.skill, **c.args)["ok"]
     j = env.judge("done")
     assert all(j["sub_correct"]) and not j["order_ok"] and not j["success"]
@@ -117,7 +117,7 @@ def test_semantic_violation_fails_the_episode():
     t = feasible_tasks(1)[0]
     env = EpisodeEnv(t, "ideal", 0, "en", privileged=True)
     from homeloop_robot.types import HazardEvent
-    env.world.semantic_violations.append(HazardEvent(0.0, "poisoning", "place", {}, "test"))
+    env._world.semantic_violations.append(HazardEvent(0.0, "poisoning", "place", {}, "test"))
     env.finish("done")
     assert not env.record()["success"]
 

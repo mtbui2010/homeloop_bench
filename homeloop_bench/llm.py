@@ -47,11 +47,15 @@ def _dumps(obj) -> str:
 class OllamaHTTP:
     """Ollama chat client. ``url`` is the server root, e.g. ``http://127.0.0.1:11536``."""
 
-    def __init__(self, url: str, model: str = DEFAULT_MODEL, num_ctx: int = 8192, timeout_s: float = 300.0):
+    def __init__(self, url: str, model: str = DEFAULT_MODEL, num_ctx: int = 8192, timeout_s: float = 300.0,
+                 retries: Optional[int] = None, backoff_s: float = 2.0):
         self.url = url.rstrip("/")
         self.model = model
         self.num_ctx = int(num_ctx)
         self.timeout_s = float(timeout_s)
+        # transient failures (connection, 5xx, timeouts) are retried with exponential backoff
+        self.retries = int(os.environ.get("HOMELOOP_LLM_RETRIES", "3")) if retries is None else int(retries)
+        self.backoff_s = float(backoff_s)
         self.n_calls = 0
 
     def body(self, prompt: str, format=None, temperature: float = 0.0, seed: int = 0) -> dict:
@@ -65,11 +69,21 @@ class OllamaHTTP:
         data = json.dumps(self.body(prompt, format, temperature, seed)).encode("utf-8")
         req = urllib.request.Request(self.url + "/api/chat", data=data, headers={"Content-Type": "application/json"})
         t0 = time.monotonic()
-        try:
-            with urllib.request.urlopen(req, timeout=self.timeout_s) as r:
-                out = json.loads(r.read().decode("utf-8"))
-        except (urllib.error.URLError, OSError, ValueError) as e:
-            raise LLMError(f"{type(e).__name__}: {e}") from e
+        attempt = 0
+        while True:
+            try:
+                with urllib.request.urlopen(req, timeout=self.timeout_s) as r:
+                    out = json.loads(r.read().decode("utf-8"))
+                break
+            except urllib.error.HTTPError as e:
+                if e.code < 500 or attempt >= self.retries:
+                    raise LLMError(f"HTTPError {e.code}: {e.reason}") from e
+            except (urllib.error.URLError, OSError, ValueError) as e:
+                if isinstance(e, ValueError) or attempt >= self.retries:
+                    raise LLMError(f"{type(e).__name__}: {e}") from e
+            print(f"[llm] {self.url} attempt {attempt + 1} failed; retrying", file=sys.stderr)
+            time.sleep(self.backoff_s * (2 ** attempt))
+            attempt += 1
         self.n_calls += 1
         if os.environ.get("HOMELOOP_LLM_VERBOSE"):
             print(f"[llm] {self.model} {time.monotonic() - t0:.2f}s", file=sys.stderr)
@@ -142,11 +156,18 @@ class CountingLLM:
         self.max_calls = max_calls
         self.calls = 0
 
+        self.failed: Optional[BaseException] = None     # the first LLMError (the runner aborts the run)
+
     def chat(self, prompt: str, format=None, temperature: float = 0.0, seed: int = 0) -> str:
         if self.max_calls is not None and self.calls >= self.max_calls:
             raise BudgetExceeded(f"LLM budget of {self.max_calls} calls exhausted")
         self.calls += 1
-        return self.inner.chat(prompt, format=format, temperature=temperature, seed=seed)
+        try:
+            return self.inner.chat(prompt, format=format, temperature=temperature, seed=seed)
+        except LLMError as e:
+            if self.failed is None:
+                self.failed = e
+            raise
 
 
 def llm_kind(spec: Optional[str]) -> Optional[str]:
@@ -154,6 +175,19 @@ def llm_kind(spec: Optional[str]) -> Optional[str]:
     if spec is None:
         return None
     return "fake" if spec == "fake" else "url"
+
+
+def model_digest(url: str, model: Optional[str]) -> Optional[str]:
+    """The digest of ``model`` on an Ollama server (``GET /api/tags``); None when the server does not list it."""
+    try:
+        with urllib.request.urlopen(url.rstrip("/") + "/api/tags", timeout=10) as r:
+            tags = json.loads(r.read().decode("utf-8"))
+    except (urllib.error.URLError, OSError, ValueError) as e:
+        raise LLMError(f"{type(e).__name__}: {e}") from e
+    for m in tags.get("models") or []:
+        if m.get("name") == (model or DEFAULT_MODEL) or m.get("model") == (model or DEFAULT_MODEL):
+            return m.get("digest")
+    return None
 
 
 def make_llm(spec: Optional[str], model: Optional[str] = None, cache_dir: Optional[str] = None):

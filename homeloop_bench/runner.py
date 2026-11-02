@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -19,8 +20,10 @@ from homeloop_robot.rng import r6
 from homeloop_robot.types import _round_tree
 
 from .env import Budgets, EpisodeEnv, task_dict
-from .llm import BudgetExceeded, llm_kind, make_llm
-from .planners import make_planner, needs_llm, planner_class
+from .llm import BudgetExceeded, LLMError, llm_kind, make_llm
+from .planners import make_planner, needs_llm, planner_available, planner_class
+
+ERROR_RATE_MAX = 0.05     # a run with more planner errors than this exits non-zero (cli)
 
 
 def dumps(obj) -> str:
@@ -31,9 +34,20 @@ class PlannerConfigError(ValueError):
     pass
 
 
+class InfraError(RuntimeError):
+    """The run cannot be scored: the LLM server failed or the planner's code is not importable. The run is
+    aborted (no summary is written), so an infrastructure failure never looks like a 0 % planner score."""
+
+
 def check_llm(planner_name: str, llm_spec: Optional[str]) -> None:
     if needs_llm(planner_name) and not llm_spec:
         raise PlannerConfigError(f"planner {planner_name} needs --llm URL or --llm fake")
+
+
+def check_planner(planner_name: str) -> None:
+    ok, why = planner_available(planner_name)
+    if not ok:
+        raise PlannerConfigError(f"planner {planner_name} is unavailable: {why}")
 
 
 def run_episode(task, planner_name: str, profile: str, seed: int, lang: str, llm_spec: Optional[str],
@@ -53,10 +67,15 @@ def run_episode(task, planner_name: str, profile: str, seed: int, lang: str, llm
             env.finish("give_up", "planner returned without finishing")
     except BudgetExceeded:
         env.set_budget()
-    except Exception as e:  # noqa: BLE001 - any planner crash is a failed episode
+    except (LLMError, ImportError) as e:
+        raise InfraError(f"task {env.task_id} seed {seed}: {type(e).__name__}: {e}") from e
+    except Exception as e:  # noqa: BLE001 - any other planner crash is a failed episode (status "error")
         env.set_error(e)
         if getattr(planner, "raise_errors", False):
             raise
+    failed = getattr(env.llm(), "failed", None)
+    if failed is not None:              # an LLM error that the planner's own code swallowed
+        raise InfraError(f"task {env.task_id} seed {seed}: {type(failed).__name__}: {failed}") from failed
     return env.record()
 
 
@@ -93,11 +112,48 @@ def data_sha(tasks: list) -> str:
     return h.hexdigest()[:16]
 
 
-def _versions() -> dict:
+def git_commit(path) -> Optional[str]:
+    """``git describe --always --dirty --abbrev=12`` of the checkout holding ``path`` (None outside git)."""
+    try:
+        p = Path(path).resolve()
+        d = p if p.is_dir() else p.parent
+        r = subprocess.run(["git", "-C", str(d), "describe", "--always", "--dirty", "--abbrev=12"],
+                           capture_output=True, text=True, timeout=10)
+        return r.stdout.strip() or None if r.returncode == 0 else None
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+
+def _versions(planner_name: str = "") -> dict:
+    import importlib.util
+
     import homeloop_robot
 
     from . import __version__ as hb
-    return {"homeloop_bench": hb, "homeloop_robot": getattr(homeloop_robot, "__version__", "")}
+    out = {"homeloop_bench": hb, "homeloop_robot": getattr(homeloop_robot, "__version__", ""),
+           "homeloop_bench_git": git_commit(Path(__file__).parent),
+           "homeloop_robot_git": git_commit(Path(homeloop_robot.__file__).parent)}
+    if planner_name.startswith("robot_agent:"):
+        for mod in ("robot_agent", "embodiplan"):
+            try:
+                spec = importlib.util.find_spec(mod)
+            except (ImportError, ValueError):
+                spec = None
+            loc = (list(spec.submodule_search_locations or []) or [spec.origin]) if spec else []
+            out[f"{mod}_git"] = git_commit(loc[0]) if loc and loc[0] else None
+    return out
+
+
+def split_shares(tasks: list) -> dict:
+    """Label shares of a task list, for reweighting a prefix run (``summarize(split_shares=...)``)."""
+    out = {"kind": {}, "n_subtasks": {}}
+    for t in tasks:
+        d = task_dict(t)
+        out["kind"][str(d.get("kind"))] = out["kind"].get(str(d.get("kind")), 0) + 1
+        ns = str(len(d.get("subtasks") or []) or 1)
+        out["n_subtasks"][ns] = out["n_subtasks"].get(ns, 0) + 1
+    n = max(1, len(tasks))
+    return {k: {a: b / n for a, b in v.items()} for k, v in out.items()}
 
 
 def _worker(args) -> list:
@@ -121,10 +177,17 @@ def run_many(planner_name: str, split: Optional[str], limit: Optional[int], prof
     from homeloop_robot import load_profile
 
     check_llm(planner_name, llm_spec if llm is None else "given")
+    check_planner(planner_name)
+    shares = None
     if tasks is None:
-        tasks = load_tasks(split, limit, tasks_file)
-    elif limit is not None:
-        tasks = list(tasks)[: int(limit)]
+        full = load_tasks(split, None, tasks_file)
+        tasks = full[: int(limit)] if limit is not None else full
+        if len(tasks) < len(full):
+            shares = split_shares(full)
+    else:
+        if limit is not None and int(limit) < len(tasks):
+            shares = split_shares(tasks)
+            tasks = list(tasks)[: int(limit)]
     t0 = time.monotonic()
     episodes = []
     if planner_name.startswith("robot_agent:"):
@@ -153,10 +216,11 @@ def run_many(planner_name: str, split: Optional[str], limit: Optional[int], prof
     prof = load_profile(profile)
     config = {"planner": planner_name, "split": split, "limit": limit, "profile": profile, "seeds": int(seeds),
               "lang": lang, "llm": llm_kind(llm_spec), "model": (model if llm_spec and llm_spec != "fake" else None),
-              "profile_sha": prof.sha, "data_sha": data_sha(tasks), "n_tasks": len(tasks), "versions": _versions(),
+              "profile_sha": prof.sha, "data_sha": data_sha(tasks), "n_tasks": len(tasks),
+              "versions": _versions(planner_name), "model_digest": _digest(llm, llm_spec, model),
               "budgets": {"max_calls": budgets.max_calls, "max_sim_time_s": r6(budgets.max_sim_time_s),
                           "max_llm_calls": budgets.max_llm_calls}}
-    summary = summarize(episodes, config)
+    summary = summarize(episodes, config, split_shares=shares)
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
     with (out / "episodes.jsonl").open("w", encoding="utf-8", newline="\n") as f:
@@ -168,6 +232,17 @@ def run_many(planner_name: str, split: Optional[str], limit: Optional[int], prof
     print(f"[run] {planner_name} {len(episodes)} episodes in {time.monotonic() - t0:.1f}s wall -> {out}",
           file=sys.stderr)
     return summary
+
+
+def _digest(llm, llm_spec, model) -> Optional[str]:
+    """The Ollama model digest (``/api/tags``) of a URL run; None for fake / no LLM."""
+    if not llm_spec or llm_spec == "fake":
+        return None
+    from .llm import model_digest
+    try:
+        return model_digest(llm_spec, model)
+    except LLMError:
+        return None
 
 
 def read_episodes(dir_) -> list:

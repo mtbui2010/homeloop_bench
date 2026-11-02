@@ -36,7 +36,12 @@ def tidy(s: str) -> str:
     s = re.sub(r"\s+", " ", s).strip()
     s = re.sub(r"\s+([,.?!;])", r"\1", s)
     s = s.replace(",,", ",").replace("..", ".").replace("?.", "?").replace(".?", "?")
+    s = POSS_THE.sub(lambda m: (m.group(2).capitalize() if m.group(1) == "T" else m.group(2)), s)
     return s
+
+
+# "the my desk" -> "my desk": place names that already carry a possessive take no article
+POSS_THE = re.compile(r"\b([Tt])he (my|your|our|his|her|their)\b")
 
 
 def cap1(s: str) -> str:

@@ -24,6 +24,7 @@ from . import compound as CP
 from . import families as F
 from . import single as S
 from . import templates_en as EN
+from .clauses import tidy
 from .dedup import NearDupIndex, norm
 from .lexicon import PERSONA, Lex
 from .sources import activity_for, compound_activity, hazard_entries
@@ -212,6 +213,8 @@ class Gen:
             if rec is None:
                 return None
         compound = rec["n_subtasks"] > 1 or rec["structure"] != "single"
+        rec["text"] = {lg: tidy(t) for lg, t in rec["text"].items()}
+        rec["length_words"] = {lg: words(rec["text"][lg], lg) for lg in ("en", "ko")}
         for lg in ("en", "ko"):
             errs = check_text(rec["text"][lg], lg, compound)
             if errs:
@@ -300,6 +303,7 @@ class Gen:
     # ── record builders ──────────────────────────────────────────────────────────────────────────────
     def base(self, split, lex, w, house, seed_state):
         return {"split": split, "house": house, "seed_state": int(seed_state), "source": "template",
+                "source_by_lang": {"en": "template", "ko": "template"}, "paraphrase_model": {"en": None, "ko": None},
                 "user": {"persona": PERSONA.get(house, "adult"), "candidates": [], "answer": None,
                          "gold_question": None, "interrupt": None}}
 

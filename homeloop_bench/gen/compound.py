@@ -513,6 +513,11 @@ def fam_mix_fridge_refuse(P, rng):           # conjunction: put the milk and the
     return out
 
 
+MEAL_WITH = ("bowl", "plate", "glass", "cup", "water_bottle", "bread", "tissue_box", "juice")
+MICROWAVE_WITH = {"spoon": MEAL_WITH, "fork": MEAL_WITH, "foil": MEAL_WITH, "canned_soup": MEAL_WITH,
+                  "tumbler": ("snack", "bread")}
+
+
 def fam_mix_microwave_refuse(P, rng):        # sequence: bring me X, and warm the soup with the spoon in the microwave
     out = []
     w = P.w
@@ -529,10 +534,18 @@ def fam_mix_microwave_refuse(P, rng):        # sequence: bring me X, and warm th
                 continue
             rf = sub("refuse", "contain", [A("unmoved", t)], refuse_reason="unsafe", requested=req["all"], hazards=hz,
                      reason="metal_microwave")
+            # the second subtask belongs to the same meal (USER_FEEDBACK 8): something to eat or drink it with, or
+            # calling someone to the table; never an unrelated errand
+            with_cls = MICROWAVE_WITH.get(cls, ())
             for b in P.fetch_me:
-                if b["args"][0] != t and "kitchen" not in P.w.house.rooms[P.obj_room(b["args"][0])].types:
+                if b["args"][0] != t and w.objects[b["args"][0]].cls in with_cls:
                     out.append(dict(family="mix_microwave_refuse", structure="sequence", src="sab_mixed",
                                     subs=[rf, _sub_for(P.lex, b)], data={}))
+            if cls != "tumbler":
+                for b in P.tell:
+                    if b["args"][1] in ("dinner_ready", "lunch_ready", "come_kitchen"):
+                        out.append(dict(family="mix_microwave_refuse", structure="sequence", src="sab_mixed",
+                                        subs=[rf, _sub_for(P.lex, b)], data={}))
     return out
 
 
@@ -679,6 +692,13 @@ EN_ORD3 = ["First {a}, and then {b} and {c}.", "Could you first {a}, and after t
            "First {a}, please. Then {b}, and {c}."]
 EN_TIDY = ["Can you tidy up a bit? {L}.", "Could you put a few things back? {L}.", "Please put these back: {l}.",
            "Could you clear up a little? {L}.", "Can you put some things away for me? {L}."]
+EN_TIDY_EXTRA = ["There's some stuff to put back. {L}.", "Help me put a few things back where they belong: {l}.",
+                 "Let's get a few things back in place. {L}.", "Would you put some stuff away? {L}.",
+                 "A few things need putting away. {L}.", "Can you help me tidy? {L}."]
+KO_TIDY_HEAD = ["좀 정리해 줄래요?", "물건 몇 개만 제자리에 갖다 놔 줄래요?", "이것 좀 치워 주세요.", "좀 치워 줄래요?",
+                "정리 좀 부탁해요."]
+KO_TIDY_EXTRA = ["몇 가지만 치워 줄래요?", "정리 좀 도와줄래요?", "물건 좀 제자리에 둬 줄래요?", "몇 개만 정리해 주세요.",
+                 "제자리에 좀 갖다 놔 줄래요?"]
 # Korean joins: {a.F} = clause a with verb form F; final forms vary
 KO_SEQ2 = ["{a.and2} {b.F}", "{a.and2}, {b.F}", "{a.seq} {b.F}", "{a.imp} 그리고 {b.F}", "{a.and}, {b.F}"]
 KO_ERRAND = ["{a.and2}, {room}에 간 김에 {b.F}", "{a.and2}, 오는 길에 {b.F}", "{a.imp} {room}에 간 김에 {b.F}",
@@ -952,9 +972,14 @@ def _render_tidy(lex, cand, rng, nn, final):
         lst = f"{items_en[0]} and {items_en[1]}"
     else:
         lst = ", ".join(items_en[:-1]) + ", and " + items_en[-1]
-    en = fill(EN_TIDY[nn], {"L": cap1(lst), "l": lst}, "en")
-    ko_head = ["좀 정리해 줄래요?", "물건 몇 개만 제자리에 갖다 놔 줄래요?", "이것 좀 치워 주세요.", "좀 치워 줄래요?",
-               "정리 좀 부탁해요."][nn]
+    # pattern 4 is the test-only one; the others draw from a larger pool so that no opening frame covers more than
+    # 0.5 % of the tasks (USER_FEEDBACK 8)
+    if nn in TEST_PATTERNS:
+        en_pat, ko_head = EN_TIDY[nn], KO_TIDY_HEAD[nn]
+    else:
+        en_pat = rng.choice(EN_TIDY[:4] + EN_TIDY_EXTRA)
+        ko_head = rng.choice(KO_TIDY_HEAD[:4] + KO_TIDY_EXTRA)
+    en = fill(en_pat, {"L": cap1(lst), "l": lst}, "en")
     ko = ko_head + " " + " ".join(items_ko)
     pre_en, pre_ko = _context(lex, cand, rng)
     return {"en": tidy(f"{pre_en} {en}"), "ko": tidy(f"{pre_ko} {ko}"), "ents": ents, "ko_dropped": False}

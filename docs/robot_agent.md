@@ -35,10 +35,14 @@ removed after the episode (`HOMELOOP_KEEP_RA_LOGS=1` keeps them).
    (`robot_pkg="homeloop_robot"`, a temporary common dir); `host_id` -> "homeloop";
    `robot_agent.skill_configs.ENV` -> `homeloop_robot.configs.tasks.env_for(world)`;
    `robot_agent.connect.llm.init_llm_client` -> our client. A fresh run manager and run-control state.
-3. The agent namespace: `skill_registry` calls the `ra_skills` function by name; `device_manager` has a
+3. robot_agent's object memory (`mem.json`, which a deployed robot_agent keeps across runs) is seeded with the
+   object memory every planner observes (`EpisodeEnv.object_memory`: each object's usual place, the house
+   default), by class name and colour + class name in English and Korean; a name shared by objects with different
+   usual places is left out (`seed_memory`). Without it sage searched blind (sage EN 012, 049, 097).
+4. The agent namespace: `skill_registry` calls the `ra_skills` function by name; `device_manager` has a
    fake node; `_llm_cfg = {"name": "llama", "url": URL, "model": M, "num_ctx": 8192}`.
-4. A run is started on robot_agent's run manager and bound to the thread (`begin_run`), as the API does.
-5. `loop.run_blocking(instruction, lang)` is drained until the `done` event, the episode budget, or (after
+5. A run is started on robot_agent's run manager and bound to the thread (`begin_run`), as the API does.
+6. `loop.run_blocking(instruction, lang)` is drained until the `done` event, the episode budget, or (after
    a stop event) the next motion call. Final status: success -> done, refused -> refuse, else give_up.
 
 ## Interruptions
@@ -77,9 +81,10 @@ scores are not results.
 - robot_agent moves only to ENV places. The homeloop ENV (`env_for`) lists places, not people, so a goal
   that needs the robot next to a person (a message, a handover to someone other than the user) has to go
   through the person's usual place.
-- Delivering to someone other than the user maps to robot_agent's `deliver` goal, which needs the
-  `WaitForUnload` action; the homeloop manifest lists it only as an alias of Handover, and robot_agent's
-  goal kinds check the plan actions without aliases, so such goals are refused.
+- Delivering maps to robot_agent's `deliver` goal (MoveTo + WaitForUnload). The homeloop manifest declares
+  `wait_for_unload` (the nearest person takes the object), so the goal kind is offered. robot_agent's "bring me
+  X" is an `on` goal to the speaker: it asks "Where are you?" and puts X down at that place, which does not
+  satisfy the benchmark's `held_by(X, user)` (a handover).
 - `say::text` programs of llm_direct carry no language; the robot package's `say` defaults to English, so a
   Korean sentence is logged as English and the `said_to` check (Korean keywords) fails.
 - ClosedLoop (grace, llm_direct) has no understand step and cannot refuse.

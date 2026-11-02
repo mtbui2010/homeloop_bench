@@ -57,3 +57,22 @@ def test_correction_is_injected_into_the_sage_run():
     e = run_episode(TASKS["fx-cor-000"], "robot_agent:sage", "ideal", 0, "en", "fake")
     assert e["goal_changed"] and e["events"][0]["kind"] == "correction"
     assert not any(c["code"] == "cancelled" for c in e["calls"])     # injected, not a cancelled call
+
+
+def test_sage_object_memory_is_seeded_from_the_observed_memory(tmp_path):
+    from homeloop_bench.env import EpisodeEnv
+    from homeloop_bench.planners.robot_agent_adapter import seed_memory
+    env = EpisodeEnv(TASKS["fx-feas-000"], "ideal", 0, "en")
+    n = seed_memory(env, tmp_path / "mem.json")
+    data = json.loads((tmp_path / "mem.json").read_text())
+    assert n == len(data["objects"]) > 0 and data["answers"] == []
+    usual = {}
+    for o in env.object_memory():
+        usual.setdefault(o.cls, set()).add(o.usual_place)
+    for name, e in data["objects"].items():
+        assert e["how"] == "house memory" and e["place"] in env.world0.house.places
+    # a class whose objects usually sit at different places is not remembered by its bare name
+    for cls, ps in usual.items():
+        if len(ps) > 1:
+            from homeloop_robot.catalog import CLASSES
+            assert CLASSES[cls].name["en"].lower() not in data["objects"]

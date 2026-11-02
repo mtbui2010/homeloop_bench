@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import contextlib
 import importlib
+import json
 import os
 import shutil
 import tempfile
@@ -175,6 +176,38 @@ def _count_embodiplan(env):
     return [(backend, "chat", routed)]
 
 
+def seed_memory(env, path) -> int:
+    """Write robot_agent's object memory (``mem.json``: {objects: {name: {place, ts, how}}}) with the object
+    memory every planner observes (``EpisodeEnv.object_memory``: each object's usual place). A deployed
+    robot_agent keeps this file across runs (object_memory), so it knows where things usually are; the
+    benchmark's other planners get the same list in their observation. Names: the class names and colour +
+    class name in English and Korean; a name shared by objects with different usual places is left out.
+    Returns the number of names written."""
+    import time
+
+    from robot_agent.core.planning.assist_loop import words
+
+    from homeloop_robot.catalog import COLORS, class_names
+    places: dict = {}
+    for o in env.object_memory():
+        for lg in ("en", "ko"):
+            try:
+                base = list(class_names(o.cls, lg))
+            except KeyError:
+                base = []
+            base = list(dict.fromkeys(base + [o.name.get(lg) or o.cls]))
+            color = (o.attrs or {}).get("color")
+            cname = (COLORS.get(color) or {}).get(lg, color) if color else None
+            names = base + ([f"{cname} {b}" for b in base] if cname else [])
+            for n in names:
+                places.setdefault(words(n), set()).add(o.usual_place)
+    now = time.time()
+    objs = {n: {"place": next(iter(ps)), "ts": now, "how": "house memory"}
+            for n, ps in sorted(places.items()) if n and len(ps) == 1}
+    Path(path).write_text(json.dumps({"objects": objs, "answers": []}, ensure_ascii=False, indent=1))
+    return len(objs)
+
+
 def _url(env):
     x = getattr(env, "_llm_inner", None)
     for _ in range(4):
@@ -250,6 +283,8 @@ class _RobotAgentPlanner:
                                               device_manager=types.SimpleNamespace(_ros_node=node),
                                               _llm_cfg={"name": "llama", "url": _url(env),
                                                         "model": getattr(client, "model", ""), "num_ctx": 8192})
+                if self.loop_kind == "assist":
+                    seed_memory(env, tmp / "mem.json")
                 loop = self._make_loop(agent, tmp, fake)
                 loop._llm_client = client
                 final = None

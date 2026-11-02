@@ -45,7 +45,7 @@ is in `subtasks[i].requested` (never in the goal).
 ## Delivery
 
 "Bring me X" / "take X to Grandpa" (round 2) is `{"pred": "delivered", "args": [obj, person], "mode": "reach" | "hand",
-"mode_reason": null | "explicit" | "no_surface" | "user_needs"}`, text form `delivered[reach](obj, person)`
+"mode_reason": null | "explicit" | "no_surface" | "user_needs"}`, text form: the mode in square brackets after `delivered`, then `(obj, person)` as for any atom
 (homeloop_robot docs/reach.md). The data has no `held_by` atom any more (old records with `held_by` still parse and
 mean `delivered[hand]`).
 

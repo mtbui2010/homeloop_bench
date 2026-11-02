@@ -1,0 +1,198 @@
+"""``homeloop-bench`` command line (docs/cli.md). Also ``python -m homeloop_bench.cli``."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+from .llm import DEFAULT_MODEL
+
+LIVE_PLANNERS = "robot_agent:sage,progprompt_like"
+
+
+def cmd_planners(a) -> int:
+    from .planners import list_planners
+    for name, desc, avail in list_planners():
+        line = f"{name}\t{desc}"
+        if not avail:
+            line += "\t[unavailable: robot_agent not importable]"
+        print(line)
+    return 0
+
+
+def _budgets(a):
+    from .env import Budgets
+    d = Budgets()
+    return Budgets(max_calls=a.max_calls or d.max_calls, max_sim_time_s=a.max_sim_time_s or d.max_sim_time_s,
+                   max_llm_calls=a.max_llm_calls or d.max_llm_calls)
+
+
+def cmd_run(a) -> int:
+    from .planners import REGISTRY
+    from .runner import PlannerConfigError, run_many
+    if a.planner not in REGISTRY:
+        print(f"unknown planner {a.planner!r}; see `homeloop-bench planners`", file=sys.stderr)
+        return 2
+    try:
+        s = run_many(a.planner, a.split, a.limit, a.profile, a.seeds, a.lang, a.llm, a.out, model=a.model,
+                     workers=a.workers, tasks_file=a.tasks, budgets=_budgets(a), progress=True)
+    except PlannerConfigError as e:
+        print(str(e), file=sys.stderr)
+        return 2
+    print(json.dumps({k: s[k] for k in ("n_episodes", "success", "success_ci95", "false_success",
+                                         "goal_condition_success", "help_rate", "rejection_rate")},
+                     sort_keys=True))
+    return 0
+
+
+def _success_map(dir_) -> dict:
+    from .runner import read_episodes
+    return {(e["task_id"], e["seed"]): bool(e["success"]) for e in read_episodes(dir_)}
+
+
+def cmd_compare(a) -> int:
+    from .metrics import mcnemar
+    res = mcnemar(_success_map(a.dir_a), _success_map(a.dir_b))
+    res["a"], res["b_dir"] = str(a.dir_a), str(a.dir_b)
+    if a.json:
+        print(json.dumps(res, sort_keys=True))
+        return 0
+    print(f"paired McNemar test on (task, seed): A = {a.dir_a}  B = {a.dir_b}")
+    print("| n_pairs | success A | success B | b (A ok, B fail) | c (A fail, B ok) | statistic | p | method |")
+    print("|---|---|---|---|---|---|---|---|")
+    fmt = lambda x: "n/a" if x is None else (f"{x:.4f}" if isinstance(x, float) else str(x))  # noqa: E731
+    print(f"| {res['n_pairs']} | {fmt(res['success_a'])} | {fmt(res['success_b'])} | {res['b']} | {res['c']} | "
+          f"{fmt(res['statistic'])} | {fmt(res['p_value'])} | {res['method']} |")
+    return 0
+
+
+def cmd_report(a) -> int:
+    from .report import render
+    from .runner import read_episodes
+    s = json.loads((Path(a.dir) / "summary.json").read_text(encoding="utf-8"))
+    text = render(s, read_episodes(a.dir))
+    (Path(a.dir) / "report.md").write_text(text, encoding="utf-8")
+    print(text)
+    return 0
+
+
+def cmd_show(a) -> int:
+    from .runner import load_tasks
+    if a.tasks:
+        ts = [t for t in load_tasks(None, None, a.tasks) if t.get("id") == a.task_id]
+        if not ts:
+            print(f"no task {a.task_id}", file=sys.stderr)
+            return 1
+        t = ts[0]
+    else:
+        from .tasks import task_by_id
+        from .env import task_dict
+        t = task_dict(task_by_id(a.task_id))
+    print(json.dumps(t, ensure_ascii=False, sort_keys=True, indent=1))
+    return 0
+
+
+def cmd_calibrate(a) -> int:
+    from .llm import make_llm
+    from .planners.knowno_like import CALIB_PATH, calibrate
+    from .runner import load_tasks
+    llm = make_llm(a.llm, a.model)
+    tasks = load_tasks(a.split, a.limit, a.tasks)
+    c = calibrate(tasks, llm, epsilon=a.epsilon, lang=a.lang)
+    c.update({"split": a.split, "limit": a.limit, "model": a.model if a.llm != "fake" else "fake", "lang": a.lang})
+    out = Path(a.out) if a.out else CALIB_PATH
+    out.write_text(json.dumps(c, sort_keys=True) + "\n", encoding="utf-8")
+    print(json.dumps(c, sort_keys=True))
+    return 0
+
+
+def live_dir(root, planner: str, model: str, lang: str) -> Path:
+    return Path(root) / f"{planner}__{model}__{lang}"
+
+
+def cmd_live_smoke(a) -> int:
+    from .runner import run_many
+    root = Path(a.root)
+    rc = 0
+    for p in [x.strip() for x in a.planners.split(",") if x.strip()]:
+        for lang in [x.strip() for x in a.langs.split(",") if x.strip()]:
+            out = live_dir(root, p, a.model, lang)
+            s = run_many(p, a.split, a.limit, a.profile, a.seeds, lang, a.llm, out, model=a.model,
+                         tasks_file=a.tasks, progress=True)
+            print(json.dumps({"planner": p, "lang": lang, "dir": str(out), "success": s["success"],
+                              "n_episodes": s["n_episodes"], "false_success": s["false_success"]}, sort_keys=True))
+    return rc
+
+
+def build_parser() -> argparse.ArgumentParser:
+    ap = argparse.ArgumentParser(prog="homeloop-bench", description="HomeLoop-Bench runner (docs/cli.md)")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    sub.add_parser("planners", help="list planners").set_defaults(fn=cmd_planners)
+
+    r = sub.add_parser("run", help="run a planner on a split")
+    r.add_argument("--planner", required=True)
+    r.add_argument("--split", default="dev")
+    r.add_argument("--limit", type=int, default=None)
+    r.add_argument("--profile", default="real", choices=["ideal", "real", "stress"])
+    r.add_argument("--seeds", type=int, default=1)
+    r.add_argument("--lang", default="en", choices=["en", "ko"])
+    r.add_argument("--llm", default=None, help="Ollama URL (http://host:port) or 'fake' (tests only)")
+    r.add_argument("--model", default=DEFAULT_MODEL)
+    r.add_argument("--out", required=True)
+    r.add_argument("--workers", type=int, default=1)
+    r.add_argument("--tasks", default=None, help="a task JSONL file instead of the packaged split")
+    r.add_argument("--max-calls", type=int, default=None)
+    r.add_argument("--max-sim-time-s", type=float, default=None)
+    r.add_argument("--max-llm-calls", type=int, default=None)
+    r.set_defaults(fn=cmd_run)
+
+    c = sub.add_parser("compare", help="paired McNemar test of two run directories")
+    c.add_argument("dir_a")
+    c.add_argument("dir_b")
+    c.add_argument("--json", action="store_true")
+    c.set_defaults(fn=cmd_compare)
+
+    rp = sub.add_parser("report", help="re-render DIR/report.md")
+    rp.add_argument("dir")
+    rp.set_defaults(fn=cmd_report)
+
+    sh = sub.add_parser("show", help="print one task")
+    sh.add_argument("task_id")
+    sh.add_argument("--tasks", default=None)
+    sh.set_defaults(fn=cmd_show)
+
+    k = sub.add_parser("calibrate-knowno", help="conformal threshold for knowno_like")
+    k.add_argument("--split", default="train")
+    k.add_argument("--limit", type=int, default=300)
+    k.add_argument("--llm", required=True)
+    k.add_argument("--model", default=DEFAULT_MODEL)
+    k.add_argument("--epsilon", type=float, default=0.15)
+    k.add_argument("--lang", default="en", choices=["en", "ko"])
+    k.add_argument("--tasks", default=None)
+    k.add_argument("--out", default=None)
+    k.set_defaults(fn=cmd_calibrate)
+
+    ls = sub.add_parser("live-smoke", help="live smoke runs -> results/live_smoke/<planner>__<model>__<lang>/")
+    ls.add_argument("--llm", required=True)
+    ls.add_argument("--model", default=DEFAULT_MODEL)
+    ls.add_argument("--limit", type=int, default=100)
+    ls.add_argument("--split", default="dev")
+    ls.add_argument("--profile", default="real", choices=["ideal", "real", "stress"])
+    ls.add_argument("--seeds", type=int, default=1)
+    ls.add_argument("--planners", default=LIVE_PLANNERS)
+    ls.add_argument("--langs", default="en,ko")
+    ls.add_argument("--root", default="results/live_smoke")
+    ls.add_argument("--tasks", default=None)
+    ls.set_defaults(fn=cmd_live_smoke)
+    return ap
+
+
+def main(argv=None) -> int:
+    a = build_parser().parse_args(argv)
+    return int(a.fn(a) or 0)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

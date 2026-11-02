@@ -10,10 +10,10 @@
   },
   "none": {
    "n": 86,
-   "success": 0.081395,
+   "success": 0.139535,
    "success_ci95": [
-    0.039986,
-    0.158602
+    0.081658,
+    0.228237
    ]
   },
   "preference": {
@@ -36,18 +36,18 @@
   },
   "contain": {
    "n": 21,
-   "success": 0.142857,
+   "success": 0.095238,
    "success_ci95": [
-    0.04981,
-    0.346361
+    0.026519,
+    0.289141
    ]
   },
   "correction": {
    "n": 11,
-   "success": 0.0,
+   "success": 0.090909,
    "success_ci95": [
-    0.0,
-    0.258833
+    0.016232,
+    0.377358
    ]
   },
   "fetch": {
@@ -68,18 +68,18 @@
   },
   "multi_object": {
    "n": 10,
-   "success": 0.0,
+   "success": 0.2,
    "success_ci95": [
-    0.0,
-    0.277533
+    0.056682,
+    0.509838
    ]
   },
   "navigate": {
    "n": 3,
-   "success": 0.0,
+   "success": 1.0,
    "success_ci95": [
-    0.0,
-    0.561497
+    0.438503,
+    1.0
    ]
   },
   "rearrange": {
@@ -102,18 +102,18 @@
  "by_house": {
   "couple_flat": {
    "n": 18,
-   "success": 0.166667,
+   "success": 0.222222,
    "success_ci95": [
-    0.058366,
-    0.39222
+    0.090009,
+    0.452146
    ]
   },
   "family_house": {
    "n": 17,
-   "success": 0.117647,
+   "success": 0.176471,
    "success_ci95": [
-    0.03288,
-    0.343364
+    0.061911,
+    0.410295
    ]
   },
   "korean_apt_59": {
@@ -126,10 +126,10 @@
   },
   "senior_flat": {
    "n": 14,
-   "success": 0.0,
+   "success": 0.214286,
    "success_ci95": [
-    0.0,
-    0.215311
+    0.075714,
+    0.475892
    ]
   },
   "shared_flat": {
@@ -160,10 +160,10 @@
   },
   "feasible": {
    "n": 81,
-   "success": 0.061728,
+   "success": 0.123457,
    "success_ci95": [
-    0.026653,
-    0.136492
+    0.068461,
+    0.212551
    ]
   },
   "refuse": {
@@ -178,20 +178,20 @@
  "by_lang": {
   "en": {
    "n": 100,
-   "success": 0.07,
+   "success": 0.12,
    "success_ci95": [
-    0.034319,
-    0.137495
+    0.069994,
+    0.198121
    ]
   }
  },
  "by_n_subtasks": {
   "1": {
    "n": 47,
-   "success": 0.12766,
+   "success": 0.234043,
    "success_ci95": [
-    0.059846,
-    0.251739
+    0.136033,
+    0.372243
    ]
   },
   "2": {
@@ -222,10 +222,10 @@
   },
   "conjunction": {
    "n": 8,
-   "success": 0.0,
+   "success": 0.125,
    "success_ci95": [
-    0.0,
-    0.324408
+    0.022417,
+    0.470888
    ]
   },
   "correction": {
@@ -254,18 +254,18 @@
   },
   "shared_object": {
    "n": 9,
-   "success": 0.111111,
+   "success": 0.0,
    "success_ci95": [
-    0.019891,
-    0.435
+    0.0,
+    0.299145
    ]
   },
   "single": {
    "n": 46,
-   "success": 0.130435,
+   "success": 0.23913,
    "success_ci95": [
-    0.061178,
-    0.256659
+    0.139122,
+    0.379351
    ]
   },
   "with_context": {
@@ -277,8 +277,8 @@
    ]
   }
  },
- "calls_mean": 4.35,
- "claim_rate": 0.07,
+ "calls_mean": 7.15,
+ "claim_rate": 0.18,
  "config": {
   "budgets": {
    "max_calls": 60,
@@ -294,57 +294,59 @@
   "n_tasks": 100,
   "planner": "robot_agent:sage",
   "profile": "real",
-  "profile_sha": "025947894150ad458487307663288ded7318dff4b71dadd69878381a985a8499",
+  "profile_sha": "e1a04501e24f65474af927e30240c4349b7adf2b81e316bec31e08ca7e414804",
   "seeds": 1,
   "split": "dev",
   "versions": {
    "embodiplan_git": "a69064255c69",
    "homeloop_bench": "0.1.0",
-   "homeloop_bench_git": "ef0593d770f6",
+   "homeloop_bench_git": "065057e58b89",
    "homeloop_robot": "0.1.0",
-   "homeloop_robot_git": "cf1847865907",
+   "homeloop_robot_git": "c6176b299e91",
    "robot_agent_git": "895561b88987"
   }
  },
- "correct_help_rate": 0.210526,
+ "correct_help_rate": 0.236111,
  "design_effect": 1.0,
  "error_rate": 0.0,
  "errors_by_type": {},
  "failures_by_code": {
-  "absent": 47,
-  "blocked": 7,
+  "absent": 56,
+  "blocked": 16,
   "cancelled": 1,
-  "hw_fault": 2,
-  "timeout": 83,
-  "unreachable": 5
+  "dropped": 1,
+  "hw_fault": 4,
+  "timeout": 16,
+  "unreachable": 9
  },
  "false_rejection_rate": 0.094737,
- "false_success": 0.02,
- "false_success_given_claim": 0.285714,
- "give_up_rate": 0.82,
- "goal_condition_success": 0.159649,
- "help_rate": 0.76,
+ "false_success": 0.08,
+ "false_success_given_claim": 0.444444,
+ "give_up_rate": 0.71,
+ "goal_condition_success": 0.236842,
+ "help_rate": 0.72,
  "help_recall": 0.857143,
  "icc": 0.0,
- "llm_calls_mean": 6.33,
- "min_separation_m": 1.403567,
- "min_separation_p5_m": 1.403567,
+ "llm_calls_mean": 11.64,
+ "min_separation_m": 1.191001,
+ "min_separation_p5_m": 1.315295,
  "n_eff": 100.0,
  "n_episodes": 100,
  "n_error": 0,
  "n_tasks": 100,
  "partial_rejection_rate": 0.0,
- "protective_stops": 0,
+ "protective_stops": 4,
  "recovery_rate_by_code": {
-  "absent": 0.12766,
-  "blocked": 0.571429,
+  "absent": 0.178571,
+  "blocked": 0.5,
   "cancelled": 0.0,
-  "hw_fault": 0.0,
-  "timeout": 0.024096,
-  "unreachable": 0.4
+  "dropped": 0.0,
+  "hw_fault": 0.25,
+  "timeout": 0.125,
+  "unreachable": 0.444444
  },
  "rejection_rate": 0.4,
- "safety_violations": 0,
+ "safety_violations": 1,
  "semantic_by_code": {},
  "semantic_violations": 0,
  "severe_violations": 0,
@@ -362,23 +364,23 @@
   }
  },
  "status_counts": {
-  "done": 7,
-  "give_up": 82,
+  "done": 18,
+  "give_up": 71,
   "refuse": 11
  },
- "subtask_success": 0.210692,
- "success": 0.07,
+ "subtask_success": 0.245283,
+ "success": 0.12,
  "success_ci95": [
-  0.034319,
-  0.137495
+  0.069994,
+  0.198121
  ],
  "success_ci95_episode": [
-  0.034319,
-  0.137495
+  0.069994,
+  0.198121
  ],
  "success_reweighted": {
-  "kind": 0.068432,
-  "n_subtasks": 0.069555
+  "kind": 0.118864,
+  "n_subtasks": 0.119235
  },
- "time_mean_s": 48.139311
+ "time_mean_s": 65.440924
 }

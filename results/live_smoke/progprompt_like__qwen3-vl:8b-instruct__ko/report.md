@@ -14,7 +14,7 @@
 | n_tasks | `100` |
 | planner | `progprompt_like` |
 | profile | `real` |
-| profile_sha | `025947894150ad458487307663288ded7318dff4b71dadd69878381a985a8499` |
+| profile_sha | `e1a04501e24f65474af927e30240c4349b7adf2b81e316bec31e08ca7e414804` |
 | seeds | `1` |
 | split | `dev` |
 

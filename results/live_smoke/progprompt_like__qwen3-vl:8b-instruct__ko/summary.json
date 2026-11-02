@@ -294,14 +294,14 @@
   "n_tasks": 100,
   "planner": "progprompt_like",
   "profile": "real",
-  "profile_sha": "025947894150ad458487307663288ded7318dff4b71dadd69878381a985a8499",
+  "profile_sha": "e1a04501e24f65474af927e30240c4349b7adf2b81e316bec31e08ca7e414804",
   "seeds": 1,
   "split": "dev",
   "versions": {
    "homeloop_bench": "0.1.0",
-   "homeloop_bench_git": "ef0593d770f6",
+   "homeloop_bench_git": "065057e58b89",
    "homeloop_robot": "0.1.0",
-   "homeloop_robot_git": "cf1847865907"
+   "homeloop_robot_git": "c6176b299e91"
   }
  },
  "correct_help_rate": null,

@@ -135,3 +135,22 @@ def test_record_schema():
         assert k in rec, k
     assert set(rec["calls"][0]) == {"k", "skill", "args", "ok", "code", "injected", "t", "dur", "event"}
     assert set(rec["safety"]) == {"violations", "severe", "min_sep_m", "n_stops", "slow_s"}
+
+
+def test_order_pairs_accepts_the_data_form_and_a_flat_chain():
+    from homeloop_bench.env import order_pairs
+    assert order_pairs([[0, 1], [0, 2], [1, 2]]) == [(0, 1), (0, 2), (1, 2)]
+    assert order_pairs([0, 1, 2]) == [(0, 1), (1, 2)]
+    assert order_pairs([0, [1, 2, 3]]) == [(0, 1), (0, 2), (0, 3)]
+    assert order_pairs(None) == []
+
+
+def test_oracle_respects_order_pairs_against_its_natural_plan_order():
+    """Pairs that reverse the fixture's natural order: the oracle plans only subtasks whose predecessors
+    hold, so the judge's order check passes (a pair list is not read as consecutive groups)."""
+    from homeloop_bench.runner import run_episode
+    t = _task("fx-cmp-000")
+    for order in ([[2, 0], [2, 1], [0, 1]], [[1, 0], [2, 0]]):
+        tt = dict(t, order=order)
+        r = run_episode(tt, "oracle", "ideal", 0, "en", None)
+        assert r["success"] and r["order_ok"], (order, r["status"])

@@ -20,19 +20,14 @@ def task_kinds(env) -> list:
 
 
 def solve_target(env) -> dict:
-    """The goal to plan for now: every non-refuse subtask, and for ordered structures only the subtasks up
-    to the first order group that is not complete yet (``unmoved`` atoms are kept by not touching)."""
+    """The goal to plan for now: every non-refuse subtask whose ``order`` predecessors (``(a, b)`` pairs:
+    ``a`` before ``b``) already hold; ``unmoved`` atoms are kept by not touching."""
     subs = env.subtasks
     use = [i for i, s in enumerate(subs) if s["kind"] != "refuse"]
     if env.order:
-        in_order = {i for g in env.order for i in g}
-        allowed = {i for i in use if i not in in_order}
         from homeloop_robot import goals as G
-        for g in env.order:
-            allowed |= {i for i in g if i in use}
-            if not all(G.evaluate(subs[i]["goal"], env.world).holds for i in g if i in use):
-                break
-        use = [i for i in use if i in allowed]
+        done = {i: G.evaluate(subs[i]["goal"], env.world).holds for i in use}
+        use = [i for i in use if all(done.get(a, True) for a, b in env.order if b == i)]
     atoms = []
     for i in use:
         atoms += [a for a in subs[i]["goal"]["all"] if a.get("pred") != "unmoved"]

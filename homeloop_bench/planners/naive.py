@@ -2,7 +2,7 @@
 
 No replanning, no recovery, no asking: the first failed call ends the episode with ``give_up``; when every
 call reports ok it finishes ``done`` (so silent failures become false successes). Refuse tasks are
-refused like the oracle does. Ordered structures are planned group by group on an ideal copy of the start
+refused like the oracle does. Ordered structures are planned layer by layer (subtasks whose predecessors hold) on an ideal copy of the start
 state.
 """
 
@@ -28,7 +28,7 @@ def start_plan(env) -> list | None:
         subtasks = env.subtasks
         order = env.order
         world = sim.world
-    for _ in range(len(env.order) + 1):
+    for _ in range(len(env.subtasks) + 1):
         tgt = solve_target(_View)
         if G.evaluate(tgt, sim.world).holds:
             break

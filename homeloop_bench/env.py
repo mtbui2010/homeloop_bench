@@ -146,12 +146,17 @@ def resolve_subtasks(td: dict, world0) -> list:
     return out
 
 
-def _order_groups(order) -> list:
-    """``order`` = [i, j, [k, l], ...] -> groups of subtask indices (a list = any order inside)."""
-    groups = []
-    for x in order or []:
-        groups.append([int(y) for y in x] if isinstance(x, (list, tuple)) else [int(x)])
-    return groups
+def order_pairs(order) -> list:
+    """``order`` -> precedence pairs ``[(a, b), ...]`` (subtask ``a`` completes before subtask ``b``).
+
+    The task data's form is a list of pairs ``[[a, b], ...]`` (docs/tasks.md). A flat chain
+    ``[i, j, [k, l], ...]`` (an int is one subtask, a list of other length is a group done in any order) is
+    also accepted and turned into pairs between consecutive groups."""
+    items = list(order or [])
+    if items and all(isinstance(x, (list, tuple)) and len(x) == 2 for x in items):
+        return sorted({(int(a), int(b)) for a, b in items})
+    groups = [[int(y) for y in x] if isinstance(x, (list, tuple)) else [int(x)] for x in items]
+    return sorted({(a, b) for ga, gb in zip(groups, groups[1:]) for a in ga for b in gb})
 
 
 MOTION = ("move", "pick", "place", "put_in", "open", "close", "handover", "dock")
@@ -199,7 +204,7 @@ class EpisodeEnv:
                 else:
                     self.robot.schedule_interrupt(int(plan.get("after_calls", 0)), ev)
         self.subtasks = resolve_subtasks(td, self.world0)
-        self.order = _order_groups(td.get("order")) if td.get("structure") == "ordered" else []
+        self.order = order_pairs(td.get("order")) if td.get("structure") == "ordered" else []
         self.goal_changed = False
         self.stop_k: Optional[int] = None        # call index of a stop event
         self.calls: list = []                    # episode record calls
@@ -384,13 +389,13 @@ class EpisodeEnv:
             else:
                 correct.append(bool(ev.holds))
         order_ok = True
-        groups = self.order
-        for a, b in zip(groups, groups[1:]):
-            ka = [self._done_k[i] for i in a if i < len(self._done_k)]
-            kb = [self._done_k[i] for i in b if i < len(self._done_k)]
-            if any(x is None for x in ka + kb):
+        for a, b in self.order:
+            if a >= len(self._done_k) or b >= len(self._done_k):
+                continue
+            ka, kb = self._done_k[a], self._done_k[b]
+            if ka is None or kb is None:
                 continue                          # an unfinished subtask is already not correct
-            if max(ka) > min(kb):
+            if ka > kb:
                 order_ok = False
         all_refuse = all(k == "refuse" for k in kinds)
         mixed = any(k == "refuse" for k in kinds) and not all_refuse

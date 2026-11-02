@@ -144,7 +144,7 @@ def special_tasks() -> list:
              "goal": {"all": [{"pred": "open", "args": ["fridge@kitchen"]}]}}]
     g = {"all": [a for s in subs for a in s["goal"]["all"]]}
     t = base("fx-cmp-000", h, 0, g, capability="rearrange", subtasks=subs, n_subtasks=3, structure="ordered",
-             order=[0, 1, 2], mixed_kind=False)
+             order=[[0, 1], [0, 2], [1, 2]], mixed_kind=False)
     out.append(t)
     # mixed: the milk onto the counter, and (refuse) the bleach into the fridge
     subs = [{"kind": "feasible", "capability": "contain", "ambiguity": "none",

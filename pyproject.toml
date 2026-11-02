@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "homeloop-bench"
+version = "0.1.0"
+description = "HomeLoop-Bench: closed-loop evaluation of household robot task planners (plan, execute, verify, replan, ask, safety) on homeloop_robot, 10k tasks in English and Korean."
+requires-python = ">=3.10"
+license = {text = "Apache-2.0"}
+dependencies = ["pyyaml>=6", "homeloop-robot"]
+
+[project.scripts]
+homeloop-bench = "homeloop_bench.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["homeloop_bench*"]

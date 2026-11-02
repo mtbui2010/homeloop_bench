@@ -26,10 +26,16 @@ TOOLS = [
 ]
 
 
+DELIVERY_NOTE = ("Bringing something to a person: put it on a table, desk, counter, nightstand or shelf they can reach "
+                 "from where they are (see People now), or hand it over when they ask for it in their hand or no such "
+                 "surface with room is near them. A seat, a bed or the floor does not count.")
+
+
 def tools_text() -> str:
     lines = ["Tools (call with JSON args):"]
     for name, args, desc in TOOLS:
         lines.append(f"- {name}({args}): {desc}")
+    lines.append(DELIVERY_NOTE)
     return "\n".join(lines)
 
 
@@ -92,6 +98,14 @@ def render_observation(obs, *, with_results: bool = True, history=None) -> str:
     L.append("People (id | name en / ko | usually at | role):")
     for p in obs.people:
         L.append(f"- {p.id} | {_names(p.name)} | {p.usual_place} | {p.role}")
+    if getattr(obs, "people_now", None):
+        L.append("People now (id | posture | at | room | walking | prefers handover | furniture within 2 m: place type "
+                 "height_m dist_m free):")
+        for v in obs.people_now:
+            near = "; ".join(f"{n['place']} {n['type']} {n['height_m']:.2f} {n['dist_m']:.2f} "
+                             f"{'-' if n.get('free') is None else n['free']}" for n in v.get("nearby") or []) or "-"
+            L.append(f"- {v['id']} | {v['posture']} | {v.get('place') or '-'} | {v.get('room') or '-'} | "
+                     f"{'yes' if v.get('moving') else 'no'} | {'yes' if v.get('prefers_handover') else 'no'} | {near}")
     L.append("Object memory (id | class | name en / ko | attrs | usually at; things may have moved):")
     for o in obs.memory:
         L.append(f"- {o.id} | {o.cls} | {_names(o.name)} | {_attrs(o.attrs)} | {o.usual_place}")

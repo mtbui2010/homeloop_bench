@@ -96,6 +96,10 @@ class Observation:
     t: float
     calls_left: int
     time_left_s: float
+    # what the robot sees of each person now (homeloop_robot.reach.person_view): posture, place, room, walking,
+    # the house profile's prefers_handover and the furniture within 2 m (type, height, distance, free slots).
+    # Never a task's delivery mode or a reach verdict (docs/runner.md).
+    people_now: tuple = ()
 
     def text(self) -> str:
         from .planners.prompts import render_observation
@@ -166,6 +170,14 @@ def order_pairs(order) -> list:
 
 
 MOTION = ("move", "pick", "place", "put_in", "open", "close", "handover", "dock")
+
+
+def delivery_category(atoms: list) -> str:
+    """none | reach | hand | mixed: the delivery modes of a task's (judge) delivery atoms."""
+    modes = sorted({a.get("mode") or ("hand" if a.get("pred") == "held_by" else "reach") for a in atoms})
+    if not modes:
+        return "none"
+    return modes[0] if len(modes) == 1 else "mixed"
 
 
 class EpisodeEnv:
@@ -285,7 +297,19 @@ class EpisodeEnv:
                            memory=tuple(mem), robot=self.robot.observe(), last=self.last, events=ev,
                            history=tuple(self._hist), step=len(self.calls), t=r6(self.ep.clock.t),
                            calls_left=max(0, self.budgets.max_calls - len(self.calls)),
-                           time_left_s=r6(max(0.0, self.budgets.max_sim_time_s - self.ep.clock.t)))
+                           time_left_s=r6(max(0.0, self.budgets.max_sim_time_s - self.ep.clock.t)),
+                           people_now=self.people_now())
+
+    def people_now(self) -> tuple:
+        """What the robot observes of each person now (see :attr:`Observation.people_now`)."""
+        from homeloop_robot.reach import person_view
+        w = self._world
+        return tuple(person_view(w, pid) for pid in sorted(w.people))
+
+    def delivery_atoms(self) -> list:
+        """The judge's delivery atoms of the current goal (scoring only; planners never read them)."""
+        return [a for s in self.subtasks if s["kind"] != "refuse" for a in s["goal"]["all"]
+                if a.get("pred") in ("delivered", "held_by")]
 
     def object_memory(self) -> list:
         """The object memory every planner observes: each object of the house with its usual place (the house
@@ -503,6 +527,7 @@ class EpisodeEnv:
         asked = sum(1 for c in self.calls if c["skill"] == "ask")
         kinds = [s.get("kind") for s in (td.get("subtasks") or [])] or [td.get("kind")]
         is_clarify = td.get("kind") == "clarify" or "clarify" in kinds
+        w_end = self._world
         rec = {
             "task_id": self.task_id, "seed": self.seed, "planner": self.planner_name, "profile": self.profile_name,
             "lang": self.lang, "kind": td.get("kind"), "capability": td.get("capability"),
@@ -525,6 +550,11 @@ class EpisodeEnv:
                        "slow_s": r6(float(safety.get("time_in_slow_s") or 0.0))},
             "llm_calls": self.llm_calls, "sim_time_s": r6(self.ep.clock.t), "n_calls": len(self.calls),
             "instruction_heard": self.instruction_event,
+            "delivery": delivery_category(self.delivery_atoms()),
+            "delivery_atoms": [{"obj": a["args"][0], "person": a["args"][1],
+                                "mode": a.get("mode") or ("hand" if a["pred"] == "held_by" else None),
+                                "mode_reason": a.get("mode_reason"), "ok": bool(G.holds(a, w_end))}
+                               for a in self.delivery_atoms()],
             "events": [dict(e) for e in self._events],
         }
         if self.error:

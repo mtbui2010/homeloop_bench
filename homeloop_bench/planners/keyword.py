@@ -72,6 +72,8 @@ def parse_prompt(prompt: str) -> dict:
             sec = "places"; continue
         if line.startswith("People ("):
             sec = "people"; continue
+        if line.startswith("People now ("):
+            sec = "people_now"; continue
         if line.startswith("Object memory"):
             sec = "memory"; continue
         if line.startswith("User events:"):
@@ -269,7 +271,7 @@ def _child(p: dict) -> bool:
 def _hazard(atom: tuple, info: dict) -> str | None:
     """Common-sense hazard check of one guessed atom (object tags x destination / receiver)."""
     pred, args = atom
-    if pred not in ("on", "in", "held_by"):
+    if pred not in ("on", "in", "delivered"):
         return None
     mem = {o["id"]: o for o in info["memory"]}
     o = mem.get(args[0])
@@ -280,7 +282,7 @@ def _hazard(atom: tuple, info: dict) -> str | None:
     if c is not None and not c.liftable:
         return "too heavy or fixed for the robot"
     dst = args[1]
-    if pred == "held_by":
+    if pred == "delivered":
         per = next((p for p in info["people"] if p["id"] == dst), None)
         if per and _child(per) and tags & {"sharp", "toxic", "medicine"}:
             return "unsafe to hand to a child"
@@ -339,7 +341,7 @@ def understand(text: str, lang: str, info: dict) -> dict:
         elif v == "fetch" or (objs and person and not pls):
             o = obj_slot()
             if o and (person or user):
-                atoms.append(("held_by", [o, person or user]))
+                atoms.append(("delivered", [o, person or user]))
         elif objs and pls:
             o = obj_slot()
             pid = pls[-1][2][0]
@@ -443,7 +445,7 @@ class Belief:
         p, a = atom
         if p in ("on", "in"):
             return self.placed.get(a[0], (None,))[0] == a[1] and self.holding != a[0]
-        if p == "held_by":
+        if p == "delivered":
             return self.handed.get(a[0]) == a[1]
         if p == "said_to":
             return tuple(a) in self.said
@@ -519,7 +521,7 @@ def next_call(b: Belief, atoms: list, lang: str):
             return ("open", {"container": a[1]})
         if b.holding == o:
             dst = a[1]
-            if p == "held_by":
+            if p == "delivered":
                 if b.near != dst:
                     return ("move", {"target": dst})
                 return ("handover", {"person": dst})
@@ -588,7 +590,7 @@ def apply_events(atoms: list, info: dict, lang: str) -> list:
         out = []
         swapped = False
         for p, a in atoms:
-            if not swapped and p in ("on", "in", "held_by"):
+            if not swapped and p in ("on", "in", "delivered"):
                 o = a[0]
                 cls = mem.get(o, {}).get("cls")
                 new = None
@@ -612,7 +614,8 @@ def goal_atoms_from_string(s: str) -> list:
         g = G.parse(s)
     except Exception:  # noqa: BLE001 - an unparsable interpretation -> nothing
         return []
-    return [(a["pred"], list(a.get("args") or [])) for a in g.get("all") or [] if "pred" in a]
+    return [("delivered" if a["pred"] == "held_by" else a["pred"], list(a.get("args") or [])) for a in g.get("all") or []
+            if "pred" in a]
 
 
 def plan_state(info: dict) -> tuple:

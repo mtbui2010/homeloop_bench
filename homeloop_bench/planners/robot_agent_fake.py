@@ -75,9 +75,14 @@ def understand_goals(env) -> list:
             out.append({"type": "open", "object": args[0], "from": "", "to": ""})
         elif p == "closed":
             out.append({"type": "close", "object": args[0], "from": "", "to": ""})
-        elif p == "held_by":
+        elif p in ("held_by", "delivered"):
+            # the mode a robot infers from the words and the scene (never the label)
+            mode = "hand" if p == "held_by" else _modes(env).get((args[0], args[1]), "hand")
             if args[1] == user:
                 out.append({"type": "on", "object": _obj_name(w, args[0]), "from": src(args[0]), "to": "me"})
+            elif mode == "reach":
+                # "near the person": the robot package binds a person as a place to the surface they can reach
+                out.append({"type": "on", "object": _obj_name(w, args[0]), "from": src(args[0]), "to": args[1]})
             else:
                 out.append({"type": "deliver", "object": _obj_name(w, args[0]), "from": src(args[0]),
                             "to": seat(args[1])})
@@ -98,13 +103,19 @@ def _gold_question(env) -> str:
     return str(gq or "Which one do you mean?")
 
 
+def _modes(env) -> dict:
+    """Delivery modes chosen like the oracle does: the heard words and the start scene, never the labels."""
+    from .oracle import observed_modes
+    return observed_modes(env, env.world0, env.current_goal())
+
+
 def oracle_calls(env, world=None) -> list:
     w = env._world if world is None else world      # test fake only: it reads the true world
     goal = {"all": gold_goals(env)}
     if not goal["all"]:
         return []
     people = {pid: st.pos for pid, st in env.user.people_at(env.ep.clock.t).items()}
-    return _oracle.solve(w, goal, lang=env.lang, people_pos=people) or []
+    return _oracle.solve(w, goal, lang=env.lang, people_pos=people, modes=_modes(env)) or []
 
 
 def _primary(args: dict) -> str:

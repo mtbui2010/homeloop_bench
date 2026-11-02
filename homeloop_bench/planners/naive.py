@@ -12,14 +12,16 @@ from homeloop_robot import goals as G
 from homeloop_robot import make_episode
 from homeloop_robot import oracle as _oracle
 
-from .oracle import note_refusals, solve_target, task_kinds
+from .oracle import note_refusals, observed_modes, solve_target, task_kinds
 
 
 def start_plan(env) -> list | None:
-    """The full oracle plan from the start state (None when unsolvable)."""
+    """The full oracle plan from the start state (None when unsolvable). Delivery modes: chosen from the heard
+    instruction and the start scene (``observed_modes``), never from the goal's labels."""
+    modes = observed_modes(env, env.world0, env.current_goal())
     if not env.order:
         tgt = solve_target(env)
-        return _oracle.solve(env.world0, tgt, lang=env.lang) if tgt["all"] else []
+        return _oracle.solve(env.world0, tgt, lang=env.lang, modes=modes) if tgt["all"] else []
     sim = make_episode(env.task["house"], int(env.task["seed_state"] or 0), "ideal", 0, lang=env.lang,
                        user_impl="null", safety_impl="null")
     calls = []
@@ -32,7 +34,7 @@ def start_plan(env) -> list | None:
         tgt = solve_target(_View)
         if G.evaluate(tgt, sim.world).holds:
             break
-        plan = _oracle.solve(sim.world, tgt, lang=env.lang)
+        plan = _oracle.solve(sim.world, tgt, lang=env.lang, modes=modes)
         if not plan:
             return None
         for c in plan:

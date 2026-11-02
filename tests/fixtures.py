@@ -37,7 +37,7 @@ def _clause(w, a, lang):
             return f"put the {_obj_phrase(w, args[0], 'en')} on the {_place_phrase(w, args[1], 'en')}"
         if p == "in":
             return f"put the {_obj_phrase(w, args[0], 'en')} in the {_place_phrase(w, args[1], 'en')}"
-        if p == "held_by":
+        if p in ("held_by", "delivered"):
             return f"bring the {_obj_phrase(w, args[0], 'en')} to {_person_phrase(w, args[1], 'en')}"
         if p == "open":
             return f"open the {_place_phrase(w, args[0], 'en')}"
@@ -54,7 +54,7 @@ def _clause(w, a, lang):
         return f"{_obj_phrase(w, args[0], 'ko')} {_place_phrase(w, args[1], 'ko')}에 올려 주세요"
     if p == "in":
         return f"{_obj_phrase(w, args[0], 'ko')} {_place_phrase(w, args[1], 'ko')}에 넣어 주세요"
-    if p == "held_by":
+    if p in ("held_by", "delivered"):
         return f"{_obj_phrase(w, args[0], 'ko')} {_person_phrase(w, args[1], 'ko')}한테 가져다 주세요"
     if p == "open":
         return f"{_place_phrase(w, args[0], 'ko')} 열어 주세요"
@@ -98,7 +98,7 @@ def feasible_tasks(n: int = 12, seed: int = 0) -> list:
         i += 1
         if g is None:
             continue
-        cap = {"on": "rearrange", "in": "contain", "held_by": "fetch", "open": "articulate", "closed": "articulate",
+        cap = {"on": "rearrange", "in": "contain", "held_by": "fetch", "delivered": "fetch", "open": "articulate", "closed": "articulate",
                "said_to": "message", "robot_at": "navigate", "docked": "navigate"}[g["all"][0]["pred"]]
         if len(g["all"]) > 1:
             cap = "multi_object"

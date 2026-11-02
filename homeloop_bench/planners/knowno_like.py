@@ -41,7 +41,7 @@ def options_prompt(obs) -> str:
         "MODE: knowno_options",
         "You control a household robot. List up to 4 different plausible interpretations of the instruction as "
         "goal conditions over the ids below, e.g. on(mug_1, table@dining) & open(fridge@kitchen). Predicates: "
-        "on(obj, place), in(obj, container), held_by(obj, person), open(c), closed(c), said_to(person, message), "
+        "on(obj, place), in(obj, container), delivered(obj, person) (bring it to the person: on a surface they can reach, or into their hand), open(c), closed(c), said_to(person, message), "
         "robot_at(place), docked(). Use the single option \"refuse\" when the request is unsafe or impossible.",
         render_observation(obs),
         'Answer with JSON: {"options": ["...", ...]}.'])

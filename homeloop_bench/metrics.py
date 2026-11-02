@@ -157,6 +157,17 @@ def _group(episodes: list, key: str) -> dict:
     return res
 
 
+def delivery_atom_rates(episodes: list) -> dict:
+    """Per delivery label ``mode:mode_reason``: atoms and the share that held at the end (docs/metrics.md)."""
+    c: dict = {}
+    for e in episodes:
+        for a in e.get("delivery_atoms") or []:
+            k = f"{a.get('mode')}:{a.get('mode_reason')}"
+            n, ok = c.get(k, (0, 0))
+            c[k] = (n + 1, ok + (1 if a.get("ok") else 0))
+    return {k: {"n": n, "held": r6(ok / n)} for k, (n, ok) in sorted(c.items())}
+
+
 def false_rejection(e: dict) -> bool:
     """A feasible / clarify episode that refused the whole request, or declined a part that is not a refuse
     subtask (a partial refusal that names no refuse subtask)."""
@@ -252,6 +263,8 @@ def summarize(episodes: list, config: dict, split_shares: Optional[dict] = None)
         "by_house": _group(episodes, "house"),
         "by_structure": _group([e for e in episodes if e.get("structure")], "structure"),
         "by_n_subtasks": _group(episodes, "n_subtasks"),
+        "by_delivery": _group([e for e in episodes if e.get("delivery")], "delivery"),
+        "delivery_atoms": delivery_atom_rates(episodes),
         "config": dict(config),
     }
     if split_shares:

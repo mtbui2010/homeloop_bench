@@ -69,12 +69,18 @@ def run_shim(task: dict, lang: str = "en", seed: int = 0, profile: str = "ideal"
     if task.get("user", {}).get("gold_question"):
         robot.call("ask", question=task["user"]["gold_question"][lang], lang=lang)
     goal = None
+    # delivery modes as a robot chooses them (the words and the start scene), never the labels
+    text = (task.get("text") or {}).get(lang, "")
+    modes = oracle.delivery_modes(w, _goal_of(task), text=text, lang=lang)
+    if it and it.get("new_goal"):
+        t2 = f"{text} {(it.get('text') or {}).get(lang, '')}"
+        modes = {**oracle.delivery_modes(w, it["new_goal"], text=t2, lang=lang), **modes}
     while stages and not stopped:
         goal = stages[0]
         while not G.evaluate(goal, w).holds:
             if n >= MAX_CALLS:
                 return {"success": False, "status": "budget", "calls": n, "reason": "call budget"}
-            plan = oracle.solve(w, goal, lang=lang)
+            plan = oracle.solve(w, goal, lang=lang, modes=modes)
             if not plan:
                 return {"success": False, "status": "give_up", "calls": n,
                         "reason": "no plan: " + oracle.explain_unsolvable(w, goal)}

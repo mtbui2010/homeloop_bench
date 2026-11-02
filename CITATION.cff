@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+message: "If you use HomeLoop-Bench, please cite it as below."
+title: "HomeLoop-Bench: closed-loop evaluation of household robot task planners in English and Korean"
+authors:
+  - family-names: Bui
+    given-names: Trung
+license: Apache-2.0
+version: 0.1.0
+type: software
+keywords:
+  - household robots
+  - task planning
+  - large language models
+  - benchmark
+  - human-robot interaction
+  - Korean

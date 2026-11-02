@@ -143,7 +143,10 @@ def _patched(pairs):
 
 
 def _count_embodiplan(env):
-    """Count (and budget) embodiplan's own LLM calls (grace / sage generator talk to the server directly)."""
+    """Route embodiplan's own LLM calls (the sage / grace generator talks to the server directly) through the
+    episode's LLM chain: counted and budgeted, served from / written to the run's llm_cache, and sent with
+    the bench client's options (one ``num_ctx`` for every request, so the server never reloads the model;
+    seed 0 when embodiplan sets none, so its sampled calls repeat)."""
     try:
         import embodiplan
     except ImportError:
@@ -153,14 +156,23 @@ def _count_embodiplan(env):
     if chat is None:
         return []
     counter = env.llm()
+    routed_ok = counter is not None and hasattr(counter, "chat_messages")
 
-    def counted(self, *a, **kw):
+    def routed(self, messages, temperature=None):
+        temp = float(self.temperature if temperature is None else temperature)
+        if routed_ok and getattr(self, "provider", "ollama") == "ollama":
+            seed = int(self.seed) if getattr(self, "seed", None) is not None else 0
+            content = counter.chat_messages(list(messages), temp, seed)
+            if not content:
+                raise RuntimeError(f"Ollama returned empty content (model {counter.model})")
+            approx = getattr(embodiplan.base, "_approx_tokens", lambda t: max(1, len(t) // 4))
+            return content, approx(" ".join(str(m.get("content", "")) for m in messages)), approx(content)
         if counter is not None:
             if counter.max_calls is not None and counter.calls >= counter.max_calls:
                 raise BudgetExceeded(f"LLM budget of {counter.max_calls} calls exhausted")
             counter.calls += 1
-        return chat(self, *a, **kw)
-    return [(backend, "chat", counted)]
+        return chat(self, messages, temperature)
+    return [(backend, "chat", routed)]
 
 
 def _url(env):

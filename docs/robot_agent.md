@@ -54,8 +54,13 @@ not read pending changes, so it keeps the old goal.
 ## LLM calls
 
 Live runs: the loops' client is our `OllamaHTTP` (urllib) behind the episode's call counter and cache.
-embodiplan (the grace / SAGE generator) talks to the server itself; its `LLMBackend.chat` is wrapped during
-the episode so those calls are counted and budgeted too.
+embodiplan (the grace / SAGE generator) would talk to the server itself; its `LLMBackend.chat` is replaced during
+the episode so those calls go through the same chain (`chat_messages`, the full message list kept): they are
+counted, budgeted and cached in the run's `llm_cache/` (a rerun is served without the GPU), and they use the
+bench client's options. One `num_ctx` (8192) for every request matters: a request with another context size
+makes Ollama reload the model (in a first live run, sage's direct embodiplan calls used the server default and
+the model was reloaded ~160 times in 40 min). embodiplan's temperature (0.2 by default) is kept; its seed is 0
+when it sets none, so the sampled calls repeat.
 
 `--llm fake` (tests): `robot_agent_fake.FakeUnderstandLLM` answers the understand prompt with the task's
 gold goals in robot_agent's understand JSON (clarify tasks: "ambiguous" + the gold question until the

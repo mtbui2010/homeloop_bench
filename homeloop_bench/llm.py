@@ -58,15 +58,20 @@ class OllamaHTTP:
         self.backoff_s = float(backoff_s)
         self.n_calls = 0
 
-    def body(self, prompt: str, format=None, temperature: float = 0.0, seed: int = 0) -> dict:
-        b = {"model": self.model, "messages": [{"role": "user", "content": prompt}], "stream": False,
+    def body(self, prompt: str, format=None, temperature: float = 0.0, seed: int = 0, messages=None) -> dict:
+        msgs = [dict(m) for m in messages] if messages is not None else [{"role": "user", "content": prompt}]
+        b = {"model": self.model, "messages": msgs, "stream": False,
              "options": {"temperature": float(temperature), "seed": int(seed), "num_ctx": self.num_ctx}}
         if format is not None:
             b["format"] = format
         return b
 
     def chat(self, prompt: str, format=None, temperature: float = 0.0, seed: int = 0) -> str:
-        data = json.dumps(self.body(prompt, format, temperature, seed)).encode("utf-8")
+        return self.chat_messages(None, temperature, seed, format=format, prompt=prompt)
+
+    def chat_messages(self, messages, temperature: float = 0.0, seed: int = 0, format=None, prompt: str = "") -> str:
+        """A chat with a full message list (system / user / assistant turns), e.g. embodiplan's own calls."""
+        data = json.dumps(self.body(prompt, format, temperature, seed, messages=messages)).encode("utf-8")
         req = urllib.request.Request(self.url + "/api/chat", data=data, headers={"Content-Type": "application/json"})
         t0 = time.monotonic()
         attempt = 0
@@ -133,16 +138,26 @@ class CachedLLM:
         self.misses = 0
 
     def chat(self, prompt: str, format=None, temperature: float = 0.0, seed: int = 0) -> str:
-        k = cache_key(self.model, prompt, format, temperature, seed)
+        return self._cached(cache_key(self.model, prompt, format, temperature, seed),
+                            lambda: self.inner.chat(prompt, format=format, temperature=temperature, seed=seed),
+                            {"prompt": prompt, "format": format, "temperature": float(temperature), "seed": int(seed)})
+
+    def chat_messages(self, messages, temperature: float = 0.0, seed: int = 0, format=None) -> str:
+        msgs = [dict(m) for m in messages]
+        k = cache_key(self.model, _dumps(msgs), format, temperature, seed) if len(msgs) != 1 or \
+            msgs[0].get("role") != "user" else cache_key(self.model, msgs[0].get("content", ""), format, temperature, seed)
+        return self._cached(k, lambda: self.inner.chat_messages(msgs, temperature, seed, format=format),
+                            {"messages": msgs, "format": format, "temperature": float(temperature), "seed": int(seed)})
+
+    def _cached(self, k: str, call, row: dict) -> str:
         if k in self._mem:
             self.hits += 1
             return self._mem[k]
         self.misses += 1
-        resp = self.inner.chat(prompt, format=format, temperature=temperature, seed=seed)
+        resp = call()
         self._mem[k] = resp
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        line = _dumps({"sha": k, "model": self.model, "prompt": prompt, "format": format,
-                       "temperature": float(temperature), "seed": int(seed), "response": resp}) + "\n"
+        line = _dumps({"sha": k, "model": self.model, **row, "response": resp}) + "\n"
         with self.path.open("a", encoding="utf-8") as f:
             _lock(f)                     # parallel workers (run --workers N) share one cache file
             f.write(line)
@@ -171,11 +186,17 @@ class CountingLLM:
         self.failed: Optional[BaseException] = None     # the first LLMError (the runner aborts the run)
 
     def chat(self, prompt: str, format=None, temperature: float = 0.0, seed: int = 0) -> str:
+        return self._count(lambda: self.inner.chat(prompt, format=format, temperature=temperature, seed=seed))
+
+    def chat_messages(self, messages, temperature: float = 0.0, seed: int = 0, format=None) -> str:
+        return self._count(lambda: self.inner.chat_messages(messages, temperature, seed, format=format))
+
+    def _count(self, call) -> str:
         if self.max_calls is not None and self.calls >= self.max_calls:
             raise BudgetExceeded(f"LLM budget of {self.max_calls} calls exhausted")
         self.calls += 1
         try:
-            return self.inner.chat(prompt, format=format, temperature=temperature, seed=seed)
+            return call()
         except LLMError as e:
             if self.failed is None:
                 self.failed = e

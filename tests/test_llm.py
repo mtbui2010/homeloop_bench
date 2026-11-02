@@ -47,3 +47,32 @@ def test_make_llm():
     assert isinstance(make_llm("http://x:1", "m"), OllamaHTTP)
     with pytest.raises(ValueError):
         make_llm("ftp://x")
+
+
+class EchoMsgs(Echo):
+    def chat_messages(self, messages, temperature=0.0, seed=0, format=None):
+        self.n += 1
+        return "/".join(m["content"] for m in messages) + f"|{seed}"
+
+
+def test_ollama_body_with_messages():
+    c = OllamaHTTP("http://127.0.0.1:1/", "m:1")
+    msgs = [{"role": "system", "content": "s"}, {"role": "user", "content": "u"}]
+    b = c.body("", temperature=0.2, seed=0, messages=msgs)
+    assert b["messages"] == msgs and b["options"]["num_ctx"] == 8192
+
+
+def test_cache_and_count_chat_messages(tmp_path):
+    msgs = [{"role": "system", "content": "s"}, {"role": "user", "content": "u"}]
+    e = EchoMsgs()
+    c = CountingLLM(CachedLLM(e, tmp_path / "c.jsonl"), 2)
+    assert c.chat_messages(msgs, 0.2, 0) == "s/u|0" and c.chat_messages(msgs, 0.2, 0) == "s/u|0"
+    assert e.n == 1 and c.calls == 2                     # every call counts, the second is a cache hit
+    with pytest.raises(BudgetExceeded):
+        c.chat_messages(msgs, 0.2, 0)
+    c2 = CachedLLM(EchoMsgs(), tmp_path / "c.jsonl")
+    assert c2.chat_messages(msgs, 0.2, 0) == "s/u|0" and c2.inner.n == 0
+    assert c2.chat_messages(msgs, 0.2, 1) == "s/u|1" and c2.inner.n == 1   # the seed is part of the key
+    # a single user message shares its key with chat(prompt)
+    assert c2.chat_messages([{"role": "user", "content": "p"}], 0.0, 0) == "p|0"
+    assert c2.chat("p") == "p|0" and c2.inner.n == 2

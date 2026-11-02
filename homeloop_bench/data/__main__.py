@@ -7,6 +7,9 @@ validate    the dataset checks (--strict: warnings fail too)
 stats       counts per label (--json)
 realism     realism rules R-a..R-h (--strict); writes <repo>/data/quality/realism_report.json
 quality     paraphrase + Korean back-translation quality report (needs the LLM for new back-translations)
+delivery    round 2: held_by -> delivered(mode, mode_reason), explicit-hand variants, within-reach reseeds
+            (gen/delivery.py; deterministic, idempotent); writes <repo>/data/quality/delivery_report.json
+datasheet   rewrite docs/datasheet.md from the shipped quality reports (no LLM)
 """
 
 from __future__ import annotations
@@ -86,6 +89,28 @@ def cmd_realism(a):
     return 1 if (a.strict and not rep["ok"]) else 0
 
 
+def cmd_delivery(a):
+    from ..gen.delivery import delivery_stats, rewrite_all
+    from ..tasks import read_records
+    recs = [r for s in SPLITS for r in read_records(s)]
+    out, report = rewrite_all(recs)
+    for s in SPLITS:
+        _dump([r for r in out if r["split"] == s], TASKS_DIR / f"{s}.jsonl")
+    report["by_split"] = {s: delivery_stats([r for r in out if r["split"] == s]) for s in SPLITS}
+    QUALITY_DIR.mkdir(parents=True, exist_ok=True)
+    with open(QUALITY_DIR / "delivery_report.json", "w", encoding="utf-8") as f:
+        json.dump(report, f, sort_keys=True, ensure_ascii=False, indent=1)
+        f.write("\n")
+    print(json.dumps({k: v for k, v in report.items() if k != "by_split"}, sort_keys=True))
+    return 0
+
+
+def cmd_datasheet(a):
+    from ..gen.quality import datasheet_from_reports
+    datasheet_from_reports(_all())
+    return 0
+
+
 def cmd_paraphrase(a):
     from ..gen.paraphrase import run
     return run(url=a.url, model=a.model, ko_model=a.ko_model, ko_judge=a.ko_judge, frac=a.frac, rounds=a.rounds,
@@ -132,8 +157,10 @@ def main(argv=None):
     q.add_argument("--model", default="qwen3-vl:30b-a3b-instruct", help="back-translator (the Korean judge model)")
     q.add_argument("--n", type=int, default=600)
     q.add_argument("--offline", action="store_true")
+    sub.add_parser("delivery")
+    sub.add_parser("datasheet")
     a = ap.parse_args(argv)
-    return {"generate": cmd_generate, "validate": cmd_validate, "stats": cmd_stats, "realism": cmd_realism,
+    return {"delivery": cmd_delivery, "datasheet": cmd_datasheet, "generate": cmd_generate, "validate": cmd_validate, "stats": cmd_stats, "realism": cmd_realism,
             "paraphrase": cmd_paraphrase, "quality": cmd_quality, "resplit": cmd_resplit}[a.cmd](a)
 
 

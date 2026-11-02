@@ -6,7 +6,7 @@ true world and the hidden goal); every other planner sees only the [observation]
 
 | name | loop | asks | recovery | notes |
 |---|---|---|---|---|
-| `oracle` | re-solves with `homeloop_robot.oracle.solve` from the true world after every call | clarify tasks: the gold question once, then acts on the true intent | full re-solve; at most 3 consecutive attempts of a call; `wait(5)` before retrying perception_unavailable / blocked; an `ask` for help when a move is blocked; gives up on a persistent hardware fault or e-stop | refuses refuse tasks; declines the refuse part of a mixed task; finishes `done` only when the judge would score success, so its false success is 0 |
+| `oracle` | re-solves with `homeloop_robot.oracle.solve` from the true world after every call | clarify tasks: the gold question once, then acts on the true intent | full re-solve; at most 3 consecutive attempts of a call; `wait(5)` before retrying perception_unavailable / blocked; an `ask` for help when a move is blocked, and before the last attempt of a still-blocked move it backs off to the room's floor spot and comes another way (a person in bed next to the target cannot clear the way); gives up on a persistent hardware fault or e-stop | refuses refuse tasks; declines the refuse part of a mixed task; finishes `done` only when the judge would score success, so its false success is 0 |
 | `naive` | the oracle's plan from the start state, open loop | never | none: the first failed call ends the episode (`give_up`); all calls ok -> `done`, so silent failures become false successes | the ablation that shows what closed-loop recovery buys |
 | `saycan_like` | each step: the calls whose preconditions hold in the planner's own belief (where it is, what it holds, what it found here, what it opened), the LLM picks one by index | no | none beyond the step choice; the prompt has the state only, no failure text | after SayCan (Ahn et al. 2022, https://arxiv.org/abs/2204.01691). SayCan multiplies LLM likelihoods by learned affordance values; a chat API gives no likelihoods, so here the LLM chooses by index among the affordable options |
 | `inner_monologue_like` | step-wise: the LLM sees the history with every result text, user answers and `look` scenes, and returns the next call | yes | whatever the LLM decides after seeing the failure | after Inner Monologue (Huang et al. 2022, https://arxiv.org/abs/2207.05608) |
@@ -72,3 +72,18 @@ events since the last observation), `history`, `step`, `t`, `calls_left`, `time_
 the shared prompt. Decline one unsafe part with `env.note_refusal(text, subtask=None, obj=None)` naming it (runner.md
 "Judge"); end with `env.finish("done" | "refuse" | "give_up")`. An exception inside `run` makes that episode
 `status: "error"`; an `LLMError` or `ImportError` aborts the whole run (live_smoke.md).
+
+## Deliveries (round 2)
+
+`oracle` and `naive` never read a delivery atom's `mode` label. They choose reach or hand themselves from what a
+robot observes when it gets the request (`planners/oracle.observed_modes` -> `homeloop_robot.oracle.delivery_modes`
+-> `reach.choose_mode`): the heard instruction (EN "hand", KO 손 / 건네 -> hand), the house profile
+(`prefers_handover` -> hand), the furniture around the person at the start (no reachable support surface with room
+-> hand), else reach; after a correction, the correction's words are added for its new deliveries. In reach mode
+the robot oracle puts the object on the nearest reachable support surface with room where the person is now (room
+that the goal's own `on` / `in` atoms need does not count), else hands it over. A test checks that the plans are
+identical whatever the labels say (`tests/test_reach_bench.py`). The LLM planners see the same scene in
+`People now (...)` and one line of the tool text: bring an object to a person by putting it on a table, desk,
+counter, nightstand or shelf they can reach, or hand it over when they ask for it in their hand or no such surface
+with room is near them.
+

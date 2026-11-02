@@ -100,7 +100,7 @@ def check_record(rec) -> tuple:
                         out.append(_v("R-b", rec, "requested: " + why))
     # R-d: feasible pick / place objects are graspable and within the payload
     for _, s, a in _sub_atoms(rec):
-        if s["kind"] in ("feasible", "clarify") and a.get("pred") in ("on", "in", "held_by"):
+        if s["kind"] in ("feasible", "clarify") and a.get("pred") in ("on", "in", "held_by", "delivered"):
             cls = w.objects[a["args"][0]].cls
             if not RR.REALISM[cls]["graspable"]:
                 out.append(_v("R-d", rec, f"{a['args'][0]} ({cls}) is not graspable / over the payload"))
@@ -145,7 +145,7 @@ def _r_f(rec, w):
         out.append(_v("R-f", rec, "subtasks / n_subtasks mismatch"))
     dest = {}
     for _, s, a in _sub_atoms(rec):
-        if a.get("pred") in ("on", "in", "held_by") and "condition" not in s:
+        if a.get("pred") in ("on", "in", "held_by", "delivered") and "condition" not in s:
             o = a["args"][0]
             if o in dest and dest[o] != (a["pred"], a["args"][1]):
                 out.append(_v("R-f", rec, f"contradictory goals for {o}"))
@@ -157,7 +157,7 @@ def _r_f(rec, w):
     for i, s in enumerate(subs):
         if s["kind"] == "feasible" and not s.get("correction") and "condition" not in s:
             for a in s["goal"]["all"]:
-                if a.get("pred") in ("on", "in", "held_by"):
+                if a.get("pred") in ("on", "in", "held_by", "delivered"):
                     oid = a["args"][0]
                     for lg in ("en", "ko"):
                         if not _in(rec["text"][lg], _names(lex, oid, lg), lg):

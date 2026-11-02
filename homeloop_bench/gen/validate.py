@@ -7,6 +7,9 @@ Numbered checks with PASS / FAIL (WARN lines fail only under --strict); exit 0 o
   8 >= 6 houses, held-out houses only in test, test-only template ids only in test
   9 compound fields (DESIGN 14): goal = conjunction of subtask goals, kinds, order indices
   10 no task identity (house, kind, subtasks, goals, order) in two splits (gen/resplit.py)
+  11 deliveries (round 2, gen/delivery.py): no held_by; delivered(obj, person) with mode reach | hand and a
+     mode_reason that matches it; the label is what a robot infers from the words and the start scene; explicit =
+     hand wording in EN and KO; no delivery already within the person's reach at the start; hand share 10-50 %
 """
 
 from __future__ import annotations
@@ -101,6 +104,37 @@ def _compound(r) -> list:
         if not (0 <= a < len(subs) and 0 <= b < len(subs)) or a == b:
             errs.append(f"bad order pair {[a, b]}")
     return errs
+
+
+def delivery_problems(recs: list) -> list:
+    """(id, problem) for the delivery atoms of the records (check 11)."""
+    from homeloop_robot import reach
+    from homeloop_robot.world import from_house
+    from . import delivery as D
+    bad = []
+    for r in recs:
+        atoms = D.delivery_atoms(r)
+        if not atoms:
+            continue
+        w = from_house(r["house"], r["seed_state"])
+        ctexts = D.correction_texts(r)
+        for path, a in atoms:
+            if a["pred"] == "held_by":
+                bad.append((r["id"], "held_by atom"))
+                continue
+            mode, why = a.get("mode"), a.get("mode_reason")
+            if mode not in reach.MODES or why not in reach.MODE_REASONS or (mode == "reach") != (why is None):
+                bad.append((r["id"], f"bad mode / mode_reason {mode!r} {why!r}"))
+                continue
+            want = D.label(w, a["args"][1], ctexts if D._in_correction(path) else r["text"])
+            if (mode, why) != want:
+                bad.append((r["id"], f"label {mode}:{why} but the words and scene give {want[0]}:{want[1]}"))
+            if why == "explicit" and not all(reach.wording_wants_hand(r["text"][lg], lg) for lg in ("en", "ko")) \
+                    and not D._in_correction(path):
+                bad.append((r["id"], "explicit without hand wording in both languages"))
+        if D.within_reach(r, w):
+            bad.append((r["id"], f"already within reach at the start: {D.within_reach(r, w)}"))
+    return bad
 
 
 def validate(paths=None, workers: int = 1, out=print, policy_path=POLICY) -> tuple:
@@ -244,5 +278,14 @@ def validate(paths=None, workers: int = 1, out=print, policy_path=POLICY) -> tup
     leak = [r["id"] for r in recs if len(where[identity(r)]) > 1]
     line(not leak, "10 no task identity (house, kind, subtasks, goals, order) shared by two splits",
          f"{len(leak)} tasks, e.g. {leak[:3]}")
+    # 11 deliveries
+    d_bad = delivery_problems(recs)
+    from .delivery import delivery_stats
+    ds = delivery_stats(recs)
+    hs = ds["hand_share"] or 0.0
+    share_ok = 0.10 <= hs <= 0.50 or ds["delivered_atoms"] < 500     # a dataset-level share (small test sets: n/a)
+    line(not d_bad and share_ok, "11 deliveries: delivered(mode, mode_reason) labels observable, explicit "
+         "wording, none within reach at the start, hand share 10-50 %",
+         f"{len(d_bad)} problems, e.g. {d_bad[:3]}; {ds['by_mode_reason']} hand share {hs}")
     out(f"== validate: {fails} FAIL, {warns} WARN")
     return fails, warns

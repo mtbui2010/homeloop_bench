@@ -78,16 +78,21 @@ scores are not results.
 ## Known limitations (found with the fake runs)
 
 - ClosedLoop (grace, llm_direct) ignores injected corrections (only AssistLoop reads pending changes).
-- robot_agent moves only to ENV places. The homeloop ENV (`env_for`) lists places, not people, so a goal
-  that needs the robot next to a person (a message, a handover to someone other than the user) has to go
-  through the person's usual place.
+- robot_agent moves only to ENV places. The homeloop ENV (`env_for`, homeloop_robot) lists places and, since round
+  2, one entry per person located at the support surface that person can reach (or at the person when there is
+  none); the robot package binds `MoveTo` / `Place` of a person to that surface where the person is now, and
+  `Place` to a handover when there is none (homeloop_robot docs/robot_agent.md). The bench passes `env_for` of the
+  start world; it only translates names and positions, robot_agent is not changed.
 - robot_agent has no fetch-and-hand-over goal for an arm robot. Its `deliver` goal (MoveTo + WaitForUnload)
   carries what is already loaded (a tray robot); the homeloop manifest keeps WaitForUnload as an alias of
   Handover, so deliver is not offered (declaring it made sage hand over an empty gripper, homeloop_robot
-  b6af562). "Bring me X" is an `on` goal to the speaker: sage asks "Where are you?" and puts X down at that
-  place, which does not satisfy the benchmark's `held_by(X, user)` (a handover); "give X to Grandpa" is put
-  down at a place too, so tasks with `held_by` atoms are out of reach for these loops. A message (`said_to`)
-  reaches its person only when sage says it at the place where they are (the ENV lists places, not people).
+  b6af562). "Bring me X" is an `on` goal to the speaker. Since round 2 that satisfies a `delivered[reach]` goal
+  when X ends on a support surface the person can reach (the person as a place binds to that surface); a
+  `delivered[hand]` goal (`explicit`, `no_surface`, `user_needs`) still needs a handover, which sage's `on` goal
+  gives only when the person has no reachable surface (Place becomes Handover). A message (`said_to`)
+  reaches its person only when sage says it at the place where they are.
+- `--llm fake`: `robot_agent_fake.understand_goals` turns a delivery into `on(X -> person)` when the mode a robot
+  would infer (the oracle's `observed_modes`, never the label) is reach, else the old mapping.
 - `say::text` programs of llm_direct carry no language; the robot package's `say` defaults to English, so a
   Korean sentence is logged as English and the `said_to` check (Korean keywords) fails.
 - ClosedLoop (grace, llm_direct) has no understand step and cannot refuse.

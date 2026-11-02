@@ -10,6 +10,8 @@
 | `report DIR` | re-render DIR/report.md from the run's files |
 | `show TASK_ID [--tasks FILE]` | print one task record |
 | `calibrate-knowno --split train --limit N --llm URL [--model M]` | conformal threshold for knowno_like -> planners/knowno_calib.json |
+| `python -m homeloop_bench.data delivery` | round 2 delivery rewrite of the task files ([tasks](tasks.md#delivery)); writes data/quality/delivery_report.json |
+| `python -m homeloop_bench.data datasheet` | rewrite docs/datasheet.md from the shipped quality reports (no LLM) |
 | `live-smoke --llm URL --model M [--limit 100] [--planners robot_agent:sage,progprompt_like] [--langs en,ko]` | the live smoke runs -> results/live_smoke/<planner>__<model>__<lang>/ |
 
 Defaults: `--split dev`, `--limit` all, `--seeds 1`, `--lang en`, `--profile real`, `--model

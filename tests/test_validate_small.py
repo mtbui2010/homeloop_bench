@@ -2,6 +2,7 @@ import json
 
 import yaml
 
+from homeloop_bench.gen.delivery import rewrite_all
 from homeloop_bench.gen.realism import report
 from homeloop_bench.gen.sample import Gen
 from homeloop_bench.gen.resplit import resplit
@@ -15,7 +16,10 @@ def test_small_generated_dataset_validates(tmp_path):
     paths = {}
     recs = []
     first = [r for s, rs in out.items() for r in assign_ids(rs, s, 77)]
-    for s, rs in resplit(first, 77, sizes={"train": 60, "dev": 20, "test": 40}).items():   # the pipeline's last step
+    split = resplit(first, 77, sizes={"train": 60, "dev": 20, "test": 40})
+    done = rewrite_all([r for s in split for r in split[s]])[0]      # the pipeline's last step: deliveries
+    for s in split:
+        rs = [r for r in done if r["split"] == s]
         recs += rs
         p = tmp_path / f"{s}.jsonl"
         with open(p, "w", encoding="utf-8") as f:

@@ -313,6 +313,7 @@ KO_GOAL_VERB = {
     "open": re.compile(r"열"),
     "closed": re.compile(r"닫"),
     "held_by": re.compile(r"가져다|갖다|가져와|가져올|가져가|건네|드려|드릴|전해|옮겨"),
+    "delivered": re.compile(r"가져다|갖다|가져와|가져올|가져가|건네|드려|드릴|전해|옮겨"),
     "said_to": re.compile(r"전해|말해|말씀|알려|얘기|여쭤|물어|전달|오라고|오시라고|가라고|하라고|하시라고"),
 }
 KO_NEXT_TO = re.compile(r"(옆에|곁에)\s*(\S+\s*)?(놓|두|둬)")
@@ -354,7 +355,7 @@ def ko_meaning_filters(rec: dict, para: str, tpl: str) -> list:
     for pred, rx in KO_GOAL_VERB.items():
         if pred in preds and rx.search(tpl) and not rx.search(para):
             why.append(f"ko_goal_verb_{pred}")
-    if "held_by" in preds and KO_NEXT_TO.search(para) and not KO_NEXT_TO.search(tpl):
+    if preds & {"held_by", "delivered"} and KO_NEXT_TO.search(para) and not KO_NEXT_TO.search(tpl):
         why.append("ko_handover_as_place")
     m = KO_SELF_HON.findall(para)
     if m and not any(x in tpl for x in m):

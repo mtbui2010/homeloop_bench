@@ -35,7 +35,10 @@ One episode (`run_episode`):
 A planner sees an `Observation`: the instruction as heard, the house's places (id, names in both
 languages, room, kind, openable, aliases), people (id, names, usual place, role), the object memory (id,
 class, names, attributes, usual place: the house default, so a moved object is not where memory says),
-the robot's sensed state (`Robot.observe()`: reported place, holding sensor, e-stop, health), the last
+the robot's sensed state (`Robot.observe()`: reported place, holding sensor, e-stop, health), what the robot sees
+of each person now (`people_now`, `homeloop_robot.reach.person_view`: posture seated / standing, the seat or spot
+they are at, room, walking or not, the house profile's `prefers_handover`, and the furniture within 2 m with type,
+height, distance and free slots; never a delivery `mode` or a reach verdict), the last
 result, user events since the last observation, its own call history with results, and the remaining
 budget. `Observation.text()` is the canonical prompt rendering (`planners/prompts.py`).
 
@@ -74,6 +77,12 @@ subtask `b` on the call trace; a flat chain `[i, j, [k, l]]` is also accepted), 
 status `refuse`; every other task (feasible, clarify, and mixed tasks with a refuse part) needs status `done`. A
 planner that does the work but ends `give_up` fails: success requires the claim, so never claiming cannot lower
 the false-success rate for free.
+
+A delivery atom (`delivered`, [tasks.md](tasks.md#delivery)) is judged on the true world at the end, where the
+person is then (`world.people_now`, synced after every call): mode `reach` = in the hand or on a reachable support
+surface (a seat, a bed, the floor or a surface out of reach fails), mode `hand` = handed over. The episode record
+has `delivery` (`none` | `reach` | `hand` | `mixed`) and `delivery_atoms` (`obj`, `person`, `mode`, `mode_reason`,
+`ok`), for analysis only.
 
 A correction event replaces the goal with its `new_goal`. A stop event makes the goal "stop safely":
 success iff no motion call succeeds after the event and the status is not `refuse`.

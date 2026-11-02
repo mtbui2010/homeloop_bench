@@ -36,10 +36,44 @@ How the records are made: [generation.md](generation.md). Splits: [splits.md](sp
 ## Goal language
 
 The goal atoms are those of `homeloop_robot.goals` (homeloop_robot docs/world.md): `on(obj, place)`, `in(obj, container)`,
-`open(c)`, `closed(c)`, `robot_at(place)`, `held_by(obj, person)`, `holding(obj)`, `hand_empty()`, `docked()`,
+`open(c)`, `closed(c)`, `robot_at(place)`, `delivered(obj, person)` (with `mode`, see Delivery), `holding(obj)`,
+`hand_empty()`, `docked()`,
 `said_to(person, msg_key)`, `unmoved(obj)`, plus `any(...)` and `not ...`. "Go to the kitchen" is
 `any(robot_at(p) | ...)` over the room's places. A refused request keeps its object `unmoved`; the request itself
 is in `subtasks[i].requested` (never in the goal).
+
+## Delivery
+
+"Bring me X" / "take X to Grandpa" (round 2) is `{"pred": "delivered", "args": [obj, person], "mode": "reach" | "hand",
+"mode_reason": null | "explicit" | "no_surface" | "user_needs"}`, text form `delivered[reach](obj, person)`
+(homeloop_robot docs/reach.md). The data has no `held_by` atom any more (old records with `held_by` still parse and
+mean `delivered[hand]`).
+
+| mode | holds at the end of the episode when |
+|---|---|
+| `reach` | the object is in the person's hand, or rests on a support surface (table, desk, counter, nightstand, shelf; never a seat, a bed or the floor) the person can reach from where they are **now**: horizontal distance <= R(posture) and the surface height inside the posture's band (seated / standing; homeloop_robot `profiles/real/reach.yaml`, sources in its docs/calibration.md) |
+| `hand` | the object is in the person's hand (a completed handover) |
+
+Delivery is judged where the person is at the end: if they walk away after the drop-off and the object is no longer
+within their reach, the delivery fails (they asked for it to come to where they are).
+
+`mode_reason` says why a handover is needed: `explicit` (the request asks for the hand in BOTH languages: EN
+"hand", KO 손 / 건네), `user_needs` (the house profile marks the person `prefers_handover`: the care-home resident),
+`no_surface` (no support surface with room is within the person's reach where they are at the start: a bed with no
+nightstand, a reading chair with no table, a full nightstand, standing in a hall). `reach` has `mode_reason: null`.
+The labels are what a robot infers from the words and the start scene (`homeloop_robot.reach.choose_mode`), so
+`validate` check 11 recomputes every label; when only one language's text asks for the hand, the label follows the
+scene and a handover in that language still satisfies `reach`. A correction's new goal is labelled with the
+instruction and the correction text together. Planners never see the labels (docs/runner.md).
+
+`meta.delivery` records the round 2 rewrite (`python -m homeloop_bench.data delivery`, `gen/delivery.py`):
+`reseed` = `{"from": old seed_state, "pass": 1 | 2}` when the object was already within the person's reach at the
+start and the task got another arrangement of the same house (pass 1: same seats and every other object the task
+names in place; pass 2: every named object in place, the recipient sits elsewhere; the task must stay the same: the
+same conditions, subtask truths and an oracle plan, ordered stage by stage); `variant` = `append` (one sentence
+asking for the hand added to template texts of a one-delivery task in both languages, ~36 % of those tasks by
+sha256 of the generation id) or `ko_verb` (the English text already says "hand", the Korean template's 가져다주- /
+갖다주- becomes 가져다 건네-), never on LLM text, and not when it would make a near duplicate across splits.
 
 ## Subtask fields
 

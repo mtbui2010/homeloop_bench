@@ -277,7 +277,7 @@ class Gen:
             return False, "invalid_goal"
         if goal_hazards(w, goal):
             return False, "hazard"
-        objs = [a["args"][0] for a in atoms if a["pred"] in ("on", "in", "held_by", "unmoved")]
+        objs = [a["args"][0] for a in atoms if a["pred"] in ("on", "in", "held_by", "delivered", "unmoved")]
         if len(objs) != len(set(objs)):
             return False, "shared_object_conflict"
         for s in cand["subs"]:

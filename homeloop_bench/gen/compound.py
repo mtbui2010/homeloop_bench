@@ -60,11 +60,11 @@ class Pools:
 
 
 def _objs(atoms):
-    return [a["args"][0] for a in atoms if a.get("pred") in ("on", "in", "held_by")]
+    return [a["args"][0] for a in atoms if a.get("pred") in ("on", "in", "held_by", "delivered")]
 
 
 def _distinct(*atoms) -> bool:
-    objs = [a["args"][0] for a in atoms if a.get("pred") in ("on", "in", "held_by", "unmoved")]
+    objs = [a["args"][0] for a in atoms if a.get("pred") in ("on", "in", "held_by", "delivered", "unmoved")]
     return len(objs) == len(set(objs))
 
 

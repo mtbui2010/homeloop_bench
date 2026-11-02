@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from collections import Counter
 
+from .delivery import delivery_stats
+
 LONG = {"en": 25, "ko": 15}
 
 
@@ -30,4 +32,5 @@ def stats(recs: list) -> dict:
         "by_structure": by("structure"),
         "long_share": round(sum(1 for r in recs if is_long(r)) / max(1, n), 4),
         "mixed_kind_share": round(sum(1 for r in recs if r.get("mixed_kind")) / max(1, n), 4),
+        "delivery": delivery_stats(recs),
     }

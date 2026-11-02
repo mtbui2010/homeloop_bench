@@ -39,6 +39,8 @@ the records: sorted keys, floats rounded to 6 decimals, no wall clock.
 | `status_counts` | episodes per final status |
 | `subtask_success` | mean share of correct subtasks over multi-subtask episodes |
 | `by_kind`, `by_capability`, `by_ambiguity`, `by_lang`, `by_house`, `by_structure`, `by_n_subtasks` | per label `{n, success, success_ci95}` (task-clustered interval) |
+| `by_delivery` | the same per delivery category of the episode's task: `none` (no delivery), `reach`, `hand`, `mixed` (both modes) |
+| `delivery_atoms` | per delivery label `mode:mode_reason`: `{n, held}`, the atoms and the share that held at the end (judged where the person is then) |
 | `config` | planner, split, limit, profile, seeds, lang, llm ("fake" / "url" / null), model, model_digest (Ollama, URL runs), profile_sha, data_sha, versions (package versions and the git commits of homeloop_bench, homeloop_robot and, for robot_agent planners, robot_agent and embodiplan), budgets |
 
 Report results on the held-out houses (`by_house`: `korean_apt_84`, `care_home_suite`) next to the others: the

@@ -36,7 +36,12 @@ Everything is seeded (`--gen-seed 2026`): the same code gives the same files. Wi
    no near duplicate in another split; and **the oracle solves it through the real robot in the `ideal` profile**
    (`gen/oracle_check.run_shim`, which also rejects tasks where a seated person causes a protective stop).
 5. **Splits and ids** (`gen/split.py`): shuffled, interleaved over (kind, capability), numbered `hl-<split>-NNNNNN`.
-6. **Paraphrases** (below), then validation, realism and quality reports.
+6. **Paraphrases** (below), then `resplit` ([splits.md](splits.md)).
+7. **Deliveries** (round 2, `python -m homeloop_bench.data delivery`, `gen/delivery.py`): `held_by` atoms become
+   `delivered(obj, person)` with a mode and its reason, a share of the template texts get explicit-hand wording,
+   and deliveries already within the person's reach at the start get another arrangement
+   ([tasks.md](tasks.md#delivery)). Deterministic and idempotent; ids, splits and LLM texts are kept.
+8. Validation, realism and quality reports (`datasheet` rewrites docs/datasheet.md from the shipped reports).
 
 ## Families
 

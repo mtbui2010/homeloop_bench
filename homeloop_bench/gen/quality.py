@@ -106,6 +106,11 @@ def run(url="http://127.0.0.1:11536", model="qwen3-vl:8b-instruct", n=600, offli
     para = paraphrase_report(recs)
     _write(QUALITY_DIR / "paraphrase_quality.json", para)
     write_md(rep, para)
+    realism = None
+    rp = QUALITY_DIR / "realism_report.json"
+    if rp.exists():
+        realism = json.load(open(rp, encoding="utf-8"))
+    write_datasheet(recs, para, {k: rep[k] for k in ("n_backtranslated", "chrf", "entities_mean")}, realism)
     log(f"back-translation report: {len(ok)} of {len(smp)} tasks, chrF mean {rep['chrf'].get('mean')}, "
         f"entities kept {rep['entities_mean']}; new LLM calls {llm.n_calls}")
     return 0 if len(ok) >= 500 else 1
@@ -176,3 +181,104 @@ def write_md(rep, para):
                  f"{x['template']['ko']} -> {x['paraphrase']['ko']} (chrF {x['chrf']})")
     (REPO_DIR / "docs").mkdir(exist_ok=True)
     (REPO_DIR / "docs" / "paraphrase_quality.md").write_text("\n".join(L) + "\n", encoding="utf-8")
+
+
+# ── datasheet (Gebru et al., "Datasheets for Datasets", arXiv:1803.09010) ───────────────────────────────
+def _tab(d, total, head):
+    L = [f"| {head} | tasks | share |", "|---|---|---|"]
+    for k, v in sorted(d.items(), key=lambda x: -x[1]):
+        L.append(f"| {k} | {v} | {v / total:.1%} |")
+    return L
+
+
+def write_datasheet(recs, para=None, bt=None, realism=None):
+    from .stats import stats
+    s = stats(recs)
+    n = s["total"]
+    para = para or {}
+    run_info = para.get("run") or {}
+    by_split_house = Counter((r["split"], r["house"]) for r in recs)
+    hz = Counter(h["code"] for r in recs for h in r["hazards"])
+    L = ["# Datasheet: HomeLoop-Bench tasks", "",
+         "Following Gebru et al., *Datasheets for Datasets* (https://arxiv.org/abs/1803.09010). The numbers below are "
+         "computed from the shipped files by `python -m homeloop_bench.data quality` (see [generation.md](generation.md)).",
+         "", "## Motivation", "",
+         "HomeLoop-Bench evaluates household robot task planners in closed loop: plan, act, verify, replan, ask and "
+         "stay safe, on a stochastic mock robot (homeloop_robot) whose failure rates come from published robot "
+         "experiments. The instruction sets it builds on (ALFRED, SayCan, AmbiK) are English-only. The tasks here are "
+         "bilingual (English and Korean), cover what people actually ask a home robot (fetch, put away, search, "
+         "open, tidy, pass on a message, go somewhere, and combinations of these), include ambiguous requests the "
+         "robot should ask about, unsafe or impossible requests it should refuse, mid-task corrections, and long "
+         "multi-task utterances, and every task has a machine-checkable goal on the true world state.",
+         "", "Created by Trung Bui for the HomeLoop RA-L paper and public release (Apache-2.0).", "",
+         "## Composition", "",
+         f"- {n} tasks: train {s['by_split'].get('train', 0)}, dev {s['by_split'].get('dev', 0)}, test "
+         f"{s['by_split'].get('test', 0)} ([splits.md](splits.md)); every task has English and Korean text "
+         f"(en {s['en']}, ko {s['ko']}).",
+         f"- {len(s['by_house'])} house layouts of homeloop_robot; `korean_apt_84` and `care_home_suite` only in test.",
+         "- A task = a world (`house`, `seed_state`), the instruction in both languages, the goal, labels, the "
+         "simulated user's script and, for compound tasks, the subtasks ([tasks.md](tasks.md)).",
+         "- No real people: household members are roles (mom, grandpa, the caregiver); no personal data.", ""]
+    L += ["### Labels", ""] + _tab(s["by_kind"], n, "kind") + [""] + _tab(s["by_capability"], n, "capability") + [""] + \
+        _tab(s["by_ambiguity"], n, "ambiguity") + [""] + _tab(s["by_source"], n, "source") + [""]
+    L += ["Label policy: `homeloop_bench/data/label_policy.yaml`. Every kind, capability and ambiguity value is >= 5 % "
+          "of the tasks except `ambiguity = safety`, which is documented as smaller by design: a safety ambiguity "
+          "needs a real dangerous confusion in the house (two medicine bottles, medicine vs. vitamins for an older "
+          "person, scissors for a child), which only a few houses have, and every text must be unique. Among the "
+          "ambiguous tasks the shares are preference / common sense / safety = "
+          f"{s['by_ambiguity'].get('preference', 0)} / {s['by_ambiguity'].get('common_sense', 0)} / "
+          f"{s['by_ambiguity'].get('safety', 0)}; AmbiK (arXiv:2506.04089, Sec. 3.2) has 42 / 42.5 / 15.5 %.", ""]
+    L += ["### Compound instructions (DESIGN 14)", ""] + _tab(s["by_structure"], n, "structure") + [""]
+    L += [f"- subtasks per task: {s['by_subtasks']} (>= 2: "
+          f"{sum(v for k, v in s['by_subtasks'].items() if int(k) >= 2) / n:.1%}, 3: "
+          f"{sum(v for k, v in s['by_subtasks'].items() if int(k) >= 3) / n:.1%})",
+          f"- long (EN >= 25 words or KO >= 15 어절): {s['long_share']:.1%}; mixed kinds in one utterance: "
+          f"{s['mixed_kind_share']:.1%}",
+          "- conditional requests have no opened source for their exact wording (assumed) and are capped at 5 %.", ""]
+    L += ["### Houses", "", "| house | train | dev | test |", "|---|---|---|---|"]
+    for h in sorted(s["by_house"]):
+        L.append(f"| {h} | {by_split_house.get(('train', h), 0)} | {by_split_house.get(('dev', h), 0)} | "
+                 f"{by_split_house.get(('test', h), 0)} |")
+    L += ["", "Houses with more people and rooms (shared flat, couple flat, Korean 59 m2 apartment) have more distinct "
+              "requests, so they hold more tasks; single-person homes cannot have messages or hand-overs to others.",
+          "", "### Hazards of the refused requests", ""] + _tab(dict(hz), max(1, sum(hz.values())), "hazard code") + [""]
+    L += ["## Collection process", "",
+          "- Templates written by the authors (English and Korean separately, not translated) over a shared slot set; "
+          "families are cited task types from published datasets (ALFRED, SayCan, TEACh, AmbiK, KnowNo, "
+          "SafeAgentBench, RoboGuard, RoboCup@Home GPSR, EmbodiedBench, HomeRobot OVMM) - [realism.md](realism.md).",
+          "- Worlds are the homeloop_robot houses in seeded arrangements; the goal is checked against the oracle, "
+          "which must solve every feasible and clarify task through the robot in the `ideal` profile.",
+          f"- LLM paraphrases: local `{run_info.get('model', 'qwen3-vl:8b-instruct')}` (Ollama on one GPU), generated "
+          "2026-11-02; filters, back-translation chrF and a same-meaning judge "
+          f"([paraphrase_quality.md](paraphrase_quality.md)); {para.get('n_paraphrased', 0)} tasks "
+          f"({para.get('share', 0):.1%}) are `llm_paraphrase`, the rest `template`.", "",
+          "## Preprocessing / cleaning", "",
+          "- Exact duplicates (normalised text, per language) are removed everywhere; near duplicates across splits "
+          "(Jaccard >= 0.9 of character n-grams) are removed.",
+          "- Realism rules R-a..R-h (typical receptacles, sizes, payload, sources, kind semantics, language, houses) "
+          "hold for every task (`data/quality/realism_report.json`" +
+          (f": {realism.get('violations', 0)} violations, {realism.get('intentional', 0)} intentional refused "
+           "requests" if realism else "") + ").",
+          "- Korean in 해요체; colloquially dropped object particles in "
+          f"{(realism or {}).get('ko_particle_dropped_share', 0):.1%} of the Korean texts (<= 30 %).", ""]
+    if bt:
+        L += [f"- Korean back-translation check on {bt.get('n_backtranslated')} sampled tasks: chrF mean "
+              f"{bt.get('chrf', {}).get('mean')}, entity phrases kept {bt.get('entities_mean')} "
+              "(`data/quality/ko_backtranslation_report.json`).", ""]
+    L += ["## Uses", "",
+          "- Intended: closed-loop evaluation of LLM / VLM task planners for home robots in simulation (success, goal-"
+          "condition success, false success, recovery, help and rejection rates, safety), in English and Korean, with "
+          "paired tests between planners.",
+          "- Out of scope: training or evaluating real robots without a real-world safety layer; judging Korean or "
+          "English language quality in general; any claim about real people (the users are scripted).",
+          "- Known limits: the world is symbolic; utterances are template- or LLM-written, not recorded speech (the "
+          "robot's ASR noise model adds recognition errors at run time); clarify answers are scripted; the "
+          "paraphrase model is an 8B local model, so some paraphrases are plainer than human speech.", "",
+          "## Distribution", "",
+          "- Apache-2.0, with the code (`homeloop_bench`), in `homeloop_bench/data/tasks/*.jsonl`; the LLM cache "
+          "(`homeloop_bench/data/llm_cache/paraphrase.jsonl`) is shipped so the paraphrase step is reproducible.", "",
+          "## Maintenance", "",
+          "- Regenerate with `python -m homeloop_bench.data generate` + `paraphrase --offline`; any change must keep "
+          "`validate --strict` and `realism --strict` green. Issues and corrections go to the repository's tracker.",
+          ""]
+    (REPO_DIR / "docs" / "datasheet.md").write_text("\n".join(L), encoding="utf-8")

@@ -49,6 +49,13 @@ def test_test_only_ids_are_a_fifth():
     assert len(CP.TEST_PATTERNS) / CP.N_PAT == 0.2
 
 
+def _ok(errs, fam, text):
+    """Rendering never leaves residue, repeats a word or breaks the language rules; a text that is too short or
+    too long for its type is possible (the sampler rejects it)."""
+    hard = [e for e in errs if not e.startswith("length")]
+    assert not hard, (fam, text, hard)
+
+
 def test_every_family_renders_clean_text_somewhere():
     rng = random.Random(7)
     seen = set()
@@ -60,7 +67,7 @@ def test_every_family_renders_clean_text_somewhere():
                 if r is None:
                     continue
                 for lg in ("en", "ko"):
-                    assert not check_text(r[lg], lg), (fam, r[lg], check_text(r[lg], lg))
+                    _ok(check_text(r[lg], lg), fam, r[lg])
                 seen.add(fam)
         P = CP.Pools(lex)
         for fam, fn in CP.FAMILIES.items():
@@ -70,7 +77,7 @@ def test_every_family_renders_clean_text_somewhere():
                 if r is None:
                     continue
                 for lg in ("en", "ko"):
-                    assert not check_text(r[lg], lg, compound=True), (fam, r[lg], check_text(r[lg], lg, True))
+                    _ok(check_text(r[lg], lg, compound=True), fam, r[lg])
                 seen.add("c:" + fam)
     assert len([s for s in seen if not s.startswith("c:")]) >= 13
     assert len([s for s in seen if s.startswith("c:")]) >= 25

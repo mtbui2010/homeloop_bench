@@ -67,6 +67,9 @@ def render(lex: Lex, op: dict, rng, tid: int) -> dict:
         s_en, s_ko = pair(EN.NAV_SUFFIX, KO.NAV_SUFFIX, rng)
         en = tidy(f"{wrap_en(vp_en, tid)} {s_en}")
         ko = tidy(f"{ko_sentence(args_ko, verb, tid, rng)} {s_ko}")
+    elif r_en and rng.random() < 0.4:                 # the reason after the request
+        en = tidy(f"{wrap_en(vp_en, tid)} {r_en}")
+        ko = tidy(f"{ko_sentence(args_ko, verb, tid, rng)} {r_ko}")
     else:
         en = tidy(f"{r_en} {wrap_en(vp_en, tid)}")
         ko = tidy(f"{r_ko} {ko_sentence(args_ko, verb, tid, rng)}")
@@ -81,7 +84,7 @@ def render(lex: Lex, op: dict, rng, tid: int) -> dict:
 def _pick_reason(lex, op, c, rng):
     fam = op["fam"]
     w = lex.w
-    if rng.random() > 0.35:
+    if rng.random() > (0.35 if fam in ("fetch.me", "articulate.open", "correction.object", "correction.stop") else 0.22):
         return None
     if fam in ("fetch.me", "correction.object", "correction.stop") and c.oid:
         rs = EN.FETCH_REASON.get(w.objects[c.oid].cls) or []

@@ -80,6 +80,8 @@ def movable(lex: Lex, oid: str) -> bool:
     o = lex.w.objects[oid]
     if not CLASSES[o.cls].liftable or o.at not in lex.w.house.places:
         return False
+    if lex.off_limits_place(o.at):
+        return False
     pl = lex.w.house.places[o.at]
     if pl.kind in ("floor", "dock"):
         return False
@@ -156,7 +158,7 @@ def dests(lex: Lex, oid: str, container: bool) -> list:
     o = w.objects[oid]
     out = []
     for pid, p in sorted(w.house.places.items()):
-        if pid == o.at or p.kind in ("floor", "dock"):
+        if pid == o.at or p.kind in ("floor", "dock") or lex.off_limits_place(pid):
             continue
         if container != (p.kind == "container"):
             continue
@@ -245,7 +247,7 @@ def opts_contain(lex):
 def opts_articulate(lex):
     w = lex.w
     for pid, p in sorted(w.house.places.items()):
-        if p.kind == "container" and p.container.openable and pid not in w.opened:
+        if p.kind == "container" and p.container.openable and pid not in w.opened and not lex.off_limits_place(pid):
             a = A("open", pid)
             yield opt("articulate.open", "articulate", "feasible", "none", {"all": [a]}, [a])
 
@@ -340,7 +342,7 @@ def opts_navigate(lex):
     w = lex.w
     start_room = w.house.places[w.house.robot_start].room
     for rid in sorted(w.house.rooms):
-        if rid == start_room:
+        if rid == start_room or lex.off_limits_room(rid):
             continue
         a = room_goal(w, rid)
         yield opt("navigate.room", "navigate", "feasible", "none", {"all": [a]}, [a], room=rid)
@@ -514,6 +516,8 @@ def opts_infeasible(lex):
         goal = {"refuse": True, "all": [A("unmoved", oid)]}
         reqs = []
         for pid, p in sorted(w.house.places.items()):
+            if lex.off_limits_place(pid):
+                continue
             cat = place_category(p)
             fit = {"laundry_basket": ("Bed",), "houseplant": ("Shelf", "TVStand", "SideTable", "CounterTop"),
                    "water_jug": ("CounterTop",)}[o.cls]

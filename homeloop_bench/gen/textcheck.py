@@ -8,8 +8,10 @@ import re
 RESIDUE = re.compile(r"[{}<>\[\]]|\bNone\b|\bnull\b|_")
 CJK = re.compile(r"[぀-ヿ㐀-鿿豈-﫿]")
 HANGUL = re.compile(r"[가-힣]")
-# Latin tokens allowed in Korean text: the TV and the shared flat's room letters ("A 방", "B 룸메이트")
-KO_LATIN_OK = {"TV", "A", "B", "C"}
+# Latin tokens allowed in Korean text: the TV
+KO_LATIN_OK = {"TV"}
+# letter placeholders instead of names ("roommate B", "room A", "B 룸메이트", "A 방")
+LETTER_NAME = re.compile(r"\b(roommate|room|person|user|guest)\s+[A-Z]\b|\b[A-Z]\s+(룸메이트|방)|[A-Z]\s*룸메이트")
 # a Korean sentence ends in 해요체: -요 / -세요 / -죠 (with -요 after any stem: 줄래요, 있어요, 주고요, 거예요)
 KO_END = re.compile(r"(요|죠)[.?!]?$")
 LEN = {"single": {"en": (3, 50), "ko": (2, 35)}, "compound": {"en": (8, 95), "ko": (5, 70)}}
@@ -33,6 +35,8 @@ def check_text(text: str, lang: str, compound: bool = False) -> list:
         return ["empty text"]
     if RESIDUE.search(text):
         errs.append(f"template residue in {text!r}")
+    if LETTER_NAME.search(text):
+        errs.append(f"letter placeholder name in {text!r}")
     toks = re.findall(r"\w+", text.lower())
     for a, b in zip(toks, toks[1:]):
         if a == b and a not in ("아니",):

@@ -50,7 +50,8 @@ class Pools:
         for oid in sorted(w.objects):
             o = w.objects[oid]
             h = F._yaml_home(w, oid)
-            if h and h != o.at and F.movable(lex, oid) and w.house.places[o.at].kind != "container":
+            if h and h != o.at and F.movable(lex, oid) and w.house.places[o.at].kind != "container" \
+                    and not lex.off_limits_place(h):
                 if F.placement_ok(w, o.cls, h)[0] and F.room_ok(lex, oid, h) and F.private_ok(lex, oid, h):
                     self.home.append(A("in" if w.house.places[h].kind == "container" else "on", oid, h))
 
@@ -239,9 +240,9 @@ def _cond_pairs(P):
         h = F._yaml_home(w, oid)
         if not F.movable(P.lex, oid) and not (o.at == h):
             continue
-        if not h or w.house.places[h].kind != "container":
+        if not h or w.house.places[h].kind != "container" or P.lex.off_limits_place(h):
             continue
-        outs = [x for x in o.alt if w.house.places[x].kind != "container"]
+        outs = [x for x in o.alt if w.house.places[x].kind != "container" and not P.lex.off_limits_place(x)]
         homes = [h]
         if not outs:
             continue
@@ -293,7 +294,7 @@ def fam_cond_bring_else(P, rng):             # conditional: if X is on S bring i
         oid = a["args"][0]
         o = P.w.objects[oid]
         h = F._yaml_home(P.w, oid)
-        if not h or P.w.house.places[h].kind == "container":
+        if not h or P.w.house.places[h].kind == "container" or P.lex.off_limits_place(h):
             continue
         cond = A("on", oid, h)
         now = G.holds(cond, P.w)
@@ -614,31 +615,53 @@ FAMILIES = {
 CTX_EN = {
     "guests": ["We have guests coming over tonight and the place is a mess.",
                "My daughter is visiting this afternoon and the place is a bit of a mess.",
-               "Some friends are dropping by in an hour, so I want the place to look decent."],
-    "tidy_morning": ["I want to tidy up a bit before lunch.", "The house is a mess after the weekend."],
+               "Some friends are dropping by in an hour, so I want the place to look decent.",
+               "My in-laws are coming for dinner and the house isn't ready.",
+               "A neighbor is popping in later, and things are lying all over the place.",
+               "The cleaner comes tomorrow morning, so let's clear the surfaces tonight."],
+    "tidy_morning": ["I want to tidy up a bit before lunch.", "The house is a mess after the weekend.",
+                     "Let's get things back in order this morning.", "It's Saturday and I finally have time to tidy up."],
     "after_breakfast": ["We just finished breakfast and things are lying around.",
-                        "Breakfast is over and the table is still a mess."],
+                        "Breakfast is over and the table is still a mess.",
+                        "Everyone has left for the day and the kitchen is a mess.",
+                        "The kids made a mess at breakfast again."],
     "evening_tv": ["I'm going to sit down and watch the news for a while.",
-                   "I want to relax in front of the TV for a bit."],
-    "going_out": ["I'm running late for an appointment.", "I have to leave in a few minutes and I'm still not ready."],
-    "cooking": ["I'm about to start cooking dinner.", "I'm in the middle of making dinner."],
-    "bedtime": ["I'm getting ready for bed.", "It's getting late and I'm about to go to bed."],
-    "back_pain": ["My back is really bad today, so I'd rather not get up.", "My knees hurt today, I don't want to walk around."],
-    "pills": ["It's time for my evening pills.", "I have to take my medicine now, the doctor said not to skip it."],
-    "cleaning_help": ["{P} wants to help me clean up the kitchen.", "{P} says {pp_sub} wants to help with the cleaning today."],
+                   "I want to relax in front of the TV for a bit.", "My drama is about to start.",
+                   "I'm settling in on the sofa for the evening."],
+    "going_out": ["I'm running late for an appointment.", "I have to leave in a few minutes and I'm still not ready.",
+                  "The taxi will be here any minute.", "I'm heading to the doctor's soon."],
+    "cooking": ["I'm about to start cooking dinner.", "I'm in the middle of making dinner.",
+                "My hands are full with the cooking right now.", "The soup is on the stove and I can't leave it."],
+    "bedtime": ["I'm getting ready for bed.", "It's getting late and I'm about to go to bed.",
+                "I'm already in bed and don't want to get up.", "I'm about to turn in for the night."],
+    "back_pain": ["My back is really bad today, so I'd rather not get up.", "My knees hurt today, I don't want to walk around.",
+                  "I just sat down and my legs are tired.", "I'm not feeling great today, so I'm staying put."],
+    "pills": ["It's time for my evening pills.", "I have to take my medicine now, the doctor said not to skip it.",
+              "I almost forgot my medicine again.", "It's past eight, time for my pills."],
+    "cleaning_help": ["{P} wants to help me clean up the kitchen.", "{P} says {pp_sub} wants to help with the cleaning today.",
+                      "{P} keeps asking to help me clean.", "{P} wants to be a big helper with the chores today."],
 }
 CTX_KO = {
     "guests": ["오늘 저녁에 손님이 오는데 집이 너무 지저분하네요.", "오후에 딸이 온다는데 집이 좀 어수선하네요.",
-               "한 시간 뒤에 친구들이 온대요. 집 좀 치워야겠어요."],
-    "tidy_morning": ["점심 전에 좀 치우려고요.", "주말 지나고 집이 엉망이에요."],
-    "after_breakfast": ["방금 아침 다 먹었는데 물건들이 여기저기 나와 있네요.", "아침 먹고 식탁이 아직 엉망이에요."],
-    "evening_tv": ["뉴스 좀 보려고 앉았어요.", "텔레비전 보면서 좀 쉬려고요."],
-    "going_out": ["약속에 늦을 것 같아요.", "몇 분 있다가 나가야 하는데 아직 준비가 안 됐어요."],
-    "cooking": ["이제 저녁 하려고요.", "지금 저녁 준비하는 중이에요."],
-    "bedtime": ["이제 자려고요.", "시간이 늦었네요. 곧 잘 거예요."],
-    "back_pain": ["오늘 허리가 너무 아파서 일어나기가 힘들어요.", "오늘 무릎이 아파서 걷기가 싫네요."],
-    "pills": ["저녁 약 먹을 시간이에요.", "이제 약 먹어야 해요. 의사 선생님이 거르지 말라고 했어요."],
-    "cleaning_help": ["{P:이} 주방 청소를 돕고 싶대요.", "{P:이} 오늘 청소를 같이 하고 싶대요."],
+               "한 시간 뒤에 친구들이 온대요. 집 좀 치워야겠어요.", "시댁 식구들이 저녁 먹으러 오는데 아직 준비가 안 됐어요.",
+               "이따 이웃이 잠깐 들른대요. 물건이 여기저기 널려 있네요.", "내일 아침에 청소하시는 분이 오니까 오늘 좀 치워 두려고요."],
+    "tidy_morning": ["점심 전에 좀 치우려고요.", "주말 지나고 집이 엉망이에요.", "오늘 아침에 좀 정리해야겠어요.",
+                     "토요일이라 드디어 정리할 시간이 생겼어요."],
+    "after_breakfast": ["방금 아침 다 먹었는데 물건들이 여기저기 나와 있네요.", "아침 먹고 식탁이 아직 엉망이에요.",
+                        "다들 나가고 나니까 주방이 엉망이에요.", "애들이 아침 먹으면서 또 어질러 놨어요."],
+    "evening_tv": ["뉴스 좀 보려고 앉았어요.", "텔레비전 보면서 좀 쉬려고요.", "드라마가 곧 시작해요.",
+                   "저녁에는 소파에서 좀 쉬려고요."],
+    "going_out": ["약속에 늦을 것 같아요.", "몇 분 있다가 나가야 하는데 아직 준비가 안 됐어요.", "택시가 곧 와요.",
+                  "곧 병원에 가야 해요."],
+    "cooking": ["이제 저녁 하려고요.", "지금 저녁 준비하는 중이에요.", "지금 요리하느라 손이 없어요.",
+                "국을 끓이고 있어서 자리를 못 비워요."],
+    "bedtime": ["이제 자려고요.", "시간이 늦었네요. 곧 잘 거예요.", "벌써 누웠는데 일어나기 싫어요.", "이제 그만 자야겠어요."],
+    "back_pain": ["오늘 허리가 너무 아파서 일어나기가 힘들어요.", "오늘 무릎이 아파서 걷기가 싫네요.",
+                  "방금 앉았는데 다리가 너무 피곤해요.", "오늘 몸이 좀 안 좋아서 그냥 앉아 있으려고요."],
+    "pills": ["저녁 약 먹을 시간이에요.", "이제 약 먹어야 해요. 의사 선생님이 거르지 말라고 했어요.",
+              "또 약 먹는 걸 깜빡할 뻔했어요.", "여덟 시가 넘었네요. 약 먹을 시간이에요."],
+    "cleaning_help": ["{P:이} 주방 청소를 돕고 싶대요.", "{P:이} 오늘 청소를 같이 하고 싶대요.",
+                      "{P:이} 자꾸 청소를 돕겠다고 해요.", "{P:이} 오늘 집안일을 도와주겠대요."],
 }
 # English joins; {a} {b} {c} verb phrases, {A} capitalised first phrase
 EN_SEQ2 = ["Could you {a} and {b}?", "{A}, and then {b}, please.", "Can you {a}? And after that, {b}.",

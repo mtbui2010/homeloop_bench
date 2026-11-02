@@ -53,17 +53,22 @@ PEOPLE = {
     ("korean_apt_59", "grandpa"): ("Grandpa", "아버님", "him", True),
     ("korean_apt_84", "child"): ("my daughter", "딸", "her", False),
     ("korean_apt_84", "grandma"): ("Grandma", "어머님", "her", True),
-    ("shared_flat", "roommate_b"): ("roommate B", "B 룸메이트", "him", False),
-    ("shared_flat", "roommate_c"): ("roommate C", "C 룸메이트", "her", False),
 }
+# The shared flat's other roommates and their rooms are only named with letters in the house YAML ("roommate B",
+# "room C"); a person would use a name we must not invent, so tasks never mention them (realism extras check).
+OFF_LIMITS = {"shared_flat": {"rooms": {"room_b", "room_c"}, "people": {"roommate_b", "roommate_c"}}}
+# the user's own room in the shared flat: "my desk" / "제 책상" (the YAML names are "desk in room A")
+PLACE_OVERRIDE = {("shared_flat", "desk@room_a"): (["my desk"], ["제 책상", "제 방 책상"]),
+                  ("shared_flat", "desk_chair@room_a"): (["my desk chair", "my chair"], ["제 의자"]),
+                  ("shared_flat", "bed@room_a"): (["my bed"], ["제 침대"]),
+                  ("shared_flat", "closet@room_a"): (["my closet"], ["제 옷장", "제 방 옷장"])}
 # persona of the house's user (task record user.persona)
 PERSONA = {"care_home_suite": "older", "senior_flat": "older", "family_house": "child_present",
            "korean_apt_84": "child_present"}
 
 # rooms: how a person names them (en, ko); default = the house YAML name
 ROOM_EN_FIX = {"kids": "the kids' room", "room2": "the kid's room", "main": "the main room"}
-ROOM_HOUSE = {("shared_flat", "room_a"): ("my room", "제 방"), ("shared_flat", "room_b"): ("roommate B's room", "B 룸메이트 방"),
-              ("shared_flat", "room_c"): ("roommate C's room", "C 룸메이트 방")}
+ROOM_HOUSE = {("shared_flat", "room_a"): ("my room", "제 방")}
 
 
 def plural(cls: str, name_en: str = "") -> bool:
@@ -108,6 +113,9 @@ class Lex:
 
     # ── places ─────────────────────────────────────────────────────────────────────────────────────
     def place_names(self, pid: str, lang: str) -> list:
+        ov = PLACE_OVERRIDE.get((self.house, pid))
+        if ov:
+            return list(ov[0 if lang == "en" else 1])
         p = self.w.house.places[pid]
         cands = [p.name.get(lang, "")] + list((p.aliases or {}).get(lang) or [])
         out = []
@@ -159,6 +167,15 @@ class Lex:
 
     def others(self) -> list:
         return sorted(p for p in self.w.people if (self.house, p) in PEOPLE)
+
+    def off_limits_place(self, pid: str) -> bool:
+        ol = OFF_LIMITS.get(self.house)
+        p = self.w.house.places.get(pid)
+        return bool(ol and p is not None and p.room in ol["rooms"])
+
+    def off_limits_room(self, rid: str) -> bool:
+        ol = OFF_LIMITS.get(self.house)
+        return bool(ol and rid in ol["rooms"])
 
     def person_names(self, pid: str) -> dict:
         p = self.w.people[pid]

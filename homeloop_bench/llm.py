@@ -141,10 +141,22 @@ class CachedLLM:
         resp = self.inner.chat(prompt, format=format, temperature=temperature, seed=seed)
         self._mem[k] = resp
         self.path.parent.mkdir(parents=True, exist_ok=True)
+        line = _dumps({"sha": k, "model": self.model, "prompt": prompt, "format": format,
+                       "temperature": float(temperature), "seed": int(seed), "response": resp}) + "\n"
         with self.path.open("a", encoding="utf-8") as f:
-            f.write(_dumps({"sha": k, "model": self.model, "prompt": prompt, "format": format,
-                            "temperature": float(temperature), "seed": int(seed), "response": resp}) + "\n")
+            _lock(f)                     # parallel workers (run --workers N) share one cache file
+            f.write(line)
+            f.flush()
         return resp
+
+
+def _lock(f) -> None:
+    """Exclusive advisory lock on an open file until it is closed (POSIX); a no-op elsewhere."""
+    try:
+        import fcntl
+    except ImportError:              # pragma: no cover - non-POSIX
+        return
+    fcntl.flock(f.fileno(), fcntl.LOCK_EX)
 
 
 class CountingLLM:

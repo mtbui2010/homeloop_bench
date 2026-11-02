@@ -157,8 +157,8 @@ def split_shares(tasks: list) -> dict:
 
 
 def _worker(args) -> list:
-    tasks, idx, planner_name, profile, seeds, lang, llm_spec, model, budgets = args
-    llm = make_llm(llm_spec, model) if llm_spec else None
+    tasks, idx, planner_name, profile, seeds, lang, llm_spec, model, budgets, cache_dir = args
+    llm = make_llm(llm_spec, model, cache_dir=cache_dir) if llm_spec else None
     out = []
     for i, t in zip(idx, tasks):
         for s in range(seeds):
@@ -197,7 +197,8 @@ def run_many(planner_name: str, split: Optional[str], limit: Optional[int], prof
         import multiprocessing as mp
         n = min(workers, len(tasks))
         chunks = [list(range(i, len(tasks), n)) for i in range(n)]
-        jobs = [([tasks[i] for i in ch], ch, planner_name, profile, seeds, lang, llm_spec, model, budgets)
+        cache_dir = str(Path(out_dir) / "llm_cache") if llm_spec and llm_spec != "fake" else None
+        jobs = [([tasks[i] for i in ch], ch, planner_name, profile, seeds, lang, llm_spec, model, budgets, cache_dir)
                 for ch in chunks]
         res = []
         with cf.ProcessPoolExecutor(max_workers=n, mp_context=mp.get_context("spawn")) as ex:

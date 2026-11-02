@@ -161,7 +161,7 @@ class EpisodeEnv:
     """One episode of one task (see the module doc)."""
 
     def __init__(self, task, profile: str, seed: int, lang: str = "en", budgets: Budgets = Budgets(),
-                 llm=None, privileged: bool = False):
+                 llm=None, privileged: bool = False, interrupt_via: str = "robot"):
         from .llm import CountingLLM
         td = task_dict(task)
         self.task = td
@@ -185,14 +185,19 @@ class EpisodeEnv:
         else:
             self.task_text = text
         self.interrupt = None
+        self._inject = None                      # a correction said to the planner without cancelling a call
+        self._n_motion = 0
         if hasattr(self.user, "interrupt_plan"):
             plan = self.user.interrupt_plan()
             if plan:
                 txt = plan.get("text") or {}
                 txt = txt.get(lang, "") if isinstance(txt, dict) else str(txt)
                 self.interrupt = dict(plan)
-                self.robot.schedule_interrupt(int(plan.get("after_calls", 0)),
-                                              UserEvent(0.0, str(plan.get("kind", "stop")), txt, plan.get("new_goal")))
+                ev = UserEvent(0.0, str(plan.get("kind", "stop")), txt, plan.get("new_goal"))
+                if interrupt_via == "inject" and ev.kind == "correction":
+                    self._inject = (int(plan.get("after_calls", 0)), ev)
+                else:
+                    self.robot.schedule_interrupt(int(plan.get("after_calls", 0)), ev)
         self.subtasks = resolve_subtasks(td, self.world0)
         self.order = _order_groups(td.get("order")) if td.get("structure") == "ordered" else []
         self.goal_changed = False
@@ -282,6 +287,11 @@ class EpisodeEnv:
             self.budget_hit = True
             return {"ok": False, "code": "timeout", "msg": "episode budget exhausted", "data": {}, "duration_s": 0.0}
         k = len(self.calls)
+        if skill in MOTION:
+            self._n_motion += 1
+            if self._inject is not None and self._n_motion == self._inject[0] + 1:
+                self._on_event(self._inject[1], k)      # said before this call; the call itself runs
+                self._inject = None
         self._held_at.append(self.world.robot.holding)
         n_sem = len(self.world.semantic_violations)
         res = self.robot.call(skill, **args)

@@ -43,7 +43,8 @@ def run_episode(task, planner_name: str, profile: str, seed: int, lang: str, llm
     if llm is None and llm_spec:
         llm = make_llm(llm_spec, model)
     cls = planner_class(planner_name)
-    env = EpisodeEnv(task, profile, seed, lang, budgets, llm=llm, privileged=bool(getattr(cls, "privileged", False)))
+    env = EpisodeEnv(task, profile, seed, lang, budgets, llm=llm, privileged=bool(getattr(cls, "privileged", False)),
+                     interrupt_via=getattr(cls, "interrupt_via", "robot"))
     env.planner_name = planner_name
     planner = make_planner(planner_name, llm=env.llm())
     try:

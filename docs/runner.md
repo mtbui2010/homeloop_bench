@@ -19,7 +19,8 @@ One episode (`run_episode`):
    does not).
 3. The scripted interruption of the task (`user.interrupt`), or a random stop drawn by the user model, is
    armed on the robot: motion call number `after_calls + 1` returns `cancelled` and the event is delivered
-   to the planner in the next observation.
+   to the planner in the next observation. robot_agent planners get a correction through robot_agent's
+   own dialog channel instead ([robot_agent planners](robot_agent.md#interruptions)).
 4. The planner runs (`planner.run(env)`) and ends with `env.finish(status)`. A planner exception ends the
    episode with status `error` (only the exception type is recorded). An exhausted LLM budget gives
    status `budget`.

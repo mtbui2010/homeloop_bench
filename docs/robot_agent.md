@@ -23,8 +23,19 @@ without it and marks these planners unavailable.
    `robot_agent.connect.llm.init_llm_client` -> our client. A fresh run manager and run-control state.
 3. The agent namespace: `skill_registry` calls the `ra_skills` function by name; `device_manager` has a
    fake node; `_llm_cfg = {"name": "llama", "url": URL, "model": M, "num_ctx": 8192}`.
-4. `loop.run_blocking(instruction, lang)` is drained until the `done` event, the episode budget, or (after
+4. A run is started on robot_agent's run manager and bound to the thread (`begin_run`), as the API does.
+5. `loop.run_blocking(instruction, lang)` is drained until the `done` event, the episode budget, or (after
    a stop event) the next motion call. Final status: success -> done, refused -> refuse, else give_up.
+
+## Interruptions
+
+robot_agent ends a run when a step is `cancelled` (its recovery policy treats it as the person's stop), and
+takes changes of mind through its live dialog channel. So for these planners a scripted correction is not a
+cancelled skill call: when motion call `after_calls + 1` starts, the correction event is recorded (the goal
+changes to its `new_goal`) and the call runs; the adapter then says the correction text into the run with
+`run_manager.inject` (the router classifies it; AssistLoop applies pending changes at the next step
+boundary). A stop still cancels the motion call, as for every planner. ClosedLoop (grace, llm_direct) does
+not read pending changes, so it keeps the old goal.
 
 ## LLM calls
 
@@ -43,9 +54,7 @@ scores are not results.
 
 ## Known limitations (found with the fake runs)
 
-- Interruptions reach robot_agent as `cancelled` skill results. A correction's new goal is not injected
-  into the loop (robot_agent's run manager needs a live run thread for `inject`), so on correction tasks
-  the robot_agent planners keep the old goal.
+- ClosedLoop (grace, llm_direct) ignores injected corrections (only AssistLoop reads pending changes).
 - robot_agent moves only to ENV places. The homeloop ENV (`env_for`) lists places, not people, so a goal
   that needs the robot next to a person (a message, a handover to someone other than the user) has to go
   through the person's usual place.

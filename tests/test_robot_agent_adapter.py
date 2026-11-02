@@ -51,3 +51,9 @@ def test_backend_restored_after_episode():
     before = hb._backend
     run_episode(TASKS["fx-feas-000"], "robot_agent:llm_direct", "ideal", 0, "en", "fake")
     assert hb._backend is before
+
+
+def test_correction_is_injected_into_the_sage_run():
+    e = run_episode(TASKS["fx-cor-000"], "robot_agent:sage", "ideal", 0, "en", "fake")
+    assert e["goal_changed"] and e["events"][0]["kind"] == "correction"
+    assert not any(c["code"] == "cancelled" for c in e["calls"])     # injected, not a cancelled call

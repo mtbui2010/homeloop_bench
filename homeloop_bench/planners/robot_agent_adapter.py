@@ -183,6 +183,9 @@ def _status(final: dict | None) -> str:
 
 class _RobotAgentPlanner:
     privileged = False
+    # a correction reaches robot_agent as an utterance injected into the run (its live dialog channel),
+    # not as a cancelled skill (robot_agent stops a run on a cancelled step); a stop still cancels the call
+    interrupt_via = "inject"
     needs_llm = True
     loop_kind = "assist"         # assist | closed
     ra_planner = "grace"
@@ -224,8 +227,10 @@ class _RobotAgentPlanner:
         try:
             with _patched(pairs):
                 hb.set_backend(RobotProxy(env))
-                reset_manager()
+                manager = reset_manager()
                 run_control._CANCEL.clear()
+                dec = manager.start(goal=env.task_text, user_id="owner", role="owner")
+                run = dec.run if getattr(dec, "started", False) else None
                 run_control.begin_run()
                 agent = types.SimpleNamespace(skill_registry=HomeloopRegistry(),
                                               device_manager=types.SimpleNamespace(_ros_node=node),
@@ -235,14 +240,28 @@ class _RobotAgentPlanner:
                 loop._llm_client = client
                 final = None
                 n = 0
+                injected = 0
                 for ev in loop.run_blocking(env.task_text, lang=env.lang):
                     n += 1
                     e = {k: v for k, v in ev.items() if k not in ("world", "say_audio")}
                     if e.get("event") in ("done", "error"):
                         final = e
+                    # a user interruption (correction / stop) is said to the run, as a person would say it
+                    while run is not None and injected < len(env._events):
+                        uev = env._events[injected]
+                        injected += 1
+                        try:
+                            manager.inject(run.run_id, str(uev.get("text") or ""), user_id="owner", role="owner")
+                        except Exception:       # noqa: BLE001 - an injection failure leaves the run as it is
+                            pass
                     if env.over or n > MAX_EVENTS or env.stop_k is not None and self._stop_after(env):
                         break
                 self.final = final
+                if run is not None:
+                    try:
+                        manager.finish(run.run_id, ok=_status(final) == "done", outcome=str((final or {}).get("status")))
+                    except Exception:           # noqa: BLE001
+                        pass
         finally:
             fk.CURRENT["env"] = None
             hb.set_backend(old_backend)

@@ -81,10 +81,13 @@ scores are not results.
 - robot_agent moves only to ENV places. The homeloop ENV (`env_for`) lists places, not people, so a goal
   that needs the robot next to a person (a message, a handover to someone other than the user) has to go
   through the person's usual place.
-- Delivering maps to robot_agent's `deliver` goal (MoveTo + WaitForUnload). The homeloop manifest declares
-  `wait_for_unload` (the nearest person takes the object), so the goal kind is offered. robot_agent's "bring me
-  X" is an `on` goal to the speaker: it asks "Where are you?" and puts X down at that place, which does not
-  satisfy the benchmark's `held_by(X, user)` (a handover).
+- robot_agent has no fetch-and-hand-over goal for an arm robot. Its `deliver` goal (MoveTo + WaitForUnload)
+  carries what is already loaded (a tray robot); the homeloop manifest keeps WaitForUnload as an alias of
+  Handover, so deliver is not offered (declaring it made sage hand over an empty gripper, homeloop_robot
+  b6af562). "Bring me X" is an `on` goal to the speaker: sage asks "Where are you?" and puts X down at that
+  place, which does not satisfy the benchmark's `held_by(X, user)` (a handover); "give X to Grandpa" is put
+  down at a place too, so tasks with `held_by` atoms are out of reach for these loops. A message (`said_to`)
+  reaches its person only when sage says it at the place where they are (the ENV lists places, not people).
 - `say::text` programs of llm_direct carry no language; the robot package's `say` defaults to English, so a
   Korean sentence is logged as English and the `said_to` check (Korean keywords) fails.
 - ClosedLoop (grace, llm_direct) has no understand step and cannot refuse.

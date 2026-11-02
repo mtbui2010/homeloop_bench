@@ -1,0 +1,90 @@
+{
+ "accepted": {
+  "en": 4840,
+  "ko": 5440
+ },
+ "applied": {
+  "any": 5828,
+  "both": 4452,
+  "en": 4840,
+  "ko": 5440
+ },
+ "asked": {
+  "en": 9280,
+  "ko": 9774
+ },
+ "cache_misses_offline": {
+  "en": 0,
+  "ko_j": 0,
+  "ko_w": 0
+ },
+ "chrf_min": 35.0,
+ "frac": 0.6,
+ "llm_calls": {
+  "en": 64,
+  "ko_j": 4,
+  "ko_w": 22
+ },
+ "models": {
+  "en": {
+   "judge": "qwen3-vl:8b-instruct",
+   "prompt_version": "p1",
+   "writer": "qwen3-vl:8b-instruct"
+  },
+  "ko": {
+   "back_translation": "qwen3-vl:30b-a3b-instruct",
+   "judge": "qwen3-vl:30b-a3b-instruct",
+   "prompt_version": "k2",
+   "writer": "exaone3.5:latest"
+  }
+ },
+ "rejections": {
+  "en": {
+   "duplicate": 466,
+   "duplicate_of_accepted": 142,
+   "ending_only": 1577,
+   "entity_missing": 485,
+   "instruction_leak": 19,
+   "judge_different": 688,
+   "length_ratio": 7,
+   "near_duplicate": 288,
+   "new_entity": 13,
+   "realism_R-f": 90,
+   "too_similar": 2156,
+   "unchanged": 20
+  },
+  "ko": {
+   "R-g": 524,
+   "chrf_backtranslation": 101,
+   "duplicate": 608,
+   "duplicate_of_accepted": 174,
+   "empty": 2,
+   "ending_only": 627,
+   "entity_missing": 1091,
+   "judge_not_same_meaning": 530,
+   "ko_banmal": 14,
+   "ko_imperative_question": 113,
+   "ko_no_request": 471,
+   "ko_register": 51,
+   "ko_wrong_honorific": 286,
+   "length_ratio": 35,
+   "near_duplicate": 387,
+   "new_entity": 161,
+   "realism_R-f": 17,
+   "speaker_role_flip": 159,
+   "too_similar": 324,
+   "unchanged": 10
+  }
+ },
+ "rounds": {
+  "en": 3,
+  "ko": 4
+ },
+ "selected": 6004,
+ "share_of_all": {
+  "any": 0.5828,
+  "both": 0.4452,
+  "en": 0.484,
+  "ko": 0.544
+ }
+}

@@ -70,7 +70,12 @@ phase, see [live smoke](docs/live_smoke.md).
 
 ## License
 
-Apache-2.0 ([LICENSE](LICENSE)), except the Korean paraphrases written by EXAONE 3.5 (records with
-`paraphrase_model.ko = exaone3.5:latest` and their cache rows): those are EXAONE model Output under the EXAONE AI
-Model License 1.1 - NC, research use only; see [NOTICE](NOTICE) and the [datasheet](docs/datasheet.md#distribution).
+- Code: Apache-2.0 ([LICENSE](LICENSE)).
+- Data: the English texts, the templates in both languages, the goals and labels are Apache-2.0. The Korean
+  paraphrases written by EXAONE 3.5 (records with `paraphrase_model.ko = exaone3.5:latest`) and the LLM cache rows
+  with EXAONE output are **CC BY-NC 4.0** ([LICENSE-DATA](LICENSE-DATA)); as EXAONE model Output they are also
+  subject to the EXAONE AI Model License 1.1 - NC (research use only; the stricter terms apply). See
+  [NOTICE](NOTICE) and the [datasheet](docs/datasheet.md#distribution). For commercial use, take the Korean
+  template of those tasks (`meta.template_text.ko`, Apache-2.0).
+
 Cite with [CITATION.cff](CITATION.cff).

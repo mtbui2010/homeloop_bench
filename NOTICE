@@ -9,8 +9,9 @@ Exception: Korean paraphrases written by EXAONE 3.5
 The Korean task texts of the records whose `paraphrase_model.ko` is `exaone3.5:latest`
 (homeloop_bench/data/tasks/*.jsonl, field `text.ko` of those records) and the EXAONE writer responses in
 homeloop_bench/data/llm_cache/paraphrase_ko.jsonl (rows whose `model` is `exaone3.5:latest`) are Output of the
-EXAONE 3.5 model by LG AI Research. They are NOT licensed under Apache-2.0. They are distributed under, and their
-use is subject to, the EXAONE AI Model License Agreement 1.1 - NC:
+EXAONE 3.5 model by LG AI Research. They are NOT licensed under Apache-2.0. They are distributed under CC BY-NC 4.0
+(LICENSE-DATA, https://creativecommons.org/licenses/by-nc/4.0/), and their use is also subject to the EXAONE AI
+Model License Agreement 1.1 - NC (the stricter terms apply):
 https://huggingface.co/LGAI-EXAONE/EXAONE-3.5-7.8B-Instruct/blob/main/LICENSE
 In short (the agreement governs): use solely for research purposes (Sec. 2.1a); no commercial use of the Model,
 Derivatives or Output (Sec. 3.1); the Output remains the property of the Licensor, LG Management Development

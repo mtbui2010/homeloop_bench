@@ -1,0 +1,33 @@
+HomeLoop-Bench data licence (round 2)
+
+Copyright 2026 Trung Bui
+
+Which licence covers what
+-------------------------
+1. Code (everything that is not task data): Apache License 2.0, see LICENSE.
+
+2. Task data, Apache License 2.0 part: the English texts (templates and the English paraphrases written by
+   qwen3-vl:8b-instruct), the Korean templates (`meta.template_text.ko`, and `text.ko` of records whose
+   `source_by_lang.ko` is `template`), the goals, labels and all other fields of
+   homeloop_bench/data/tasks/*.jsonl, and the cache rows written by Qwen3-VL models.
+
+3. Task data, CC BY-NC 4.0 part: the Korean texts written by EXAONE 3.5, i.e. `text.ko` of the records whose
+   `paraphrase_model.ko` is `exaone3.5:latest`, and the rows of homeloop_bench/data/llm_cache/paraphrase_ko.jsonl
+   whose `model` is `exaone3.5:latest` (EXAONE output). These are licensed under the Creative Commons
+   Attribution-NonCommercial 4.0 International licence (CC BY-NC 4.0):
+
+     https://creativecommons.org/licenses/by-nc/4.0/
+     Legal code: https://creativecommons.org/licenses/by-nc/4.0/legalcode
+
+   You may share and adapt this part for non-commercial purposes, with attribution ("HomeLoop-Bench, Trung
+   Bui, 2026; Korean paraphrases written with EXAONE 3.5 by LG AI Research"), a link to the licence and an
+   indication of changes. The full terms are those of the legal code linked above.
+
+   In addition, this part is Output of the EXAONE 3.5 model and its use stays subject to the EXAONE AI Model
+   License Agreement 1.1 - NC (research use only; no commercial use of the Model or its Output; the Output
+   remains the property of the Licensor):
+     https://huggingface.co/LGAI-EXAONE/EXAONE-3.5-7.8B-Instruct/blob/main/LICENSE
+   Where the two differ, the stricter terms apply. See NOTICE.
+
+For any use outside these terms, replace the CC BY-NC 4.0 part with the Korean template of the same task
+(`meta.template_text.ko`), which is in the Apache-2.0 part.

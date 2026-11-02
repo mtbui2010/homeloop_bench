@@ -6,7 +6,7 @@ Following Gebru et al., *Datasheets for Datasets* (https://arxiv.org/abs/1803.09
 
 HomeLoop-Bench evaluates household robot task planners in closed loop: plan, act, verify, replan, ask and stay safe, on a stochastic mock robot (homeloop_robot) whose failure rates come from published robot experiments. The instruction sets it builds on (ALFRED, SayCan, AmbiK) are English-only. The tasks here are bilingual (English and Korean), cover what people actually ask a home robot (fetch, put away, search, open, tidy, pass on a message, go somewhere, and combinations of these), include ambiguous requests the robot should ask about, unsafe or impossible requests it should refuse, mid-task corrections, and long multi-task utterances, and every task has a machine-checkable goal on the true world state.
 
-Created by Trung Bui for the HomeLoop RA-L paper and public release (Apache-2.0).
+Created by Trung Bui for the HomeLoop RA-L paper and public release (code Apache-2.0; data licences under Distribution).
 
 ## Composition
 
@@ -63,8 +63,21 @@ Label policy: `homeloop_bench/data/label_policy.yaml`. Every kind, capability an
 | conditional | 410 | 4.1% |
 
 - subtasks per task: {'1': 5872, '2': 2526, '3': 1602} (>= 2: 41.3%, 3: 16.0%)
-- long (EN >= 25 words or KO >= 15 어절): 21.2%; mixed kinds in one utterance: 6.7%
+- long (EN >= 25 words or KO >= 15 어절): 21.7%; mixed kinds in one utterance: 6.7%
 - conditional requests have no opened source for their exact wording (assumed) and are capped at 5 %.
+
+### Deliveries (round 2)
+
+"Bring me X" goals are `delivered(obj, person)` atoms with a `mode` ([tasks.md](tasks.md#delivery)): `reach` = in the hand or on a table, desk, counter, nightstand or shelf the person can reach from where they are at the end; `hand` = a completed handover. A label is what a robot infers from the words and the start scene (`validate` check 11).
+
+| mode : mode_reason | atoms | share |
+|---|---|---|
+| reach:None | 3122 | 60.4% |
+| hand:no_surface | 1550 | 30.0% |
+| hand:explicit | 279 | 5.4% |
+| hand:user_needs | 220 | 4.3% |
+
+- 5171 delivery atoms in the task goals; hand share 0.3962 (design range 10-50 %). `explicit`: the text asks for the hand in both languages; `user_needs`: the house profile marks the person `prefers_handover` (the care-home resident); `no_surface`: no support surface with room within the person's reach where they are at the start (a bed without a nightstand, a reading chair without a table, a full nightstand).
 
 ### Houses
 
@@ -103,6 +116,7 @@ Houses with more people and rooms (shared flat, couple flat, Korean 59 m2 apartm
 - Realism rules R-a..R-h (typical receptacles, sizes, payload, sources, kind semantics, language, houses) hold for every task (`data/quality/realism_report.json`: 0 violations, 595 intentional refused requests).
 - Korean paraphrases also pass deterministic meaning checks against their template: every goal verb kept (열- for open, 닫- for close, a giving verb for a hand-over, a telling verb for a message), no hand-over turned into "put it next to me", no honorifics on the speaker's own state, no required action turned into a permission, no added find-and-report task, manner or condition (`gen/paraphrase.ko_meaning_filters`).
 - Korean paraphrase error rate: a hand audit of about 200 Korean paraphrases is planned and NOT done yet; no error rate is claimed. A reviewer's spot check of 18 Korean paraphrases before these checks found 5 with a changed meaning or broken grammar; the checks above were written for those error types.
+- Round 2 delivery rewrite (`python -m homeloop_bench.data delivery`, `gen/delivery.py`, deterministic): every `held_by` atom became `delivered` with a mode; ids, splits and LLM texts unchanged. Deliveries whose object already lay within the person's reach at the start (not a real request) got another arrangement of the same house (`meta.delivery.reseed`, the old `seed_state` kept there); explicit-hand wording was added from templates to template texts only (`meta.delivery.variant`: `append` or `ko_verb`), never to LLM text; a variant that would make a near duplicate across splits is not applied (`data/quality/delivery_report.json`).
 - Korean in 해요체; colloquially dropped object particles in 11.5% of the Korean texts (<= 30 %).
 
 - Korean back-translation check on 599 sampled tasks: chrF mean 46.7, entity phrases kept 0.822 (`data/quality/ko_backtranslation_report.json`).
@@ -115,8 +129,9 @@ Houses with more people and rooms (shared flat, couple flat, Korean 59 m2 apartm
 
 ## Distribution
 
+- Licences: the code is Apache-2.0 ([LICENSE](../LICENSE)). The data has two parts. The Korean text written by EXAONE 3.5 and the LLM cache rows with EXAONE output are released under CC BY-NC 4.0 ([LICENSE-DATA](../LICENSE-DATA)), and on top of that their use is subject to the EXAONE licence below (the stricter terms apply). Everything else in the data (the English text, the templates in both languages, the goals and labels) is Apache-2.0, like the code.
 - The code, the template texts and the English paraphrases are Apache-2.0. The tasks are in `homeloop_bench/data/tasks/*.jsonl`; the LLM caches (`homeloop_bench/data/llm_cache/paraphrase.jsonl` for English, `paraphrase_ko.jsonl` for Korean) are shipped so the paraphrase step is reproducible without a GPU (`paraphrase --offline`).
-- The Korean paraphrases written by EXAONE 3.5 (5193 tasks with `paraphrase_model.ko = exaone3.5:latest`, and the EXAONE writer rows of `paraphrase_ko.jsonl`) are Output of the EXAONE model and are NOT under Apache-2.0: they are distributed under the EXAONE AI Model License Agreement 1.1 - NC (research use only, Sec. 2.1a; no commercial use of the Model or its Output, Sec. 3.1; Output remains the property of LG Management Development Institute, Sec. 4.2; https://huggingface.co/LGAI-EXAONE/EXAONE-3.5-7.8B-Instruct/blob/main/LICENSE). See NOTICE. For commercial use, take `meta.template_text.ko` for those tasks (the authors' template).
+- The Korean paraphrases written by EXAONE 3.5 (5193 tasks with `paraphrase_model.ko = exaone3.5:latest`, and the EXAONE writer rows of `paraphrase_ko.jsonl`) are Output of the EXAONE model and are NOT under Apache-2.0: they are distributed under CC BY-NC 4.0 (LICENSE-DATA) and the EXAONE AI Model License Agreement 1.1 - NC (research use only, Sec. 2.1a; no commercial use of the Model or its Output, Sec. 3.1; Output remains the property of LG Management Development Institute, Sec. 4.2; https://huggingface.co/LGAI-EXAONE/EXAONE-3.5-7.8B-Instruct/blob/main/LICENSE). See NOTICE. For commercial use, take `meta.template_text.ko` for those tasks (the authors' template).
 
 ### Licences of the generating models
 
@@ -128,8 +143,8 @@ Houses with more people and rooms (shared flat, couple flat, Korean 59 m2 apartm
 
 ## Maintenance
 
-- Version 0.1.0 (`homeloop_bench/__init__.py`), built and validated against homeloop_robot 0.1.0 at commit 0812461a7c2b: the houses, the catalog and the oracle come from homeloop_robot, so the tasks are not self-contained without that exact version. Every run records both git commits (`summary.json` `config.versions`).
-- Pipeline: `python -m homeloop_bench.data generate`, `paraphrase --offline`, `resplit`; any change must keep `validate --strict` and `realism --strict` green.
+- Version 0.1.0 (`homeloop_bench/__init__.py`), built and validated against homeloop_robot 0.1.0 at commit d9d81e1e7d27: the houses, the catalog and the oracle come from homeloop_robot, so the tasks are not self-contained without that exact version. Every run records both git commits (`summary.json` `config.versions`).
+- Pipeline: `python -m homeloop_bench.data generate`, `paraphrase --offline`, `resplit`, `delivery`; `datasheet` rewrites this file from the shipped reports; any change must keep `validate --strict` and `realism --strict` green.
 - Errata and new versions: listed in the repository's changelog with a new version number; older versions stay available as git tags. Contact and contributions: the repository's issue tracker and pull requests (the public URL is added at release).
 - Funding: to be stated by the authors at release (not filled in by the generator).
 

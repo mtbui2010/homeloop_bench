@@ -233,6 +233,19 @@ def _tab(d, total, head):
     return L
 
 
+def datasheet_from_reports(recs) -> None:
+    """Rewrite docs/datasheet.md from the shipped reports (no LLM): ``python -m homeloop_bench.data datasheet``."""
+    para = paraphrase_report(recs)
+    bt, realism = None, None
+    bp, rp = QUALITY_DIR / "ko_backtranslation_report.json", QUALITY_DIR / "realism_report.json"
+    if bp.exists():
+        rep = json.load(open(bp, encoding="utf-8"))
+        bt = {k: rep.get(k) for k in ("n_backtranslated", "chrf", "entities_mean")}
+    if rp.exists():
+        realism = json.load(open(rp, encoding="utf-8"))
+    write_datasheet(recs, para, bt, realism)
+
+
 def write_datasheet(recs, para=None, bt=None, realism=None):
     from .stats import stats
     s = stats(recs)
@@ -252,7 +265,8 @@ def write_datasheet(recs, para=None, bt=None, realism=None):
          "open, tidy, pass on a message, go somewhere, and combinations of these), include ambiguous requests the "
          "robot should ask about, unsafe or impossible requests it should refuse, mid-task corrections, and long "
          "multi-task utterances, and every task has a machine-checkable goal on the true world state.",
-         "", "Created by Trung Bui for the HomeLoop RA-L paper and public release (Apache-2.0).", "",
+         "", "Created by Trung Bui for the HomeLoop RA-L paper and public release (code Apache-2.0; data licences under "
+         "Distribution).", "",
          "## Composition", "",
          f"- {n} tasks: train {s['by_split'].get('train', 0)}, dev {s['by_split'].get('dev', 0)}, test "
          f"{s['by_split'].get('test', 0)} ([splits.md](splits.md)); every task has English and Korean text "
@@ -279,6 +293,21 @@ def write_datasheet(recs, para=None, bt=None, realism=None):
           f"- long (EN >= 25 words or KO >= 15 어절): {s['long_share']:.1%}; mixed kinds in one utterance: "
           f"{s['mixed_kind_share']:.1%}",
           "- conditional requests have no opened source for their exact wording (assumed) and are capped at 5 %.", ""]
+    d = s.get("delivery") or {}
+    nd = d.get("delivered_atoms") or 0
+    L += ["### Deliveries (round 2)", "",
+          "\"Bring me X\" goals are `delivered(obj, person)` atoms with a `mode` ([tasks.md](tasks.md#delivery)): "
+          "`reach` = in the hand or on a table, desk, counter, nightstand or shelf the person can reach from where "
+          "they are at the end; `hand` = a completed handover. A label is what a robot infers from the words and the "
+          "start scene (`validate` check 11).", "",
+          "| mode : mode_reason | atoms | share |", "|---|---|---|"]
+    for k, v in sorted((d.get("by_mode_reason") or {}).items(), key=lambda x: -x[1]):
+        L.append(f"| {k} | {v} | {v / max(1, nd):.1%} |")
+    L += ["", f"- {nd} delivery atoms in the task goals; hand share {d.get('hand_share')} (design range 10-50 %). "
+          "`explicit`: the text asks for the hand in both languages; `user_needs`: the house profile marks the person "
+          "`prefers_handover` (the care-home resident); `no_surface`: no support surface with room within the "
+          "person's reach where they are at the start (a bed without a nightstand, a reading chair without a table, "
+          "a full nightstand).", ""]
     L += ["### Houses", "", "| house | train | dev | test |", "|---|---|---|---|"]
     for h in sorted(s["by_house"]):
         L.append(f"| {h} | {by_split_house.get(('train', h), 0)} | {by_split_house.get(('dev', h), 0)} | "
@@ -318,6 +347,13 @@ def write_datasheet(recs, para=None, bt=None, realism=None):
           "- Korean paraphrase error rate: a hand audit of about 200 Korean paraphrases is planned and NOT done yet; "
           "no error rate is claimed. A reviewer's spot check of 18 Korean paraphrases before these checks found 5 "
           "with a changed meaning or broken grammar; the checks above were written for those error types.",
+          "- Round 2 delivery rewrite (`python -m homeloop_bench.data delivery`, `gen/delivery.py`, deterministic): "
+          "every `held_by` atom became `delivered` with a mode; ids, splits and LLM texts unchanged. Deliveries "
+          "whose object already lay within the person's reach at the start (not a real request) got another "
+          "arrangement of the same house (`meta.delivery.reseed`, the old `seed_state` kept there); explicit-hand "
+          "wording was added from templates to template texts only (`meta.delivery.variant`: `append` or "
+          "`ko_verb`), never to LLM text; a variant that would make a near duplicate across splits is not applied "
+          "(`data/quality/delivery_report.json`).",
           "- Korean in 해요체; colloquially dropped object particles in "
           f"{(realism or {}).get('ko_particle_dropped_share', 0):.1%} of the Korean texts (<= 30 %).", ""]
     if bt:
@@ -334,13 +370,19 @@ def write_datasheet(recs, para=None, bt=None, realism=None):
           "robot's ASR noise model adds recognition errors at run time); clarify answers are scripted; the "
           "paraphrase models are 8B-class local models, so some paraphrases are plainer than human speech.", "",
           "## Distribution", "",
+          "- Licences: the code is Apache-2.0 ([LICENSE](../LICENSE)). The data has two parts. The Korean text written "
+          "by EXAONE 3.5 and the LLM cache rows with EXAONE output are released under CC BY-NC 4.0 "
+          "([LICENSE-DATA](../LICENSE-DATA)), and on top of that their use is subject to the EXAONE licence below "
+          "(the stricter terms apply). Everything else in the data (the English text, the templates in both "
+          "languages, the goals and labels) is Apache-2.0, like the code.",
           "- The code, the template texts and the English paraphrases are Apache-2.0. The tasks are in "
           "`homeloop_bench/data/tasks/*.jsonl`; the LLM caches (`homeloop_bench/data/llm_cache/paraphrase.jsonl` "
           "for English, `paraphrase_ko.jsonl` for Korean) are shipped so the paraphrase step is reproducible "
           "without a GPU (`paraphrase --offline`).",
           f"- The Korean paraphrases written by EXAONE 3.5 ({para.get('n_paraphrased_ko', 0)} tasks with "
           "`paraphrase_model.ko = exaone3.5:latest`, and the EXAONE writer rows of `paraphrase_ko.jsonl`) are Output "
-          "of the EXAONE model and are NOT under Apache-2.0: they are distributed under the EXAONE AI Model License "
+          "of the EXAONE model and are NOT under Apache-2.0: they are distributed under CC BY-NC 4.0 (LICENSE-DATA) "
+          "and the EXAONE AI Model License "
           "Agreement 1.1 - NC (research use only, Sec. 2.1a; no commercial use of the Model or its Output, Sec. 3.1; "
           "Output remains the property of LG Management Development Institute, Sec. 4.2; "
           "https://huggingface.co/LGAI-EXAONE/EXAONE-3.5-7.8B-Instruct/blob/main/LICENSE). See NOTICE. For "
@@ -355,7 +397,8 @@ def write_datasheet(recs, para=None, bt=None, realism=None):
           f"commit {_robot_commit()}: the houses, the catalog and the oracle come from homeloop_robot, so the "
           "tasks are not self-contained without that exact version. Every run records both git commits "
           "(`summary.json` `config.versions`).",
-          "- Pipeline: `python -m homeloop_bench.data generate`, `paraphrase --offline`, `resplit`; any change must "
+          "- Pipeline: `python -m homeloop_bench.data generate`, `paraphrase --offline`, `resplit`, `delivery`; "
+          "`datasheet` rewrites this file from the shipped reports; any change must "
           "keep `validate --strict` and `realism --strict` green.",
           "- Errata and new versions: listed in the repository's changelog with a new version number; older versions "
           "stay available as git tags. Contact and contributions: the repository's issue tracker and pull requests "

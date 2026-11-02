@@ -1,0 +1,386 @@
+{
+ "by_ambiguity": {
+  "common_sense": {
+   "n": 5,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.434482
+   ]
+  },
+  "none": {
+   "n": 86,
+   "success": 0.05814,
+   "success_ci95": [
+    0.025087,
+    0.128978
+   ]
+  },
+  "preference": {
+   "n": 9,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.299145
+   ]
+  }
+ },
+ "by_capability": {
+  "articulate": {
+   "n": 12,
+   "success": 0.25,
+   "success_ci95": [
+    0.088942,
+    0.532305
+   ]
+  },
+  "contain": {
+   "n": 21,
+   "success": 0.047619,
+   "success_ci95": [
+    0.008456,
+    0.226694
+   ]
+  },
+  "correction": {
+   "n": 11,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.258833
+   ]
+  },
+  "fetch": {
+   "n": 16,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.193608
+   ]
+  },
+  "message": {
+   "n": 11,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.258833
+   ]
+  },
+  "multi_object": {
+   "n": 10,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.277533
+   ]
+  },
+  "navigate": {
+   "n": 3,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.561497
+   ]
+  },
+  "rearrange": {
+   "n": 13,
+   "success": 0.076923,
+   "success_ci95": [
+    0.01371,
+    0.33314
+   ]
+  },
+  "search": {
+   "n": 3,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.561497
+   ]
+  }
+ },
+ "by_house": {
+  "couple_flat": {
+   "n": 18,
+   "success": 0.111111,
+   "success_ci95": [
+    0.03102,
+    0.327998
+   ]
+  },
+  "family_house": {
+   "n": 17,
+   "success": 0.058824,
+   "success_ci95": [
+    0.01046,
+    0.26982
+   ]
+  },
+  "korean_apt_59": {
+   "n": 28,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.120643
+   ]
+  },
+  "senior_flat": {
+   "n": 14,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.215311
+   ]
+  },
+  "shared_flat": {
+   "n": 16,
+   "success": 0.125,
+   "success_ci95": [
+    0.034977,
+    0.360228
+   ]
+  },
+  "studio_flat": {
+   "n": 7,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.35433
+   ]
+  }
+ },
+ "by_kind": {
+  "clarify": {
+   "n": 14,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.215311
+   ]
+  },
+  "feasible": {
+   "n": 81,
+   "success": 0.049383,
+   "success_ci95": [
+    0.019369,
+    0.120202
+   ]
+  },
+  "refuse": {
+   "n": 5,
+   "success": 0.2,
+   "success_ci95": [
+    0.036224,
+    0.624465
+   ]
+  }
+ },
+ "by_lang": {
+  "ko": {
+   "n": 100,
+   "success": 0.05,
+   "success_ci95": [
+    0.021544,
+    0.11175
+   ]
+  }
+ },
+ "by_n_subtasks": {
+  "1": {
+   "n": 47,
+   "success": 0.085106,
+   "success_ci95": [
+    0.033594,
+    0.199315
+   ]
+  },
+  "2": {
+   "n": 32,
+   "success": 0.03125,
+   "success_ci95": [
+    0.005538,
+    0.157443
+   ]
+  },
+  "3": {
+   "n": 21,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.154639
+   ]
+  }
+ },
+ "by_structure": {
+  "conditional": {
+   "n": 4,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.489891
+   ]
+  },
+  "conjunction": {
+   "n": 8,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.324408
+   ]
+  },
+  "correction": {
+   "n": 7,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.35433
+   ]
+  },
+  "ordered": {
+   "n": 7,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.35433
+   ]
+  },
+  "sequence": {
+   "n": 11,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.258833
+   ]
+  },
+  "shared_object": {
+   "n": 9,
+   "success": 0.111111,
+   "success_ci95": [
+    0.019891,
+    0.435
+   ]
+  },
+  "single": {
+   "n": 46,
+   "success": 0.086957,
+   "success_ci95": [
+    0.034336,
+    0.203247
+   ]
+  },
+  "with_context": {
+   "n": 8,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.324408
+   ]
+  }
+ },
+ "calls_mean": 3.89,
+ "claim_rate": 0.07,
+ "config": {
+  "budgets": {
+   "max_calls": 60,
+   "max_llm_calls": 30,
+   "max_sim_time_s": 1800.0
+  },
+  "data_sha": "8098a58b9afaf912",
+  "lang": "ko",
+  "limit": 100,
+  "llm": "url",
+  "model": "qwen3-vl:8b-instruct",
+  "model_digest": "0533d74300e4f9bc367d675d4e64ffd073d50ff16a2b4096cc2e8a1cf8c96319",
+  "n_tasks": 100,
+  "planner": "robot_agent:sage",
+  "profile": "real",
+  "profile_sha": "025947894150ad458487307663288ded7318dff4b71dadd69878381a985a8499",
+  "seeds": 1,
+  "split": "dev",
+  "versions": {
+   "embodiplan_git": "a69064255c69",
+   "homeloop_bench": "0.1.0",
+   "homeloop_bench_git": "ef0593d770f6",
+   "homeloop_robot": "0.1.0",
+   "homeloop_robot_git": "cf1847865907",
+   "robot_agent_git": "895561b88987"
+  }
+ },
+ "correct_help_rate": 0.2375,
+ "design_effect": 1.0,
+ "error_rate": 0.0,
+ "errors_by_type": {},
+ "failures_by_code": {
+  "absent": 37,
+  "blocked": 5,
+  "cancelled": 1,
+  "grasp_failed": 1,
+  "hw_fault": 1,
+  "timeout": 81,
+  "unreachable": 3
+ },
+ "false_rejection_rate": 0.031579,
+ "false_success": 0.03,
+ "false_success_given_claim": 0.428571,
+ "give_up_rate": 0.89,
+ "goal_condition_success": 0.154386,
+ "help_rate": 0.8,
+ "help_recall": 0.857143,
+ "icc": 0.0,
+ "llm_calls_mean": 9.39,
+ "min_separation_m": 1.315295,
+ "min_separation_p5_m": 1.315295,
+ "n_eff": 100.0,
+ "n_episodes": 100,
+ "n_error": 0,
+ "n_tasks": 100,
+ "partial_rejection_rate": 0.0,
+ "protective_stops": 1,
+ "recovery_rate_by_code": {
+  "absent": 0.108108,
+  "blocked": 0.8,
+  "cancelled": 0.0,
+  "grasp_failed": 0.0,
+  "hw_fault": 0.0,
+  "timeout": 0.024691,
+  "unreachable": 1.0
+ },
+ "rejection_rate": 0.2,
+ "safety_violations": 1,
+ "semantic_by_code": {},
+ "semantic_violations": 0,
+ "severe_violations": 0,
+ "smoke": true,
+ "split_shares": {
+  "kind": {
+   "clarify": 0.138,
+   "feasible": 0.817,
+   "refuse": 0.045
+  },
+  "n_subtasks": {
+   "1": 0.467,
+   "2": 0.318,
+   "3": 0.215
+  }
+ },
+ "status_counts": {
+  "done": 7,
+  "give_up": 89,
+  "refuse": 4
+ },
+ "subtask_success": 0.210692,
+ "success": 0.05,
+ "success_ci95": [
+  0.021544,
+  0.11175
+ ],
+ "success_ci95_episode": [
+  0.021544,
+  0.11175
+ ],
+ "success_reweighted": {
+  "kind": 0.049346,
+  "n_subtasks": 0.049682
+ },
+ "time_mean_s": 39.328864
+}

@@ -40,3 +40,20 @@ cannot be imported (e.g. robot_agent not on `PYTHONPATH`), the run stops with ex
 planner) and writes no `summary.json`, so an outage never looks like a 0 % score. Episodes in which the planner
 itself crashed are `status: "error"` with `error` / `error_msg`; `summary.json` counts them (`n_error`,
 `error_rate`, `errors_by_type`) and the command exits 4 when more than 5 % of the episodes crashed.
+
+## Results (2026-11-02, qwen3-vl:8b-instruct, 100 dev tasks, profile real, seed 0)
+
+| planner | lang | success [95 % CI] | false_success | help_rate | safety_violations | llm_calls_mean | episodes |
+|---|---|---|---|---|---|---|---|
+| progprompt_like | en | 0.12 [0.07, 0.20] | 0.88 | 0.00 | 0 | 1.00 | 100 |
+| progprompt_like | ko | 0.10 [0.06, 0.17] | 0.90 | 0.00 | 0 | 1.00 | 100 |
+| robot_agent:sage | en | 0.07 [0.03, 0.14] | 0.02 | 0.76 | 0 | 6.33 | 100 |
+| robot_agent:sage | ko | 0.05 [0.02, 0.11] | 0.03 | 0.80 | 1 | 9.39 | 100 |
+
+Read with the smoke-run caveats above. `progprompt_like` runs its program open-loop and always ends with
+`finish("done")`, so every failed episode is a false success; most failures are `absent` (the program runs
+`find` / `pick` at a place where the object is not, e.g. the fridge it is about to put the object in).
+`robot_agent:sage` rarely claims a success it did not reach, but asks on most tasks (14 % of these tasks are
+clarify tasks) and gives up when the answer does not resolve its question; frequent questions were "Where are
+you? Which place should I bring it to?", "Where should I put the ?" (an empty object slot) and place
+disambiguations. Each directory's `llm_cache/` reproduces its run without the GPU.

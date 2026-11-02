@@ -1,0 +1,384 @@
+{
+ "by_ambiguity": {
+  "common_sense": {
+   "n": 5,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.434482
+   ]
+  },
+  "none": {
+   "n": 86,
+   "success": 0.081395,
+   "success_ci95": [
+    0.039986,
+    0.158602
+   ]
+  },
+  "preference": {
+   "n": 9,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.299145
+   ]
+  }
+ },
+ "by_capability": {
+  "articulate": {
+   "n": 12,
+   "success": 0.25,
+   "success_ci95": [
+    0.088942,
+    0.532305
+   ]
+  },
+  "contain": {
+   "n": 21,
+   "success": 0.142857,
+   "success_ci95": [
+    0.04981,
+    0.346361
+   ]
+  },
+  "correction": {
+   "n": 11,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.258833
+   ]
+  },
+  "fetch": {
+   "n": 16,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.193608
+   ]
+  },
+  "message": {
+   "n": 11,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.258833
+   ]
+  },
+  "multi_object": {
+   "n": 10,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.277533
+   ]
+  },
+  "navigate": {
+   "n": 3,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.561497
+   ]
+  },
+  "rearrange": {
+   "n": 13,
+   "success": 0.076923,
+   "success_ci95": [
+    0.01371,
+    0.33314
+   ]
+  },
+  "search": {
+   "n": 3,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.561497
+   ]
+  }
+ },
+ "by_house": {
+  "couple_flat": {
+   "n": 18,
+   "success": 0.166667,
+   "success_ci95": [
+    0.058366,
+    0.39222
+   ]
+  },
+  "family_house": {
+   "n": 17,
+   "success": 0.117647,
+   "success_ci95": [
+    0.03288,
+    0.343364
+   ]
+  },
+  "korean_apt_59": {
+   "n": 28,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.120643
+   ]
+  },
+  "senior_flat": {
+   "n": 14,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.215311
+   ]
+  },
+  "shared_flat": {
+   "n": 16,
+   "success": 0.125,
+   "success_ci95": [
+    0.034977,
+    0.360228
+   ]
+  },
+  "studio_flat": {
+   "n": 7,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.35433
+   ]
+  }
+ },
+ "by_kind": {
+  "clarify": {
+   "n": 14,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.215311
+   ]
+  },
+  "feasible": {
+   "n": 81,
+   "success": 0.061728,
+   "success_ci95": [
+    0.026653,
+    0.136492
+   ]
+  },
+  "refuse": {
+   "n": 5,
+   "success": 0.4,
+   "success_ci95": [
+    0.117621,
+    0.769276
+   ]
+  }
+ },
+ "by_lang": {
+  "en": {
+   "n": 100,
+   "success": 0.07,
+   "success_ci95": [
+    0.034319,
+    0.137495
+   ]
+  }
+ },
+ "by_n_subtasks": {
+  "1": {
+   "n": 47,
+   "success": 0.12766,
+   "success_ci95": [
+    0.059846,
+    0.251739
+   ]
+  },
+  "2": {
+   "n": 32,
+   "success": 0.03125,
+   "success_ci95": [
+    0.005538,
+    0.157443
+   ]
+  },
+  "3": {
+   "n": 21,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.154639
+   ]
+  }
+ },
+ "by_structure": {
+  "conditional": {
+   "n": 4,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.489891
+   ]
+  },
+  "conjunction": {
+   "n": 8,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.324408
+   ]
+  },
+  "correction": {
+   "n": 7,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.35433
+   ]
+  },
+  "ordered": {
+   "n": 7,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.35433
+   ]
+  },
+  "sequence": {
+   "n": 11,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.258833
+   ]
+  },
+  "shared_object": {
+   "n": 9,
+   "success": 0.111111,
+   "success_ci95": [
+    0.019891,
+    0.435
+   ]
+  },
+  "single": {
+   "n": 46,
+   "success": 0.130435,
+   "success_ci95": [
+    0.061178,
+    0.256659
+   ]
+  },
+  "with_context": {
+   "n": 8,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.324408
+   ]
+  }
+ },
+ "calls_mean": 4.35,
+ "claim_rate": 0.07,
+ "config": {
+  "budgets": {
+   "max_calls": 60,
+   "max_llm_calls": 30,
+   "max_sim_time_s": 1800.0
+  },
+  "data_sha": "8098a58b9afaf912",
+  "lang": "en",
+  "limit": 100,
+  "llm": "url",
+  "model": "qwen3-vl:8b-instruct",
+  "model_digest": "0533d74300e4f9bc367d675d4e64ffd073d50ff16a2b4096cc2e8a1cf8c96319",
+  "n_tasks": 100,
+  "planner": "robot_agent:sage",
+  "profile": "real",
+  "profile_sha": "025947894150ad458487307663288ded7318dff4b71dadd69878381a985a8499",
+  "seeds": 1,
+  "split": "dev",
+  "versions": {
+   "embodiplan_git": "a69064255c69",
+   "homeloop_bench": "0.1.0",
+   "homeloop_bench_git": "ef0593d770f6",
+   "homeloop_robot": "0.1.0",
+   "homeloop_robot_git": "cf1847865907",
+   "robot_agent_git": "895561b88987"
+  }
+ },
+ "correct_help_rate": 0.210526,
+ "design_effect": 1.0,
+ "error_rate": 0.0,
+ "errors_by_type": {},
+ "failures_by_code": {
+  "absent": 47,
+  "blocked": 7,
+  "cancelled": 1,
+  "hw_fault": 2,
+  "timeout": 83,
+  "unreachable": 5
+ },
+ "false_rejection_rate": 0.094737,
+ "false_success": 0.02,
+ "false_success_given_claim": 0.285714,
+ "give_up_rate": 0.82,
+ "goal_condition_success": 0.159649,
+ "help_rate": 0.76,
+ "help_recall": 0.857143,
+ "icc": 0.0,
+ "llm_calls_mean": 6.33,
+ "min_separation_m": 1.403567,
+ "min_separation_p5_m": 1.403567,
+ "n_eff": 100.0,
+ "n_episodes": 100,
+ "n_error": 0,
+ "n_tasks": 100,
+ "partial_rejection_rate": 0.0,
+ "protective_stops": 0,
+ "recovery_rate_by_code": {
+  "absent": 0.12766,
+  "blocked": 0.571429,
+  "cancelled": 0.0,
+  "hw_fault": 0.0,
+  "timeout": 0.024096,
+  "unreachable": 0.4
+ },
+ "rejection_rate": 0.4,
+ "safety_violations": 0,
+ "semantic_by_code": {},
+ "semantic_violations": 0,
+ "severe_violations": 0,
+ "smoke": true,
+ "split_shares": {
+  "kind": {
+   "clarify": 0.138,
+   "feasible": 0.817,
+   "refuse": 0.045
+  },
+  "n_subtasks": {
+   "1": 0.467,
+   "2": 0.318,
+   "3": 0.215
+  }
+ },
+ "status_counts": {
+  "done": 7,
+  "give_up": 82,
+  "refuse": 11
+ },
+ "subtask_success": 0.210692,
+ "success": 0.07,
+ "success_ci95": [
+  0.034319,
+  0.137495
+ ],
+ "success_ci95_episode": [
+  0.034319,
+  0.137495
+ ],
+ "success_reweighted": {
+  "kind": 0.068432,
+  "n_subtasks": 0.069555
+ },
+ "time_mean_s": 48.139311
+}

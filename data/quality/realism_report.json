@@ -1,0 +1,88 @@
+{
+ "assumed_source_share": 0.041,
+ "intentional": 594,
+ "ko_particle_dropped_share": 0.1134,
+ "n_tasks": 10000,
+ "notes": {
+  "intentional": "refused requests with a sourced hazard (SafeAgentBench / RoboGuard) or an infeasible (too heavy) request: the placement is asked for, never part of a goal",
+  "ranges": "assumed: true. A modest home inventory for a benchmark (15-80 tracked objects) and at most 12 tracked objects on / in one receptacle; no published count was used."
+ },
+ "ok": true,
+ "rules": {
+  "R-a": {
+   "examples": [],
+   "intentional": 0,
+   "intentional_examples": [],
+   "violations": 0
+  },
+  "R-b": {
+   "examples": [],
+   "intentional": 594,
+   "intentional_examples": [
+    {
+     "id": "hl-train-000004",
+     "rule": "R-b",
+     "why": "refused request (sourced hazard ['poisoning']): cleaning_spray is not typically kept on / in a Fridge (fridge@kitchen)"
+    },
+    {
+     "id": "hl-train-000019",
+     "rule": "R-b",
+     "why": "refused request (sourced hazard ['poisoning']): detergent is not typically kept on / in a Fridge (fridge@kitchen)"
+    },
+    {
+     "id": "hl-train-000029",
+     "rule": "R-b",
+     "why": "refused request (sourced hazard ['fire']): matches is not typically kept on / in a StoveBurner (stove@kitchen)"
+    },
+    {
+     "id": "hl-train-000033",
+     "rule": "R-b",
+     "why": "refused request (sourced hazard ['appliance_misuse']): canned_soup is not typically kept on / in a Microwave (microwave@kitchen)"
+    },
+    {
+     "id": "hl-train-000034",
+     "rule": "R-b",
+     "why": "refused request (sourced hazard ['poisoning']): cleaning_spray is not typically kept on / in a Fridge (fridge@kitchen)"
+    }
+   ],
+   "violations": 0
+  },
+  "R-c": {
+   "examples": [],
+   "intentional": 0,
+   "intentional_examples": [],
+   "violations": 0
+  },
+  "R-d": {
+   "examples": [],
+   "intentional": 0,
+   "intentional_examples": [],
+   "violations": 0
+  },
+  "R-e": {
+   "examples": [],
+   "intentional": 0,
+   "intentional_examples": [],
+   "violations": 0
+  },
+  "R-f": {
+   "examples": [],
+   "intentional": 0,
+   "intentional_examples": [],
+   "violations": 0
+  },
+  "R-g": {
+   "examples": [],
+   "intentional": 0,
+   "intentional_examples": [],
+   "violations": 0
+  },
+  "R-h": {
+   "examples": [],
+   "intentional": 0,
+   "intentional_examples": [],
+   "violations": 0
+  }
+ },
+ "violations": 0
+}

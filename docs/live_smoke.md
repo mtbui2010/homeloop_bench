@@ -76,7 +76,7 @@ rule-based classifier checked by hand on 16):
 | skill results named world ids ("plate_1 not found"), the replanner then looked for "plate 1" | 3 | 2 | homeloop_robot 4208f26 |
 | the instruction was not heard at all (empty task text) | 1 | 1 | not changed (see below) |
 | injected robot failures not recovered (calibrated hw faults, drops, blocked doors) | 5 | 1 | not a bug |
-| planner / LLM (wrong refusals, plans that fail robot_agent's gate, questions about filler words of the instruction or with an empty slot, the 8B model's Korean translations, a planner exception) | 28 | 20 | not changed (robot_agent / embodiplan are not edited) |
+| planner / LLM (wrong refusals, plans that fail robot_agent's gate, questions about filler words of the instruction or with an empty slot, the 8B model's Korean translations, a planner exception) | 28 | 21 | not changed (robot_agent / embodiplan are not edited) |
 
 A try that declared WaitForUnload as its own skill (so robot_agent offers its `deliver` goal) was reverted
 (homeloop_robot b6af562): deliver carries what the robot already holds, so sage handed over an empty gripper, and

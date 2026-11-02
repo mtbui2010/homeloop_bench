@@ -15,3 +15,9 @@ homeloop-bench = "homeloop_bench.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["homeloop_bench*"]
+
+[tool.setuptools.package-data]
+homeloop_bench = ["data/tasks/*.jsonl", "data/*.yaml", "data/llm_cache/*.jsonl", "data/quality/*.json", "planners/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

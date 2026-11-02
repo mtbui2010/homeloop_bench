@@ -1,0 +1,1 @@
+{"calibrated": false, "epsilon": 0.15, "n": 0, "q_hat": 0.7, "note": "Uncalibrated default threshold (a design placeholder, not a measured value): keeps options chosen in >= 30 % of the 5 samples. Run `homeloop-bench calibrate-knowno --split train --limit 300 --llm URL` to replace it with the conformal quantile for a real model."}

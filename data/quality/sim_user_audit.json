@@ -159,20 +159,20 @@
    "share": 0.2738
   },
   "structured": {
-   "accuracy": 0.9903,
-   "correct": 305,
+   "accuracy": 0.9904,
+   "correct": 309,
    "en": 172,
-   "ko": 136,
-   "n": 308,
-   "share": 0.5856
+   "ko": 140,
+   "n": 312,
+   "share": 0.5932
   },
   "structured_mismatch": {
-   "accuracy": 0.9512,
-   "correct": 39,
+   "accuracy": 0.9459,
+   "correct": 35,
    "en": 0,
-   "ko": 41,
-   "n": 41,
-   "share": 0.0779
+   "ko": 37,
+   "n": 37,
+   "share": 0.0703
   }
  },
  "classifier": {

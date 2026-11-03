@@ -285,8 +285,11 @@ def summarize(episodes: list, config: dict, split_shares: Optional[dict] = None)
         # how the simulated user read the robot's questions (homeloop_robot docs/user_model.md): share per path
         "dialog_paths": _path_shares(episodes),
         # answered questions not in the user's language (rule not_in_lang: an untranslated English question in a
-        # Korean episode), a subset of the paths above
+        # Korean episode; counted in the paths above) plus last messages not in it (final_say_not_in_lang)
         "dialog_not_in_lang": sum(int(e.get("dialog_not_in_lang") or 0) for e in episodes),
+        "final_say_not_in_lang": sum(int(e.get("final_say_not_in_lang") or 0) for e in episodes),
+        # episodes whose last message names a raw world id ("looked at counter@kitchen"): reported, not scored
+        "final_say_raw_ids": sum(1 for e in episodes if e.get("final_say_raw_ids")),
         "time_mean_s": _mean(e["sim_time_s"] for e in episodes) if n else 0.0,
         "calls_mean": _mean(e["n_calls"] for e in episodes) if n else 0.0,
         "status_counts": {k: v for k, v in sorted(_count(e["status"] for e in episodes).items())},

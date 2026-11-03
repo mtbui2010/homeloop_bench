@@ -122,8 +122,10 @@ status (done | refuse | give_up | error | budget) [error error_msg] success clai
 subtask_correct order_ok calls[{k skill args ok code injected t dur event [answer reply_kind]}] failures[{k code injected recovered}]
 asked help help_correct refused partial_refusals unmatched_refusals refusal_texts semantic_violations[{code k}] safety{violations severe min_sep_m n_stops slow_s}
 llm_calls sim_time_s n_calls instruction_heard delivery delivery_atoms events[{kind text k}] final_say
+dialog_paths dialog_not_in_lang final_say_not_in_lang final_say_raw_ids
 ```
 
 `final_say` (the planner's last message) and, on `ask` calls, `answer` (the text the robot heard) and
 `reply_kind` (the simulated user's reply type) are kept for the failure analysis
-([experiments](experiments.md)); planners never see `reply_kind`. No score reads them.
+([experiments](experiments.md)); planners never see `reply_kind`. No score reads them. `final_say_not_in_lang` and
+`final_say_raw_ids` check the last message for the user's language and for raw world ids ([metrics](metrics.md)).

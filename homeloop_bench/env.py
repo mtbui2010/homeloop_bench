@@ -20,11 +20,13 @@ None for non-privileged planners. A planner that reads ``_world`` is not compara
 from __future__ import annotations
 
 import copy
+import re
 from dataclasses import asdict, dataclass, field, is_dataclass
 from typing import Optional
 
 from homeloop_robot import goals as G
 from homeloop_robot import make_episode
+from homeloop_robot.intent import in_lang as _in_lang
 from homeloop_robot.rng import derive_seed, r6
 from homeloop_robot.types import UserEvent
 
@@ -588,7 +590,13 @@ class EpisodeEnv:
                 # docs/user_model.md "Heard-text check": an untranslated English question in a Korean episode)
                 not_in_lang += (c.get("intent") or {}).get("rule") == "not_in_lang"
         rec["dialog_paths"] = dict(sorted(paths.items()))
-        rec["dialog_not_in_lang"] = not_in_lang
+        # the planner's last message is heard too (robot_agent speaks it: "Task completed", a give-up reason, a
+        # refusal): one not in the user's language counts here as well (pilot round 4: KO "Task completed")
+        rec["final_say_not_in_lang"] = int(bool(self.final_say.strip()) and not _in_lang(self.final_say, self.lang))
+        rec["dialog_not_in_lang"] = not_in_lang + rec["final_say_not_in_lang"]
+        # raw world ids in the last message ("looked at counter@kitchen", "kimchi_fridge@kitchen"): reported, not
+        # scored (pilot round 4, EN hl-dev-000010; docs/metrics.md)
+        rec["final_say_raw_ids"] = raw_ids(self.final_say, w_end)
         if self.error:
             rec["error"] = self.error
             rec["error_msg"] = self.error_msg
@@ -596,6 +604,27 @@ class EpisodeEnv:
         if failed is not None:              # the classifier's server failed: the episode is not a result
             raise failed
         return rec
+
+
+_RAW_ID_RX = re.compile(r"[^\s,;:()\[\]\"'“”‘’]*\w@\w[^\s,;:()\[\]\"'“”‘’]*")
+
+
+def raw_ids(text: str, world) -> list:
+    """The raw world ids in a text the user hears: a place key ``head@room`` (also translated, '김치_냉장고@주방'),
+    or an id of the world with an underscore ('partner_b', 'kimchi_fridge@kitchen') as a whole word. Readable
+    ENV person keys ('spot near you', 'husband') are names, not ids."""
+    text = str(text or "")
+    found = [m.group(0).rstrip(".!?") for m in _RAW_ID_RX.finditer(text)]
+    ids = set(world.house.places) | set(world.objects) | set(world.people)
+    for i in sorted(x for x in ids if "_" in x):
+        if re.search(rf"(?<![\w@]){re.escape(i)}(?![\w@])", text):
+            found.append(i)
+    out, seen = [], set()
+    for f in found:
+        if f not in seen:
+            seen.add(f)
+            out.append(f)
+    return out
 
 
 def _handed(world, obj: str, person: str) -> bool:

@@ -1,0 +1,7113 @@
+{
+ "n_asked_items": 250,
+ "n_scored": 233,
+ "skipped": {
+  "no_task": 17
+ },
+ "n_ref": {
+  "structured": 160,
+  "en_reading": 73
+ },
+ "classifier": {
+  "model": "qwen3-vl:8b-instruct",
+  "prompt_version": "ui2"
+ },
+ "summary": {
+  "cached_8b_run": {
+   "n": 233,
+   "mismatch_n": 65,
+   "mismatch_rate": 0.279,
+   "by_ref": {
+    "structured": 45,
+    "en_reading": 20
+   }
+  },
+  "qwen3-vl:8b-instruct": {
+   "n": 233,
+   "mismatch_n": 65,
+   "mismatch_rate": 0.279,
+   "by_ref": {
+    "structured": 44,
+    "en_reading": 21
+   }
+  },
+  "exaone3.5:latest": {
+   "n": 233,
+   "mismatch_n": 65,
+   "mismatch_rate": 0.279,
+   "by_ref": {
+    "en_reading": 20,
+    "structured": 45
+   }
+  },
+  "qwen3-vl:30b-a3b-instruct": {
+   "n": 233,
+   "mismatch_n": 55,
+   "mismatch_rate": 0.2361,
+   "by_ref": {
+    "en_reading": 17,
+    "structured": 38
+   }
+  }
+ },
+ "rows": [
+  {
+   "id": "tr000",
+   "skip": "no_task"
+  },
+  {
+   "id": "tr002",
+   "skip": "no_task"
+  },
+  {
+   "id": "tr003",
+   "task": "hl-dev-000005",
+   "ref": {
+    "kind": "structured",
+    "qtype": "where_are_you"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "which_place",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "which_place",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "where_are_you",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "where_are_you",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr005",
+   "task": "hl-dev-000013",
+   "ref": {
+    "kind": "structured",
+    "qtype": "repeat"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr006",
+   "skip": "no_task"
+  },
+  {
+   "id": "tr007",
+   "skip": "no_task"
+  },
+  {
+   "id": "tr008",
+   "skip": "no_task"
+  },
+  {
+   "id": "tr010",
+   "task": "hl-dev-000045",
+   "ref": {
+    "kind": "structured",
+    "qtype": "repeat"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr011",
+   "skip": "no_task"
+  },
+  {
+   "id": "tr012",
+   "task": "hl-dev-000073",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "repeat"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr013",
+   "task": "hl-dev-000073",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "repeat"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "repeat",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr015",
+   "task": "hl-dev-000020",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "which_place",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "which_place",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "which_place",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr016",
+   "skip": "no_task"
+  },
+  {
+   "id": "tr017",
+   "task": "hl-dev-000010",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr018",
+   "skip": "no_task"
+  },
+  {
+   "id": "tr019",
+   "skip": "no_task"
+  },
+  {
+   "id": "tr020",
+   "skip": "no_task"
+  },
+  {
+   "id": "tr021",
+   "skip": "no_task"
+  },
+  {
+   "id": "tr022",
+   "skip": "no_task"
+  },
+  {
+   "id": "tr023",
+   "task": "hl-dev-000000",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr024",
+   "task": "hl-dev-000000",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "which_place",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "which_place",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr025",
+   "task": "hl-dev-000000",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "which_place",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "which_place",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr026",
+   "task": "hl-dev-000000",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr027",
+   "task": "hl-dev-000000",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr029",
+   "task": "hl-dev-000003",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "repeat",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "repeat",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr030",
+   "task": "hl-dev-000003",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr031",
+   "task": "hl-dev-000003",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr032",
+   "task": "hl-dev-000003",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr033",
+   "task": "hl-dev-000003",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr034",
+   "task": "hl-dev-000003",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr035",
+   "task": "hl-dev-000006",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr036",
+   "task": "hl-dev-000006",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr037",
+   "task": "hl-dev-000012",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr038",
+   "task": "hl-dev-000012",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr039",
+   "task": "hl-dev-000012",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr040",
+   "task": "hl-dev-000015",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr041",
+   "task": "hl-dev-000015",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "repeat",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr042",
+   "task": "hl-dev-000015",
+   "ref": {
+    "kind": "structured",
+    "qtype": "repeat"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr043",
+   "task": "hl-dev-000015",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "did_you_mean",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "did_you_mean",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "free",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr044",
+   "task": "hl-dev-000015",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "repeat",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "repeat",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "did_you_mean",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "repeat",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr045",
+   "task": "hl-dev-000018",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr046",
+   "task": "hl-dev-000021",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "did_you_mean"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr047",
+   "task": "hl-dev-000021",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "which_place",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "which_place",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "which_place",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr048",
+   "task": "hl-dev-000021",
+   "ref": {
+    "kind": "structured",
+    "qtype": "repeat"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr049",
+   "task": "hl-dev-000021",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr050",
+   "task": "hl-dev-000024",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr051",
+   "task": "hl-dev-000024",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr052",
+   "task": "hl-dev-000024",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr053",
+   "task": "hl-dev-000027",
+   "ref": {
+    "kind": "structured",
+    "qtype": "where_is"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "where_are_you",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "where_is",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr055",
+   "task": "hl-dev-000004",
+   "ref": {
+    "kind": "structured",
+    "qtype": "repeat"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr056",
+   "task": "hl-dev-000004",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr057",
+   "task": "hl-dev-000004",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr058",
+   "task": "hl-dev-000007",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr059",
+   "task": "hl-dev-000007",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr060",
+   "task": "hl-dev-000007",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr061",
+   "task": "hl-dev-000007",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr062",
+   "task": "hl-dev-000010",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "where_is"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr063",
+   "task": "hl-dev-000010",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr064",
+   "task": "hl-dev-000019",
+   "ref": {
+    "kind": "structured",
+    "qtype": "where_is"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "where_is",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr066",
+   "task": "hl-dev-000022",
+   "ref": {
+    "kind": "structured",
+    "qtype": "repeat"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr067",
+   "task": "hl-dev-000022",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr069",
+   "task": "hl-dev-000005",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr070",
+   "task": "hl-dev-000008",
+   "ref": {
+    "kind": "structured",
+    "qtype": "repeat"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr072",
+   "task": "hl-dev-000008",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "which_place",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr073",
+   "task": "hl-dev-000011",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr075",
+   "task": "hl-dev-000017",
+   "ref": {
+    "kind": "structured",
+    "qtype": "where_is"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "which_object",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "where_are_you",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr077",
+   "task": "hl-dev-000020",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "which_place",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "which_place",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr079",
+   "task": "hl-dev-000023",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr080",
+   "task": "hl-dev-000023",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr082",
+   "task": "hl-dev-000026",
+   "ref": {
+    "kind": "structured",
+    "qtype": "where_is"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "where_are_you",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "where_are_you",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr084",
+   "task": "hl-dev-000029",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "which_place",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr085",
+   "task": "hl-dev-000029",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr087",
+   "task": "hl-dev-000015",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "repeat",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr088",
+   "task": "hl-dev-000004",
+   "ref": {
+    "kind": "structured",
+    "qtype": "repeat"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr089",
+   "task": "hl-dev-000004",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr090",
+   "task": "hl-dev-000007",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr091",
+   "task": "hl-dev-000010",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "where_is",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr092",
+   "task": "hl-dev-000010",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr094",
+   "task": "hl-dev-000005",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr095",
+   "task": "hl-dev-000011",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr096",
+   "task": "hl-dev-000020",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr097",
+   "task": "hl-dev-000023",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "free",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr098",
+   "task": "hl-dev-000023",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "where_is"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr100",
+   "skip": "no_task"
+  },
+  {
+   "id": "tr101",
+   "skip": "no_task"
+  },
+  {
+   "id": "tr102",
+   "skip": "no_task"
+  },
+  {
+   "id": "tr103",
+   "skip": "no_task"
+  },
+  {
+   "id": "tr104",
+   "skip": "no_task"
+  },
+  {
+   "id": "tr105",
+   "task": "hl-dev-000070",
+   "ref": {
+    "kind": "structured",
+    "qtype": "where_are_you"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "where_are_you",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "where_are_you",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "where_are_you",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "where_are_you",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr106",
+   "task": "hl-dev-000010",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "where_is"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr107",
+   "task": "hl-dev-000013",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "free",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "free",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "free",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "free",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr108",
+   "task": "hl-dev-000030",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr109",
+   "task": "hl-dev-000031",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "which_place",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "which_place",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "which_object",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "which_place",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr110",
+   "task": "hl-dev-000032",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "llm",
+     "qtype": "which_object",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "llm",
+     "qtype": "which_object",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "llm",
+     "qtype": "which_object",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "llm",
+     "qtype": "which_object",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr113",
+   "task": "hl-dev-000040",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr114",
+   "task": "hl-dev-000049",
+   "ref": {
+    "kind": "structured",
+    "qtype": "where_is"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "where_is",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr116",
+   "task": "hl-dev-000051",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "which_object"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr117",
+   "task": "hl-dev-000052",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr118",
+   "task": "hl-dev-000052",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr119",
+   "task": "hl-dev-000052",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr122",
+   "task": "hl-dev-000057",
+   "ref": {
+    "kind": "structured",
+    "qtype": "repeat"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr123",
+   "task": "hl-dev-000061",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "repeat"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "repeat",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr125",
+   "task": "hl-dev-000063",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "what_to_say",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "what_to_say",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "what_to_say",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr126",
+   "task": "hl-dev-000070",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "where_is"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr128",
+   "task": "hl-dev-000080",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr129",
+   "task": "hl-dev-000083",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "which_object"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr130",
+   "task": "hl-dev-000085",
+   "ref": {
+    "kind": "structured",
+    "qtype": "repeat"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr131",
+   "task": "hl-dev-000093",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "where_is",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "free",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr133",
+   "task": "hl-dev-000003",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "repeat",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "repeat",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr134",
+   "task": "hl-dev-000006",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "free",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr135",
+   "task": "hl-dev-000015",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "free",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr136",
+   "task": "hl-dev-000015",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr137",
+   "task": "hl-dev-000017",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr138",
+   "task": "hl-dev-000017",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr139",
+   "task": "hl-dev-000023",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr140",
+   "task": "hl-dev-000023",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr141",
+   "task": "hl-dev-000023",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr143",
+   "task": "hl-dev-000042",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr144",
+   "task": "hl-dev-000042",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr145",
+   "task": "hl-dev-000048",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "did_you_mean"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "llm",
+     "qtype": "which_place",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "llm",
+     "qtype": "which_object",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "llm",
+     "qtype": "which_object",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr146",
+   "task": "hl-dev-000018",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr147",
+   "task": "hl-dev-000056",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr148",
+   "task": "hl-dev-000080",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr149",
+   "task": "hl-dev-000090",
+   "ref": {
+    "kind": "structured",
+    "qtype": "where_are_you"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "where_are_you",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "where_are_you",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "which_place",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "which_place",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr150",
+   "task": "hl-dev-000004",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr151",
+   "task": "hl-dev-000018",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr153",
+   "task": "hl-dev-000013",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "did_you_mean"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "repeat",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "repeat",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "llm",
+     "qtype": "repeat",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "repeat",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr154",
+   "task": "hl-dev-000013",
+   "ref": {
+    "kind": "structured",
+    "qtype": "repeat"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr157",
+   "task": "hl-dev-000029",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr159",
+   "task": "hl-dev-000036",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "where_is",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr160",
+   "task": "hl-dev-000040",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "free",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr161",
+   "task": "hl-dev-000003",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr162",
+   "task": "hl-dev-000042",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr165",
+   "task": "hl-dev-000057",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr166",
+   "task": "hl-dev-000057",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr167",
+   "task": "hl-dev-000058",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr169",
+   "task": "hl-dev-000072",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr170",
+   "task": "hl-dev-000072",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr172",
+   "task": "hl-dev-000085",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr173",
+   "task": "hl-dev-000093",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "free",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr174",
+   "task": "hl-dev-000000",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "llm",
+     "qtype": "which_object",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "llm",
+     "qtype": "which_object",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "llm",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr177",
+   "task": "hl-dev-000003",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr178",
+   "task": "hl-dev-000003",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr179",
+   "task": "hl-dev-000003",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr180",
+   "task": "hl-dev-000003",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr181",
+   "task": "hl-dev-000003",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr182",
+   "task": "hl-dev-000005",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "where_is"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr184",
+   "task": "hl-dev-000007",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr186",
+   "task": "hl-dev-000013",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "repeat"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "llm",
+     "qtype": "what_to_say",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "llm",
+     "qtype": "what_to_say",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "llm",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "llm",
+     "qtype": "what_to_say",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr188",
+   "task": "hl-dev-000014",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "repeat"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr189",
+   "task": "hl-dev-000014",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "which_object"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr190",
+   "task": "hl-dev-000014",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "which_object"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr191",
+   "task": "hl-dev-000014",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "which_object"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr192",
+   "task": "hl-dev-000014",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "which_object"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr194",
+   "task": "hl-dev-000017",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr196",
+   "task": "hl-dev-000018",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "where_is"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "llm",
+     "qtype": "where_is",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr198",
+   "task": "hl-dev-000020",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "repeat"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "llm",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "llm",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "repeat",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr200",
+   "task": "hl-dev-000021",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "did_you_mean"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "free",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr202",
+   "task": "hl-dev-000024",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "free",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "free",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr203",
+   "task": "hl-dev-000024",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr204",
+   "task": "hl-dev-000024",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr206",
+   "task": "hl-dev-000030",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr207",
+   "task": "hl-dev-000030",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "repeat",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "repeat",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr209",
+   "task": "hl-dev-000031",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr211",
+   "task": "hl-dev-000032",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "which_object"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "llm",
+     "qtype": "which_object",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "llm",
+     "qtype": "which_object",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "llm",
+     "qtype": "which_object",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr212",
+   "task": "hl-dev-000032",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "which_object"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "llm",
+     "qtype": "which_object",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "llm",
+     "qtype": "which_object",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "llm",
+     "qtype": "which_object",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr214",
+   "task": "hl-dev-000033",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "where_is"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "llm",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "llm",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr215",
+   "task": "hl-dev-000033",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "where_is"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "llm",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "llm",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "llm",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr217",
+   "task": "hl-dev-000040",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr218",
+   "task": "hl-dev-000041",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr221",
+   "task": "hl-dev-000045",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "llm",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "llm",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "llm",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "llm",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr222",
+   "task": "hl-dev-000045",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "repeat"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "llm",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "llm",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "llm",
+     "qtype": "repeat",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr224",
+   "task": "hl-dev-000046",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "where_is"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "llm",
+     "qtype": "where_is",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr226",
+   "task": "hl-dev-000048",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "where_are_you"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "where_are_you",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "where_are_you",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "where_are_you",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "where_are_you",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr228",
+   "task": "hl-dev-000051",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "where_is"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr229",
+   "task": "hl-dev-000054",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "where_is"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr230",
+   "task": "hl-dev-000054",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "where_is"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr233",
+   "task": "hl-dev-000059",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr234",
+   "task": "hl-dev-000060",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "did_you_mean"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr235",
+   "task": "hl-dev-000060",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "did_you_mean"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr236",
+   "task": "hl-dev-000060",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "did_you_mean"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr238",
+   "task": "hl-dev-000063",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "llm",
+     "qtype": "what_to_say",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "llm",
+     "qtype": "what_to_say",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr239",
+   "task": "hl-dev-000063",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "what_to_say"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "llm",
+     "qtype": "what_to_say",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr241",
+   "task": "hl-dev-000066",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr242",
+   "task": "hl-dev-000066",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr243",
+   "task": "hl-dev-000069",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr247",
+   "task": "hl-dev-000077",
+   "ref": {
+    "kind": "structured",
+    "qtype": "where_is"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "where_is",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "where_is",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "where_are_you",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "where_are_you",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr250",
+   "task": "hl-dev-000081",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "did_you_mean"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr251",
+   "task": "hl-dev-000081",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr254",
+   "task": "hl-dev-000084",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr255",
+   "task": "hl-dev-000084",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "which_place",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr256",
+   "task": "hl-dev-000084",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr257",
+   "task": "hl-dev-000085",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr258",
+   "task": "hl-dev-000086",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "repeat",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "repeat",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "repeat",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr260",
+   "task": "hl-dev-000087",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "free",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "free",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr261",
+   "task": "hl-dev-000087",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "free",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "free",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr262",
+   "task": "hl-dev-000087",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "repeat",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr263",
+   "task": "hl-dev-000087",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr264",
+   "task": "hl-dev-000089",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "did_you_mean"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr265",
+   "task": "hl-dev-000089",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr267",
+   "task": "hl-dev-000090",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr268",
+   "task": "hl-dev-000090",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "where_is",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr271",
+   "task": "hl-dev-000092",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "did_you_mean"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "free",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr273",
+   "task": "hl-dev-000093",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "what_to_say"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "llm",
+     "qtype": "what_to_say",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "llm",
+     "qtype": "what_to_say",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "llm",
+     "qtype": "what_to_say",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "what_to_say",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr274",
+   "task": "hl-dev-000093",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr275",
+   "task": "hl-dev-000094",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr276",
+   "task": "hl-dev-000094",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr277",
+   "task": "hl-dev-000004",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr278",
+   "task": "hl-dev-000007",
+   "ref": {
+    "kind": "structured",
+    "qtype": "repeat"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "which_place",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr279",
+   "task": "hl-dev-000007",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr280",
+   "task": "hl-dev-000008",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr283",
+   "task": "hl-dev-000015",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "repeat",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr284",
+   "task": "hl-dev-000039",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "free",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "free",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "free",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr285",
+   "task": "hl-dev-000039",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr287",
+   "task": "hl-dev-000047",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "did_you_mean"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "free",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr289",
+   "task": "hl-dev-000058",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr290",
+   "task": "hl-dev-000061",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "did_you_mean",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "which_place",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr291",
+   "task": "hl-dev-000061",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr292",
+   "task": "hl-dev-000064",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "free",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "free",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr293",
+   "task": "hl-dev-000064",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "free",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr295",
+   "task": "hl-dev-000095",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr296",
+   "task": "hl-dev-000010",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr297",
+   "task": "hl-dev-000013",
+   "ref": {
+    "kind": "structured",
+    "qtype": "repeat"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr298",
+   "task": "hl-dev-000013",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr299",
+   "task": "hl-dev-000003",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr300",
+   "task": "hl-dev-000003",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr301",
+   "task": "hl-dev-000010",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr302",
+   "task": "hl-dev-000010",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr303",
+   "task": "hl-dev-000013",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr304",
+   "task": "hl-dev-000003",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr306",
+   "task": "hl-dev-000060",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "did_you_mean"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr307",
+   "task": "hl-dev-000060",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "did_you_mean"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr308",
+   "task": "hl-dev-000060",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "which_object"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "which_place",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "which_object",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr309",
+   "task": "hl-dev-000060",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr310",
+   "task": "hl-dev-000060",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr311",
+   "task": "hl-dev-000057",
+   "ref": {
+    "kind": "structured",
+    "qtype": "repeat"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "repeat",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr312",
+   "task": "hl-dev-000057",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr313",
+   "task": "hl-dev-000057",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr315",
+   "task": "hl-dev-000057",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr316",
+   "task": "hl-dev-000057",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr319",
+   "task": "hl-dev-000060",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr320",
+   "task": "hl-dev-000060",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr322",
+   "task": "hl-dev-000060",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    }
+   }
+  },
+  {
+   "id": "tr323",
+   "task": "hl-dev-000060",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "did_you_mean"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr324",
+   "task": "hl-dev-000060",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "did_you_mean"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr325",
+   "task": "hl-dev-000060",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "confirm",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr326",
+   "task": "hl-dev-000060",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "did_you_mean"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "llm",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "llm",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "llm",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr327",
+   "task": "hl-dev-000060",
+   "ref": {
+    "kind": "en_reading",
+    "qtype": "did_you_mean"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "llm",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "llm",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "llm",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "rules",
+     "qtype": "did_you_mean",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr328",
+   "task": "hl-dev-000060",
+   "ref": {
+    "kind": "structured",
+    "qtype": "which_place"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "exaone3.5:latest": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured",
+     "qtype": "which_place",
+     "mismatch": false
+    }
+   }
+  },
+  {
+   "id": "tr329",
+   "task": "hl-dev-000060",
+   "ref": {
+    "kind": "structured",
+    "qtype": "confirm"
+   },
+   "per_model": {
+    "cached_8b_run": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:8b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "exaone3.5:latest": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    },
+    "qwen3-vl:30b-a3b-instruct": {
+     "path": "structured_mismatch",
+     "qtype": "confirm",
+     "mismatch": true
+    }
+   }
+  }
+ ]
+}

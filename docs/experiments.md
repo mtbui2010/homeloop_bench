@@ -409,3 +409,44 @@ whose person's bed was only a waypoint (q0278) now get a "no"; 2 "no" answers no
 (q0033) or the "on" for "in" (q0243) first; 8 kitchen-place questions get the message and 5 microwave questions
 "just open it"; 2 questions add the speaker's position; 4 KO read-backs move from `structured_mismatch` to
 `structured` with the same answer. Round 2 reruns the same 30 tasks in all conditions.
+
+## Translation model A/B (round 3)
+
+SAGE-v2 translates its English questions, read-backs and messages into Korean (`AssistLoop._in_lang`) with the 8B
+planner model. That model mistranslates and leaks Chinese characters. We compared it with two candidate translators
+on GPU 0, using SAGE's own prompt at temperature 0, seed 0 and num_ctx 8192. Result: `data/quality/translate_ab.json`.
+Evidence: `data/quality/translate_ab/`. Scripts: `tools/translate_ab/`.
+
+- **Items:** 330 distinct English texts that SAGE-v2 sent to translation in earlier Korean runs (164 questions,
+  86 read-backs, 48 give-ups, 32 messages). Every model has an output for every item.
+- **Scoring:** 3 independent blind judge agents (random order per item, model names hidden). For each item we take
+  the judges' mean for meaning and naturalness (1-5) and the majority for names kept and garble (foreign script,
+  English leak, broken words).
+- **Heard-text check:** the simulated user's `structured_mismatch` on each model's Korean. We used the episode of
+  the task the text came from, with the English meaning (`derive`, else the simulator's reading of the English) as
+  the reference. This covers 233 of the 250 asked items; for 17 items no source episode was found.
+
+| model | licence | meaning | natural | names kept | no garble | mismatch | latency mean / p95 (s) | GPU memory (GB) |
+|---|---|---|---|---|---|---|---|---|
+| qwen3-vl:8b-instruct (today) | Apache-2.0 | 3.86 | 3.32 | 0.782 | 0.909 | 0.279 | 0.37 / 0.73 | 6.5 |
+| exaone3.5:latest | EXAONE 1.1 NC | 4.00 | 3.74 | 0.858 | 0.970 | 0.279 | 0.27 / 0.59 | 13.6 |
+| qwen3-vl:30b-a3b-instruct | Apache-2.0 | **4.42** | **3.97** | **0.870** | **0.994** | **0.236** | 0.34 / 0.67 (full GPU) | 19.8 |
+
+- **Meaning, paired by item (sign test):**
+  - 30B vs EXAONE: 149 better, 51 worse, p = 4e-12.
+  - 30B vs 8B: 167 better, 41 worse.
+  - EXAONE vs 8B: no significant difference (p = 0.59).
+- **Where the 30B gains most:** read-backs (meaning 4.30, against 3.70 for EXAONE and 2.97 for the 8B).
+- **Latency:** in the three-model run, part of the 30B's weights sat on the CPU, and it measured 0.47 / 1.02 s.
+  The row above is a recheck with only the planner loaded: 42 items, fully on GPU 0.
+- **Memory:** the 8B planner plus the 30B translator, together with the other users' processes, measured 36.8 GB on
+  GPU 0 (OLLAMA_NUM_PARALLEL=8). That is under the 40 GB cap, but with only about 3 GB of headroom. With EXAONE in
+  place of the 30B it would be about 29.9 GB. This counts against the 30B: check nvidia-smi before raising the
+  number of parallel slots.
+- **Shared mismatches:** 27 items mismatch for all three models. In these the English itself carries raw ids,
+  Korean fragments or wrong names ("the 우유 from the fridge", "in the grandpa"). These are SAGE language gaps
+  (round 3, item 6), not translation errors.
+
+**Chosen: `qwen3-vl:30b-a3b-instruct`.** It is the best on meaning, names kept and no garble, and it has the lowest
+heard-text mismatch. Its licence is Apache-2.0. EXAONE's licence is non-commercial (research use at runtime only),
+so we did not choose it.

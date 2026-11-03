@@ -1,0 +1,235 @@
+{
+ "task": "EN->KO translation of SAGE-v2 questions, read-backs and messages (AssistLoop._in_lang prompt)",
+ "prompt": "Translate into natural spoken Korean. Keep it short and polite. Output only the translation:\\n{text}",
+ "request": {
+  "endpoint": "/api/chat on homeloop_ollama_gpu0 (GPU 0)",
+  "temperature": 0,
+  "seed": 0,
+  "num_ctx": 8192
+ },
+ "items": {
+  "n": 330,
+  "file": "data/quality/translate_ab/items.jsonl",
+  "by_kind": {
+   "give_up": 48,
+   "question": 164,
+   "read_back": 86,
+   "say": 32
+  },
+  "source": "distinct English texts SAGE-v2 sent to translation in earlier KO runs (llm caches of results/live_smoke, pilot_r27*, gate30_r27)"
+ },
+ "candidates": [
+  {
+   "model": "qwen3-vl:8b-instruct",
+   "licence": "Apache-2.0"
+  },
+  {
+   "model": "exaone3.5:latest",
+   "licence": "EXAONE AI Model License 1.1 - NC (non-commercial)"
+  },
+  {
+   "model": "qwen3-vl:30b-a3b-instruct",
+   "licence": "Apache-2.0"
+  }
+ ],
+ "scores": {
+  "method": "3 independent blind judge agents (judge_{1,2,3}.json; per-item random order, model names hidden); per item: mean of the 3 judges for meaning / natural (1-5), majority for names_kept / cjk_or_garble; then mean / rate over the 330 items",
+  "summary": {
+   "qwen3-vl:8b-instruct": {
+    "n": 330,
+    "meaning_mean": 3.857,
+    "natural_mean": 3.315,
+    "names_kept_rate": 0.782,
+    "no_garble_rate": 0.909,
+    "cjk_or_garble_n": 30,
+    "meaning_le2_n": 37,
+    "regex_foreign_script_n": 24,
+    "per_judge_meaning_mean": [
+     3.845,
+     3.855,
+     3.87
+    ],
+    "composite": 2.405
+   },
+   "exaone3.5:latest": {
+    "n": 330,
+    "meaning_mean": 3.999,
+    "natural_mean": 3.735,
+    "names_kept_rate": 0.858,
+    "no_garble_rate": 0.97,
+    "cjk_or_garble_n": 10,
+    "meaning_le2_n": 26,
+    "regex_foreign_script_n": 0,
+    "per_judge_meaning_mean": [
+     4.012,
+     4.021,
+     3.964
+    ],
+    "composite": 2.578
+   },
+   "qwen3-vl:30b-a3b-instruct": {
+    "n": 330,
+    "meaning_mean": 4.422,
+    "natural_mean": 3.966,
+    "names_kept_rate": 0.87,
+    "no_garble_rate": 0.994,
+    "cjk_or_garble_n": 2,
+    "meaning_le2_n": 18,
+    "regex_foreign_script_n": 0,
+    "per_judge_meaning_mean": [
+     4.424,
+     4.433,
+     4.409
+    ],
+    "composite": 2.72
+   }
+  },
+  "paired_meaning_sign_test": [
+   {
+    "a": "qwen3-vl:30b-a3b-instruct",
+    "b": "exaone3.5:latest",
+    "a_better": 149,
+    "b_better": 51,
+    "ties": 130,
+    "mean_diff": 0.423,
+    "sign_test_p": 4.2e-12
+   },
+   {
+    "a": "qwen3-vl:30b-a3b-instruct",
+    "b": "qwen3-vl:8b-instruct",
+    "a_better": 167,
+    "b_better": 41,
+    "ties": 122,
+    "mean_diff": 0.566,
+    "sign_test_p": 2.4e-18
+   },
+   {
+    "a": "exaone3.5:latest",
+    "b": "qwen3-vl:8b-instruct",
+    "a_better": 116,
+    "b_better": 108,
+    "ties": 106,
+    "mean_diff": 0.142,
+    "sign_test_p": 0.59
+   }
+  ],
+  "judge_agreement": {
+   "names_kept": 0.933,
+   "cjk_or_garble": 0.987,
+   "meaning_within_1": 0.992
+  },
+  "meaning_by_kind": {
+   "give_up": {
+    "n": 48,
+    "qwen3-vl:8b-instruct": 4.028,
+    "exaone3.5:latest": 4.014,
+    "qwen3-vl:30b-a3b-instruct": 4.479
+   },
+   "question": {
+    "n": 164,
+    "qwen3-vl:8b-instruct": 4.252,
+    "exaone3.5:latest": 4.205,
+    "qwen3-vl:30b-a3b-instruct": 4.457
+   },
+   "read_back": {
+    "n": 86,
+    "qwen3-vl:8b-instruct": 2.969,
+    "exaone3.5:latest": 3.698,
+    "qwen3-vl:30b-a3b-instruct": 4.302
+   },
+   "say": {
+    "n": 32,
+    "qwen3-vl:8b-instruct": 3.958,
+    "exaone3.5:latest": 3.729,
+    "qwen3-vl:30b-a3b-instruct": 4.479
+   }
+  },
+  "composite_def": "(meaning_mean-1)/4 + names_kept_rate + no_garble_rate (max 3)"
+ },
+ "mismatch_rate": {
+  "method": "homeloop_robot SimUser._content on each model's Korean, in the episode of the task the text came from (profile ideal, seed 0, lang ko; task found by matching the run's Korean in the run's episodes); reference = derive() of the English (structured meaning) when a template matches, else the simulator's reading of the English text; mismatch = path structured_mismatch (structured) or a different qtype / not in Korean (English reading); classifier fallback qwen3-vl:8b-instruct, cached in user_intent_cache.jsonl",
+  "n_asked_items": 250,
+  "n_scored": 233,
+  "skipped": {
+   "no_task": 17
+  },
+  "n_ref": {
+   "structured": 160,
+   "en_reading": 73
+  },
+  "per_model": {
+   "qwen3-vl:8b-instruct": {
+    "mismatch_n": 65,
+    "mismatch_rate": 0.279
+   },
+   "exaone3.5:latest": {
+    "mismatch_n": 65,
+    "mismatch_rate": 0.279
+   },
+   "qwen3-vl:30b-a3b-instruct": {
+    "mismatch_n": 55,
+    "mismatch_rate": 0.2361
+   }
+  },
+  "original_run_8b_text": {
+   "mismatch_n": 65,
+   "mismatch_rate": 0.279
+  },
+  "note": "27 items mismatch for all three models: the English itself carries raw ids, Korean fragments or wrong names (e.g. 'the 우유 from the fridge', 'in the grandpa'); those are SAGE weaknesses (Round 3 item 6), not translation errors",
+  "rows": "data/quality/translate_ab/mismatch.json"
+ },
+ "latency": {
+  "qwen3-vl:8b-instruct": {
+   "latency_mean_s": 0.367,
+   "latency_p50_s": 0.333,
+   "latency_p95_s": 0.729,
+   "latency_max_s": 1.3,
+   "gen_tok_per_s": 115.7,
+   "warmup_s": 0.37,
+   "size_vram_bytes": 6536183152
+  },
+  "exaone3.5:latest": {
+   "latency_mean_s": 0.274,
+   "latency_p50_s": 0.243,
+   "latency_p95_s": 0.594,
+   "latency_max_s": 0.849,
+   "gen_tok_per_s": 124.5,
+   "warmup_s": 5.13,
+   "size_vram_bytes": 13607035207
+  },
+  "qwen3-vl:30b-a3b-instruct": {
+   "latency_mean_s": 0.472,
+   "latency_p50_s": 0.4,
+   "latency_p95_s": 1.018,
+   "latency_max_s": 1.562,
+   "gen_tok_per_s": 113.7,
+   "warmup_s": 17.82,
+   "size_vram_bytes": 17776634756,
+   "note": "step-1 run had about 2.9 GB of the weights on the CPU (three models loaded); the latency above is pessimistic",
+   "full_gpu_recheck": {
+    "n": 42,
+    "latency_mean_s": 0.341,
+    "latency_p50_s": 0.29,
+    "latency_p95_s": 0.665,
+    "same_output_as_step1": 19,
+    "items": "every 8th item (42)",
+    "size_bytes": 19768415353,
+    "size_vram_bytes": 19768415353,
+    "gpu0_mib_with_8b_planner": 36809,
+    "gpu0_mib_planner_only": 16306,
+    "note": "loaded next to the 8B planner only (OLLAMA_NUM_PARALLEL=8, num_ctx 8192): 100 % on GPU 0; 19 of 42 outputs differ in wording from step 1 (CPU/GPU split changes the numerics); the scores are on the step-1 outputs"
+   }
+  }
+ },
+ "memory": {
+  "gpu0_mib_planner_only": 16306,
+  "gpu0_mib_8b_plus_30b": 36809,
+  "gpu0_cap_mib": 40960,
+  "exaone_vram_bytes": 13607035207,
+  "qwen30b_bytes": 19768415353,
+  "note": "8B planner + 30B translator use 36.8 GB of GPU 0 including other users' processes, under the 40 GB cap with about 3 GB headroom at OLLAMA_NUM_PARALLEL=8; 8B + EXAONE would be about 29.9 GB. The tighter fit counts against the 30B: check nvidia-smi before raising parallel slots"
+ },
+ "chosen": "qwen3-vl:30b-a3b-instruct",
+ "choice_reason": "best on all three criteria: meaning 4.42 vs 4.00 (EXAONE) and 3.86 (8B), paired sign test vs EXAONE p=4.2e-12; names kept 0.870 vs 0.858 / 0.782; no garble 0.994 vs 0.970 / 0.909; lowest heard-text mismatch 0.236 vs 0.279 / 0.279; Apache-2.0. Costs: higher latency (0.34 s mean on full GPU vs 0.27 s EXAONE) and 6 GB more GPU memory than EXAONE",
+ "licence_note": "qwen3-vl:30b-a3b-instruct and qwen3-vl:8b-instruct: Apache-2.0 (licence text in the model's ollama manifest), fine for the public release. exaone3.5: EXAONE AI Model License Agreement 1.1 - NC (non-commercial; research use at runtime only) - not chosen. The translator is a runtime dependency; the bench ships no model weights."
+}

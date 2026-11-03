@@ -72,10 +72,14 @@ phase, see [live smoke](docs/live_smoke.md).
 
 - Code: Apache-2.0 ([LICENSE](LICENSE)).
 - Data: the English texts, the templates in both languages, the goals and labels are Apache-2.0. The Korean
-  paraphrases written by EXAONE 3.5 (records with `paraphrase_model.ko = exaone3.5:latest`) and the LLM cache rows
-  with EXAONE output are **CC BY-NC 4.0** ([LICENSE-DATA](LICENSE-DATA)); as EXAONE model Output they are also
-  subject to the EXAONE AI Model License 1.1 - NC (research use only; the stricter terms apply). See
-  [NOTICE](NOTICE) and the [datasheet](docs/datasheet.md#distribution). For commercial use, take the Korean
-  template of those tasks (`meta.template_text.ko`, Apache-2.0).
+  paraphrases written by EXAONE 3.5 (`text.ko` and `meta.paraphrase.ko` of records with
+  `paraphrase_model.ko = exaone3.5:latest`, 5,193 tasks) and the whole Korean LLM cache `paraphrase_ko.jsonl`
+  are EXAONE model Output, owned by LG and redistributed under the EXAONE AI Model License 1.1 - NC: research
+  use only, no commercial use, and **no use to train, fine-tune or otherwise develop or improve models**. CC BY-NC
+  4.0 covers only the authors' own contribution to that part (selection, filtering, labels)
+  ([LICENSE-DATA](LICENSE-DATA), [NOTICE](NOTICE), [datasheet](docs/datasheet.md#distribution)).
+- Training warning: the train split holds 2,084 records with EXAONE-written Korean text. To train or fine-tune a
+  model, replace their `text.ko` with `meta.template_text.ko` (the authors' Apache-2.0 template) or use English
+  only. The same replacement gives a fully Apache-2.0 dataset for commercial use.
 
 Cite with [CITATION.cff](CITATION.cff).

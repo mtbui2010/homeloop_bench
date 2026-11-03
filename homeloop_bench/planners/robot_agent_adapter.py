@@ -205,6 +205,41 @@ def _count_embodiplan(env):
     return [(backend, "chat", routed)]
 
 
+def seed_pool_path():
+    """The homeloop robot package's seed pool (its manifest's ``planner.seed_memory``), None without one."""
+    import yaml
+
+    import homeloop_robot
+    MANIFEST_PATH = Path(homeloop_robot.__file__).resolve().parent / "configs" / "manifest.yaml"   # no robot_agent
+    rel = ((yaml.safe_load(MANIFEST_PATH.read_text(encoding="utf-8")) or {}).get("planner") or {}).get("seed_memory")
+    return (MANIFEST_PATH.parent / rel).resolve() if rel else None
+
+
+def seed_pool_info() -> dict:
+    """{seed_pool: path relative to the homeloop_robot package, seed_pool_sha: sha256 of the file, seed_pool_n}."""
+    import hashlib
+
+    import homeloop_robot
+    p = seed_pool_path()
+    if p is None or not p.is_file():
+        return {"seed_pool": None, "seed_pool_sha": None, "seed_pool_n": 0}
+    data = p.read_bytes()
+    root = Path(homeloop_robot.__file__).resolve().parent
+    try:
+        rel = str(p.relative_to(root.parent))
+    except ValueError:
+        rel = p.name
+    return {"seed_pool": rel, "seed_pool_sha": hashlib.sha256(data).hexdigest(),
+            "seed_pool_n": sum(1 for line in data.decode("utf-8").splitlines() if line.strip())}
+
+
+def no_seed_pool(loop) -> None:
+    """``robot_agent:sage_norag``: this loop's robot view reports no seed pool, so the SAGE planner it builds
+    (``ClosedLoop._make_planner``: ``seed_memory=self.robot.seed_memory()``) retrieves from nothing. Only this
+    loop instance's view is changed (robot_agent is not edited, the shared adapter is not touched)."""
+    loop.robot.seed_memory = lambda: None
+
+
 def seed_memory(env, path) -> int:
     """Write robot_agent's object memory (``mem.json``: {objects: {name: {place, ts, how}}}) with the object
     memory every planner observes (``EpisodeEnv.object_memory``: each object's usual place). A deployed
@@ -267,10 +302,20 @@ class _RobotAgentPlanner:
     ra_planner = "grace"
     description = ""
     structured = True            # SAGE's template questions carry their qtype (structured_asks)
+    seed_pool = True             # the robot package's seed pool (manifest planner.seed_memory) is retrieved from
+
+    @classmethod
+    def run_config(cls) -> dict:
+        """What summary.json ``config.planner_config`` records: the variant and its seed pool (path, sha256, size)."""
+        info = seed_pool_info() if cls.seed_pool else {"seed_pool": None, "seed_pool_sha": None, "seed_pool_n": 0}
+        return {"variant": "rag" if cls.seed_pool else "norag", "loop": cls.loop_kind, "generator": cls.ra_planner,
+                "live_memory": "per episode (deleted after it)", **info}
 
     def __init__(self, llm=None):
         self.llm = llm
         self.events: list = []
+        self.generator = None        # None: SAGE (grace), or the fake GoalPlanner under --llm fake
+        self.on_loop = None          # inspection hook (loop, env) -> True to stop before the run (built_prompt)
 
     def run(self, env) -> None:
         import robot_agent.connect.llm as ra_llm
@@ -318,8 +363,12 @@ class _RobotAgentPlanner:
                     seed_memory(env, tmp / "mem.json")
                 loop = self._make_loop(agent, tmp, fake)
                 loop._llm_client = client
+                if not self.seed_pool:
+                    no_seed_pool(loop)
                 if self.structured and os.environ.get("HOMELOOP_RA_STRUCTURED", "1") != "0":
                     structured_asks(loop, proxy)
+                if self.on_loop is not None and self.on_loop(loop, env):
+                    return                       # an inspection (built_prompt): the run is not played
                 final = None
                 n = 0
                 injected = 0
@@ -365,7 +414,8 @@ class _RobotAgentPlanner:
                       log_dir=str(tmp / "runs"), live_path=str(tmp / "live.jsonl"))
         if self.loop_kind == "assist":
             from robot_agent.core.planning.assist_loop import AssistLoop
-            return AssistLoop(agent, emit=None, generator=FAKE_GENERATOR if fake else self.ra_planner,
+            gen = self.generator or (FAKE_GENERATOR if fake else self.ra_planner)
+            return AssistLoop(agent, emit=None, generator=gen,
                               health_wait_s=0, memory_path=str(tmp / "mem.json"), **common)
         from robot_agent.core.planning.loop import ClosedLoop
         planner = self.ra_planner
@@ -375,9 +425,16 @@ class _RobotAgentPlanner:
 
 
 class SagePlanner(_RobotAgentPlanner):
+    """SAGE as designed: its retrieval over the robot's seed pool (top-3 similar solved plans in every prompt)."""
     name = "robot_agent:sage"
     loop_kind = "assist"
     ra_planner = "grace"
+
+
+class SageNoRagPlanner(SagePlanner):
+    """The same SAGE with an empty seed pool (zero-shot): the only difference from ``robot_agent:sage``."""
+    name = "robot_agent:sage_norag"
+    seed_pool = False
 
 
 class GracePlanner(_RobotAgentPlanner):
@@ -390,3 +447,67 @@ class LlmDirectPlanner(_RobotAgentPlanner):
     name = "robot_agent:llm_direct"
     loop_kind = "closed"
     ra_planner = "llm_direct"
+
+
+class _Captured(Exception):
+    pass
+
+
+def built_prompt(task, planner_name: str = "robot_agent:sage", lang: str = "en", profile: str = "real",
+                 seed: int = 0) -> dict:
+    """The first prompt SAGE's generator sends for ``task`` (its decompose call), built by the same episode setup
+    a run uses (robot package, ENV, per-episode memory, the variant's seed pool), with ``--llm fake``: the episode
+    starts as ``run`` starts it, the loop's own SAGE planner is built (generator ``grace``, not the fake
+    GoalPlanner) and its ``generate_plan`` is called once with the task text; the LLM call is captured and not
+    sent. Returns {planner, task_id, lang, query, seed_pool_n, retrieved: [{task, score, source}], prompt}.
+    Shows that ``robot_agent:sage`` retrieves from the seed pool and ``robot_agent:sage_norag`` does not."""
+    import embodiplan
+
+    from ..env import EpisodeEnv
+    from . import make_planner, planner_class
+    cls = planner_class(planner_name)
+    if getattr(cls, "loop_kind", None) != "assist":
+        raise ValueError(f"{planner_name}: built_prompt is for the SAGE planners (robot_agent:sage, _norag)")
+    env = EpisodeEnv(task, profile, seed, lang, llm=FakeLLM(), privileged=False, interrupt_via="inject")
+    env.planner_name = planner_name
+    planner = make_planner(planner_name, llm=env.llm())
+    planner.generator = planner.ra_planner
+    out: dict = {"planner": planner_name, "task_id": env.task_id, "lang": lang, "query": env.task_text}
+
+    def inspect(loop, env_):
+        gen = loop._make_planner()
+        sage = gen
+        for _ in range(4):                     # registry proxy -> GraceBackend -> SAGEPlanner
+            if hasattr(sage, "retrieve_examples") and hasattr(sage, "memory"):
+                break
+            sage = getattr(sage, "_p", None) or getattr(sage, "inner", None) or getattr(sage, "_inner", None)
+        mem = getattr(sage, "memory", None)
+        out["seed_pool_n"] = (mem.size.get("seed", 0) if mem is not None else 0)
+        ex, _block = sage.retrieve_examples(env_.task_text) if sage is not None else ([], "")
+        out["retrieved"] = [{"task": e.task, "score": round(float(e.score), 4), "source": e.source} for e in ex]
+
+        prompts = out.setdefault("prompts", [])
+
+        def capture(self, messages, temperature=None):
+            # every call fails (nothing is sent): SAGE falls back (decompose -> one sub-goal -> expand), so the
+            # decompose prompt and the expand prompt of the first sub-goal are both seen
+            prompts.append("\n\n".join(str(m.get("content", "")) for m in messages))
+            raise _Captured()
+        with _patched([(embodiplan.LLMBackend, "chat", capture)]):
+            try:
+                gen.generate_plan(env_.task_text, "Robot state: " + loop.robot.adapter.observe().text, [])
+            except _Captured:
+                pass
+            except Exception:                  # noqa: BLE001 - SAGE falls back after a failed call; the
+                pass                           # first captured prompt is what is reported
+        return True
+    planner.on_loop = inspect
+    import contextlib
+    import io
+    with contextlib.redirect_stdout(io.StringIO()):        # SAGE prints its fallbacks
+        planner.run(env)
+    ps = out.pop("prompts", [])
+    out["prompt"] = ps[0] if ps else None
+    out["n_prompts"] = len(ps)
+    out["prompts_with_examples"] = sum(1 for p in ps if "RETRIEVED EXAMPLE" in p)
+    return out

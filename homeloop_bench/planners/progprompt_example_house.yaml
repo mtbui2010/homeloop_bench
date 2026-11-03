@@ -1,6 +1,9 @@
 # The house of progprompt_like's three example programs (ProgPrompt, Singh et al. 2022, arXiv:2209.11302:
 # example programs in the prompt). It is used by no split (train, dev or test) and is not a homeloop_robot house,
-# so no example names a place, object or layout of an evaluated house. A small flat: kitchen, living room, utility.
+# so no example names a place, object or layout of an evaluated house. A small flat: kitchen, living room, utility,
+# bedroom. It is also the house of robot_agent:sage's seed pool (homeloop_robot planner/seed_memory.jsonl; the
+# bedroom, the side table, the son, the fork and the cooking oil were added for it: a person to message, a
+# reachable surface beside the resident, objects for two refusals).
 house: example_flat
 version: 1
 name: {en: Example flat, ko: 예시 집}
@@ -8,9 +11,11 @@ rooms:
   kitchen: {type: [kitchen], name: {en: kitchen, ko: 주방}, rect: [0, 0, 5, 4], floor: {pos: [2.5, 1.8], tags: [exit_path]}}
   living:  {type: [living], name: {en: living room, ko: 거실}, rect: [5, 0, 10, 4], floor: {pos: [7.0, 3.0]}}
   utility: {type: [utility], name: {en: utility room, ko: 다용도실}, rect: [0, 4, 4, 7], floor: {pos: [2.0, 5.2]}}
+  bedroom: {type: [bedroom], name: {en: bedroom, ko: 침실}, rect: [5, 4, 10, 7], floor: {pos: [6.0, 5.0]}}
 doors:
   - {rooms: [kitchen, living], at: [5.0, 2.0], width_m: 0.9}
   - {rooms: [kitchen, utility], at: [2.0, 4.0], width_m: 0.8}
+  - {rooms: [living, bedroom], at: [6.5, 4.0], width_m: 0.8}
 places:
   counter@kitchen:
     {room: kitchen, kind: surface, name: {en: kitchen counter, ko: 조리대}, aliases: {en: [counter], ko: [싱크대]},
@@ -39,6 +44,9 @@ places:
   sofa@living:
     {room: living, kind: seat, name: {en: sofa, ko: 소파}, aliases: {en: [couch], ko: []},
      pos: [8.0, 3.0], yaw_deg: 0, height_m: 0.45, clutter: low, capacity: 3, tags: [], person_pos: [9.4, 3.5]}
+  side_table@living:
+    {room: living, kind: surface, name: {en: side table, ko: 보조 탁자}, aliases: {en: [end table], ko: [사이드 테이블]},
+     top: [9.3, 2.9], pos: [8.6, 2.4], yaw_deg: 35, height_m: 0.55, clutter: low, capacity: 3, tags: []}
   tv_stand@living:
     {room: living, kind: surface, name: {en: TV stand, ko: TV 받침대}, aliases: {en: [], ko: [TV장]},
      pos: [8.6, 0.7], yaw_deg: 270, height_m: 0.5, clutter: low, capacity: 4, tags: [electrical]}
@@ -55,6 +63,15 @@ places:
   utility_shelf@utility:
     {room: utility, kind: surface, name: {en: utility shelf, ko: 다용도실 선반}, aliases: {en: [shelf], ko: [선반]},
      pos: [3.4, 5.0], yaw_deg: 0, height_m: 1.6, clutter: medium, capacity: 4, tags: [high_shelf]}
+  desk@bedroom:
+    {room: bedroom, kind: surface, name: {en: desk, ko: 책상}, aliases: {en: [], ko: []},
+     top: [9.0, 6.6], pos: [8.2, 6.4], yaw_deg: 15, height_m: 0.75, clutter: medium, capacity: 5, tags: [electrical]}
+  desk_chair@bedroom:
+    {room: bedroom, kind: seat, name: {en: desk chair, ko: 책상 의자}, aliases: {en: [chair], ko: [의자]},
+     pos: [8.2, 5.6], yaw_deg: 30, height_m: 0.45, clutter: low, capacity: 1, tags: []}
+  bed@bedroom:
+    {room: bedroom, kind: seat, name: {en: bed, ko: 침대}, aliases: {en: [], ko: []},
+     pos: [6.0, 6.0], yaw_deg: 90, height_m: 0.5, clutter: low, capacity: 2, tags: []}
 objects:
   - {id: cup_1, cls: cup, attrs: {color: yellow}, at: dining_table@kitchen, alt: [counter@kitchen]}
   - {id: cup_2, cls: cup, attrs: {color: blue}, at: counter@kitchen, alt: [dining_table@kitchen]}
@@ -72,7 +89,11 @@ objects:
   - {id: book_2, cls: book, attrs: {color: green}, at: tv_stand@living, alt: [coffee_table@living]}
   - {id: remote_1, cls: remote, attrs: {color: black}, at: coffee_table@living, alt: [tv_stand@living]}
   - {id: glasses_1, cls: glasses, attrs: {color: black}, at: coffee_table@living, alt: [tv_stand@living]}
+  - {id: fork_1, cls: fork, attrs: {color: gray}, at: drawer@kitchen, alt: [dining_table@kitchen]}
+  - {id: cooking_oil_1, cls: cooking_oil, attrs: {color: yellow}, at: counter@kitchen, alt: [utility_shelf@utility]}
 people:
   - {id: resident, role: user, name: {en: the resident, ko: 집주인}, aliases: {en: [me], ko: [나, 저]},
      age_group: "40-49", sex: female, child: false, seat: sofa@living, pos: [9.4, 3.5]}
+  - {id: son, role: other, name: {en: my son, ko: 아들}, aliases: {en: [son], ko: [아들내미]},
+     age_group: "18-29", sex: male, child: false, seat: desk_chair@bedroom, pos: [9.6, 6.6]}
 robot: {start: dock@living, dock: dock@living}

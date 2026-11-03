@@ -159,20 +159,20 @@
    "share": 0.2738
   },
   "structured": {
-   "accuracy": 0.9905,
-   "correct": 314,
+   "accuracy": 0.9903,
+   "correct": 305,
    "en": 172,
-   "ko": 145,
-   "n": 317,
-   "share": 0.6027
+   "ko": 136,
+   "n": 308,
+   "share": 0.5856
   },
   "structured_mismatch": {
-   "accuracy": 0.9375,
-   "correct": 30,
+   "accuracy": 0.9512,
+   "correct": 39,
    "en": 0,
-   "ko": 32,
-   "n": 32,
-   "share": 0.0608
+   "ko": 41,
+   "n": 41,
+   "share": 0.0779
   }
  },
  "classifier": {
@@ -906,8 +906,8 @@
  "key_slots": {
   "by_slot": {
    "confirm.goal": {
-    "checked": 132,
-    "matched": 132
+    "checked": 131,
+    "matched": 131
    },
    "did_you_mean.word": {
     "checked": 21,
@@ -934,8 +934,8 @@
     "matched": 42
    }
   },
-  "checked": 340,
-  "matched": 338
+  "checked": 339,
+  "matched": 337
  },
  "n": 526,
  "n_disagree_excluded": 4,

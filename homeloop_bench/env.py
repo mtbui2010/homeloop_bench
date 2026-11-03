@@ -497,9 +497,14 @@ class EpisodeEnv:
             self.refusals.append({"text": self.final_say, "subtask": None, "obj": None, "whole": True})
 
     def _hw_fault_after_llm_budget(self) -> bool:
-        """A skill call made after the last refused LLM call failed with a hardware fault (or an e-stop)."""
+        """A skill call made after the last refused LLM call failed with a hardware fault (or an e-stop), or one made
+        after the first refused LLM call failed with a persistent hardware fault."""
         last = int(getattr(self._llm, "refused", 0) or 0)
-        return any(not c["ok"] and c.get("code") in ("hw_fault", "estop") and n >= last > 0
+        # a persistent fault made after the budget had run out ends the episode too, whatever the planner asked the
+        # LLM afterwards: the robot could not go on with or without it (fresh pilot round 3, sage_norag KO
+        # hl-dev-000057: the give-up message's translation was refused after Find hw_fault_persistent)
+        return any(not c["ok"] and ((c.get("code") in ("hw_fault", "estop") and n >= last > 0)
+                                    or (c.get("event") == "hw_fault_persistent" and n > 0))
                    for c, n in zip(self.calls, self._refused_at_call))
 
     def set_error(self, exc: BaseException) -> None:
@@ -621,7 +626,14 @@ class EpisodeEnv:
         # the planner's last message is heard too (robot_agent speaks it: "Task completed", a give-up reason, a
         # refusal): one not in the user's language counts here as well (pilot round 4: KO "Task completed")
         rec["final_say_not_in_lang"] = int(bool(self.final_say.strip()) and not _in_lang(self.final_say, self.lang))
-        rec["dialog_not_in_lang"] = not_in_lang + rec["final_say_not_in_lang"]
+        # Say / Announce texts the user hears that are not in their language (fresh pilot round 3, sage_norag KO
+        # hl-dev-000057: Say "It's time to sleep" to a Korean child was in no counter). Reported, not scored here:
+        # scoring stays strict (said_to needs the household's language, homeloop_robot goals.py)
+        rec["say_not_in_lang"] = sum(
+            1 for c in self.calls if c.get("skill") in ("say", "announce")
+            and str((c.get("args") or {}).get("text") or "").strip()
+            and not _in_lang((c.get("args") or {}).get("text"), self.lang))
+        rec["dialog_not_in_lang"] = not_in_lang + rec["say_not_in_lang"] + rec["final_say_not_in_lang"]
         # raw world ids in the last message ("looked at counter@kitchen", "kimchi_fridge@kitchen"): reported, not
         # scored (pilot round 4, EN hl-dev-000010; docs/metrics.md)
         rec["final_say_raw_ids"] = raw_ids(self.final_say, w_end)

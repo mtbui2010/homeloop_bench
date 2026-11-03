@@ -20,6 +20,8 @@ from __future__ import annotations
 
 from homeloop_robot import oracle as _oracle
 
+from .base import refusal_text
+
 MAX_ATTEMPTS = 3
 
 
@@ -107,7 +109,7 @@ class OraclePlanner:
         w = env.truth
         kinds = task_kinds(env)
         if kinds and all(k == "refuse" for k in kinds):
-            env.finish("refuse", "I can't do that safely.")
+            env.finish("refuse", refusal_text(env.lang))
             return
         note_refusals(env)
         is_clarify = env.task.get("kind") == "clarify" or "clarify" in kinds

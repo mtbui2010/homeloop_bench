@@ -13,6 +13,7 @@ from homeloop_robot import make_episode
 from homeloop_robot import oracle as _oracle
 
 from .oracle import note_refusals, observed_modes, solve_target, task_kinds
+from .base import refusal_text
 
 
 def start_plan(env) -> list | None:
@@ -56,7 +57,7 @@ class NaivePlanner:
     def run(self, env) -> None:
         kinds = task_kinds(env)
         if kinds and all(k == "refuse" for k in kinds):
-            env.finish("refuse", "I can't do that safely.")
+            env.finish("refuse", refusal_text(env.lang))
             return
         note_refusals(env)
         plan = start_plan(env)

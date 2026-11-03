@@ -12,6 +12,15 @@ from typing import Protocol, runtime_checkable
 from ..env import Finish, ToolCall
 
 
+# The whole-task refusal the baselines say to the user, in the user's language (fresh pilot round 1: oracle / naive /
+# knowno_like said "I can't do that safely." to Korean users; it counted in dialog_not_in_lang)
+REFUSAL_TEXT = {"en": "I can't do that safely.", "ko": "그건 안전하게 할 수 없어요."}
+
+
+def refusal_text(lang: str) -> str:
+    return REFUSAL_TEXT.get(lang, REFUSAL_TEXT["en"])
+
+
 @runtime_checkable
 class Planner(Protocol):
     name: str

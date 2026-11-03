@@ -19,7 +19,7 @@ from pathlib import Path
 from homeloop_robot import goals as G
 from homeloop_robot.catalog import COLORS
 
-from .base import ask_json
+from .base import ask_json, refusal_text
 from .inner_monologue_like import LLMStepPlanner
 from .prompts import render_observation
 
@@ -173,7 +173,7 @@ class KnowNoLike(LLMStepPlanner):
             if o and o not in opts:
                 opts.append(o)
         if any(o.lower() == "refuse" for o in opts) and len(opts) == 1:
-            env.finish("refuse", "I can't do that safely.")
+            env.finish("refuse", refusal_text(env.lang))
             return
         opts = [o for o in opts if o.lower() != "refuse"]
         freq = option_frequencies(self.llm, obs, opts)

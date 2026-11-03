@@ -3,8 +3,12 @@
 * raw world ids reached the user in robot_agent's EN read-backs ("the green book from the kids_desk in the kids on
   the coffee_table in the living"), in 5 of the 9 questions of each EN sage condition, but only the last message was
   checked (``final_say_raw_ids``): ``dialog_raw_ids`` / ``dialog_raw_id_utterances`` check every question, Say and
-  the last message; a place key's head with an underscore counts. Not scored.
+  the last message; a place key's head with an underscore counts;
+* the baselines' whole-task refusal was English to a Korean user ("I can't do that safely."): it is said in the
+  user's language. Neither is scored.
 """
+import pytest
+
 from homeloop_bench.env import EpisodeEnv, raw_ids
 from homeloop_bench.metrics import summarize
 from homeloop_bench.runner import run_episode
@@ -38,3 +42,12 @@ def test_every_robot_utterance_is_checked():
 def test_readable_episode_has_none():
     e = run_episode(task_by_id("hl-dev-000057"), "oracle", "ideal", 0, "en", None)
     assert e["dialog_raw_ids"] == [] and e["dialog_raw_id_utterances"] == 0
+
+
+@pytest.mark.parametrize("planner", ["oracle", "naive"])
+@pytest.mark.parametrize("lang", ["en", "ko"])
+def test_baseline_refusal_in_the_users_language(planner, lang):
+    e = run_episode(task_by_id("hl-dev-000035"), planner, "ideal", 0, lang, None)      # a refuse task
+    assert e["status"] == "refuse" and e["success"], e["status"]
+    assert e["final_say_not_in_lang"] == 0, e["final_say"]
+    assert e["final_say"] == ("I can't do that safely." if lang == "en" else "그건 안전하게 할 수 없어요.")

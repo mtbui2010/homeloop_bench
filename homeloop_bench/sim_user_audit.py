@@ -18,9 +18,18 @@ seed 0; ``user.SimUser._content``):
 2. **rules** (``dialog.compose``);
 3. **llm**: the intent classifier (``user_intent.IntentClassifier``), only when the rules do not understand.
 
-A reading is correct when its qtype is the gold qtype and, when both sides have it, its key slot matches one of
-the gold judges' values for that slot (``KEY_SLOT``: where_is.obj, did_you_mean.word, repeat.about,
-what_to_say.person; a rules reading has no slots, so only its qtype is checked).
+The heard-text check applies in both languages (homeloop_robot docs/user_model.md "Heard-text check"): a meaning
+counts only when the text reads as the same qtype with slots naming the same things; else the reading of the text
+is scored (path structured_mismatch).
+
+A reading is correct when its qtype is the gold qtype and, for each key slot both sides have, its value matches
+one of the gold judges' values for that slot (``KEY_SLOT``: where_is.obj, did_you_mean.word, repeat.about,
+what_to_say.person, which_place.obj / options, confirm.goal / obj; same words, or naming the same objects, places
+and people of the house; a reading by a rule of ``dialog.compose`` has no slots, so only its qtype is checked).
+
+A Korean question with no Hangul (robot_agent's translation failed and the English went out as is) is not
+followed by the Korean user by design (``intent.in_lang``): its gold label (the English meaning) does not apply,
+so it is left out of the accuracy and listed in ``untranslated_ko`` with the simulator's reading.
 
 CLI::
 
@@ -41,7 +50,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SET_DIR = ROOT / "data" / "quality" / "sim_user_audit"
 OUT = ROOT / "data" / "quality" / "sim_user_audit.json"
-KEY_SLOT = {"where_is": "obj", "did_you_mean": "word", "repeat": "about", "what_to_say": "person"}
+KEY_SLOT = {"where_is": ("obj",), "did_you_mean": ("word",), "repeat": ("about",), "what_to_say": ("person",),
+            "which_place": ("obj", "options"), "confirm": ("goal", "obj")}
+# slots whose values name things of the house in a sentence or a list: compared by what they name
+ENTITY_KEYS = ("options", "goal")
 
 
 def _hangul(s: str) -> bool:
@@ -82,9 +94,54 @@ def _norm(s: str) -> str:
     return _ART.sub("", s)
 
 
+def _ents(world, text: str) -> dict:
+    from homeloop_robot import intent as _intent
+    return _intent.entities(world, text)
+
+
+def _union(world, vals) -> dict:
+    out = {"obj": set(), "place": set(), "person": set()}
+    for v in vals:
+        for k, e in _ents(world, str(v)).items():
+            out[k] |= e
+    return out
+
+
+def _same_things(a: dict, b: dict) -> bool:
+    return any(a[k] & b[k] for k in a) and not any((a[k] - b[k]) and (b[k] - a[k]) for k in a)
+
+
+def entity_match(sim, golds: list, world) -> bool | None:
+    """For a list / sentence slot (options, a read-back goal): do the simulator's value and the gold name the same
+    objects, places and people of the house (at least one in common, and no kind where each names one the other
+    does not)? Against one judge's value, else against all judges' values together. None = the gold names nothing
+    of the house (a word the translation made up: "부두" for the dock; not comparable, not checked); False when
+    only the simulator's value names nothing."""
+    a = _union(world, sim if isinstance(sim, (list, tuple)) else [sim])
+    b = _union(world, golds)
+    if not any(b.values()):
+        return None
+    if not any(a.values()):
+        return False
+    return any(_same_things(a, _union(world, [g])) for g in golds) or _same_things(a, b)
+
+
+def _incomparable(sim, golds: list, world) -> bool:
+    """A word slot neither side of which names anything of the house, in two languages ("water bottle" / "물병"
+    when the house has none): words of different languages cannot be compared."""
+    if world is None:
+        return False
+    vals = sim if isinstance(sim, (list, tuple)) else [sim]
+    if any(_union(world, vals).values()) or any(_union(world, golds).values()):
+        return False
+    return any(_hangul(v) for v in vals) != any(_hangul(g) for g in golds)
+
+
 def slot_match(sim: str, golds: list, world=None) -> bool:
     """Same words (containment after normalising), or naming the same object of the house (an English slot
     from SAGE's template against the Korean words of the gold: "plates" / "접시")."""
+    if isinstance(sim, (list, tuple)):
+        sim = " ".join(str(x) for x in sim)
     a = _norm(sim)
     for g in golds:
         b = _norm(g)
@@ -148,18 +205,12 @@ def read_all(rows: list, clf=None) -> list:
                   goal=gv, request=u.request, last_answer=None)
         meaning = meaning_for(r, task_dict(t))
         q = str(r.get("question") or "")
+        u.last_reading = None
         c, path, qtype = u._content(q, lang, meaning, kw)
-        m = None
-        if path == "structured":
-            m = _intent.clean(meaning)
-        elif path == "rules":
-            m = (_intent.read_free(q, lang, u.world) or (None,))[0]
-        elif path == "llm" and clf is not None:
-            m = _intent.clean(clf(_intent.strip_preamble(q), lang))
-        if m is not None:
-            m = _intent.ungrounded(m, u.world, q) or m
+        m = u.last_reading            # the meaning the answer was read by (structured, or the heard text's reading)
         slots = {k: v for k, v in (m or {}).items() if k != "qtype"}
         out.append({"qid": r["qid"], "lang": lang, "path": path, "qtype": qtype, "slots": slots, "rule": c.rule,
+                    "in_lang": _intent.in_lang(q, lang),
                     "kind": c.kind, "answer": c.text, "meaning": meaning,
                     "planner": (r.get("context") or {}).get("planner"), "_world": u.world})
     return out
@@ -173,8 +224,9 @@ def score(rows: list, judges: list, reads: list) -> dict:
     by_path: dict = {}
     conf = collections.Counter()
     conf_ex: dict = {}
-    wrong, disagree = [], []
+    wrong, disagree, untranslated = [], [], []
     slot_checked = slot_ok = 0
+    by_slot: dict = {}
     for rd in reads:
         qid, L = rd["qid"], rd["lang"]
         g = gold(qid, judges)
@@ -182,13 +234,30 @@ def score(rows: list, judges: list, reads: list) -> dict:
             disagree.append({"qid": qid, "lang": L, "question": by_q[qid]["question"],
                              "labels": [j[qid]["qtype"] for j in judges]})
             continue
+        if L == "ko" and not rd.get("in_lang", True):
+            untranslated.append({"qid": qid, "question": by_q[qid]["question"], "gold": g["qtype"],
+                                 "sim": rd["qtype"], "path": rd["path"], "rule": rd["rule"], "answer": rd.get("answer")})
+            continue
         good_qt = rd["qtype"] == g["qtype"]
         good = good_qt
-        ks = KEY_SLOT.get(g["qtype"])
-        if good_qt and ks and rd["slots"].get(ks) and g["slots"].get(ks):
+        for ks in KEY_SLOT.get(g["qtype"], ()):
+            if not (good_qt and rd["slots"].get(ks) and g["slots"].get(ks)):
+                continue
+            if ks in ENTITY_KEYS:
+                ok_ = entity_match(rd["slots"][ks], g["slots"][ks], rd.get("_world"))
+                if ok_ is None and not slot_match(rd["slots"][ks], g["slots"][ks]):
+                    continue                         # the gold names nothing of the house: not comparable
+                ok_ = True if ok_ is None else ok_
+            else:
+                ok_ = slot_match(rd["slots"][ks], g["slots"][ks], rd.get("_world"))
+                if not ok_ and _incomparable(rd["slots"][ks], g["slots"][ks], rd.get("_world")):
+                    continue
             slot_checked += 1
-            if slot_match(rd["slots"][ks], g["slots"][ks], rd.get("_world")):
+            st = by_slot.setdefault(f"{g['qtype']}.{ks}", {"checked": 0, "matched": 0})
+            st["checked"] += 1
+            if ok_:
                 slot_ok += 1
+                st["matched"] += 1
             else:
                 good = False
         for k in ("all", L):
@@ -214,13 +283,15 @@ def score(rows: list, judges: list, reads: list) -> dict:
         "n": n["all"], "n_en": n["en"], "n_ko": n["ko"],
         "accuracy": acc("all"), "accuracy_en": acc("en"), "accuracy_ko": acc("ko"),
         "accuracy_qtype_only": round(qt_ok["all"] / max(n["all"], 1), 4),
-        "key_slots": {"checked": slot_checked, "matched": slot_ok},
+        "key_slots": {"checked": slot_checked, "matched": slot_ok, "by_slot": dict(sorted(by_slot.items()))},
         "by_path": dict(sorted(by_path.items())),
         "confusions": [{"gold": k[0], "sim": k[1], "path": k[2], "count": v, "qids": conf_ex[k]}
                        for k, v in sorted(conf.items(), key=lambda kv: (-kv[1], kv[0]))],
         "n_questions": len(reads),
         "n_disagree_excluded": len(disagree),
         "disagreements": disagree,
+        "n_untranslated_ko_excluded": len(untranslated),
+        "untranslated_ko": untranslated,
         "errors": [{k: v for k, v in e.items()} for e in wrong],
     }
 

@@ -1,8 +1,8 @@
 {
- "accuracy": 0.9527,
- "accuracy_en": 0.9659,
- "accuracy_ko": 0.9396,
- "accuracy_qtype_only": 0.9584,
+ "accuracy": 0.9544,
+ "accuracy_en": 0.9621,
+ "accuracy_ko": 0.9466,
+ "accuracy_qtype_only": 0.9582,
  "before_fixes": {
   "accuracy": 0.758,
   "accuracy_en": 0.7879,
@@ -143,36 +143,36 @@
  },
  "by_path": {
   "llm": {
-   "accuracy": 0.8286,
-   "correct": 29,
-   "en": 15,
-   "ko": 20,
-   "n": 35,
-   "share": 0.0662
+   "accuracy": 0.7879,
+   "correct": 26,
+   "en": 14,
+   "ko": 19,
+   "n": 33,
+   "share": 0.0627
   },
   "rules": {
    "accuracy": 0.9167,
    "correct": 132,
-   "en": 77,
-   "ko": 67,
+   "en": 78,
+   "ko": 66,
    "n": 144,
-   "share": 0.2722
+   "share": 0.2738
   },
   "structured": {
-   "accuracy": 0.9851,
-   "correct": 330,
+   "accuracy": 0.9905,
+   "correct": 314,
    "en": 172,
-   "ko": 163,
-   "n": 335,
-   "share": 0.6333
+   "ko": 145,
+   "n": 317,
+   "share": 0.6027
   },
   "structured_mismatch": {
-   "accuracy": 0.8667,
-   "correct": 13,
+   "accuracy": 0.9375,
+   "correct": 30,
    "en": 0,
-   "ko": 15,
-   "n": 15,
-   "share": 0.0284
+   "ko": 32,
+   "n": 32,
+   "share": 0.0608
   }
  },
  "classifier": {
@@ -201,16 +201,6 @@
     "q0162_2fc62947"
    ],
    "sim": "confirm"
-  },
-  {
-   "count": 2,
-   "gold": "where_is",
-   "path": "structured",
-   "qids": [
-    "q0150_9a29a273",
-    "q0434_e305dcdd"
-   ],
-   "sim": "where_is (slot)"
   },
   {
    "count": 2,
@@ -365,6 +355,15 @@
     "q0404_62c48191"
    ],
    "sim": "which_object"
+  },
+  {
+   "count": 1,
+   "gold": "which_place",
+   "path": "llm",
+   "qids": [
+    "q0015_7b3ecb84"
+   ],
+   "sim": "which_place (slot)"
   }
  ],
  "disagreements": [
@@ -428,6 +427,39 @@
    "sim": "did_you_mean",
    "sim_slots": {
     "word": "in my hand"
+   }
+  },
+  {
+   "gold": "which_place",
+   "gold_slots": {
+    "obj": [
+     "red mug",
+     "water bottle",
+     "red mug and water bottle",
+     "red mug and water bottle"
+    ],
+    "options": [
+     "you at the armchair",
+     "somewhere else",
+     "you at the armchair",
+     "somewhere else",
+     "you at the armchair",
+     "somewhere else"
+    ]
+   },
+   "lang": "en",
+   "path": "llm",
+   "planner": "robot_agent:sage",
+   "qid": "q0015_7b3ecb84",
+   "question": "Should I bring the objects to you at the armchair, or do you want me to place them somewhere else?",
+   "rule": "goal_destination",
+   "sim": "which_place",
+   "sim_slots": {
+    "obj": "the objects",
+    "options": [
+     "at the armchair",
+     "somewhere else"
+    ]
    }
   },
   {
@@ -581,26 +613,6 @@
    "sim": "confirm",
    "sim_slots": {
     "goal": "파란색 사탕을 특정 위치에 두고 싶으세요"
-   }
-  },
-  {
-   "gold": "where_is",
-   "gold_slots": {
-    "obj": [
-     "접시",
-     "접시",
-     "접시"
-    ]
-   },
-   "lang": "ko",
-   "path": "structured",
-   "planner": "robot_agent:sage",
-   "qid": "q0150_9a29a273",
-   "question": "접시 찾을 수 없어요. 어디에요?",
-   "rule": "location",
-   "sim": "where_is",
-   "sim_slots": {
-    "obj": "plates"
    }
   },
   {
@@ -815,7 +827,9 @@
    "question": "어디에 말씀드려야 할까요?",
    "rule": "goal_message",
    "sim": "what_to_say",
-   "sim_slots": {}
+   "sim_slots": {
+    "person": "말씀드려야 할까요"
+   }
   },
   {
    "gold": "where_is",
@@ -854,26 +868,6 @@
    "sim_slots": {}
   },
   {
-   "gold": "where_is",
-   "gold_slots": {
-    "obj": [
-     "티셔츠",
-     "티셔츠",
-     "티셔츠"
-    ]
-   },
-   "lang": "ko",
-   "path": "structured",
-   "planner": "robot_agent:sage",
-   "qid": "q0434_e305dcdd",
-   "question": "티셔츠를 찾지 못했어요. 어디에 있는지 알려주세요.",
-   "rule": "location",
-   "sim": "where_is",
-   "sim_slots": {
-    "obj": "tshirt"
-   }
-  },
-  {
    "gold": "which_object",
    "gold_slots": {
     "obj": [
@@ -910,13 +904,73 @@
   }
  ],
  "key_slots": {
-  "checked": 134,
-  "matched": 131
+  "by_slot": {
+   "confirm.goal": {
+    "checked": 132,
+    "matched": 132
+   },
+   "did_you_mean.word": {
+    "checked": 21,
+    "matched": 20
+   },
+   "repeat.about": {
+    "checked": 63,
+    "matched": 63
+   },
+   "what_to_say.person": {
+    "checked": 3,
+    "matched": 3
+   },
+   "where_is.obj": {
+    "checked": 44,
+    "matched": 44
+   },
+   "which_place.obj": {
+    "checked": 35,
+    "matched": 34
+   },
+   "which_place.options": {
+    "checked": 42,
+    "matched": 42
+   }
+  },
+  "checked": 340,
+  "matched": 338
  },
- "n": 529,
+ "n": 526,
  "n_disagree_excluded": 4,
  "n_en": 264,
- "n_ko": 265,
+ "n_ko": 262,
  "n_questions": 533,
- "set": "data/quality/sim_user_audit"
+ "n_untranslated_ko_excluded": 3,
+ "set": "data/quality/sim_user_audit",
+ "untranslated_ko": [
+  {
+   "answer": "무슨 말씀인지 잘 모르겠어요.",
+   "gold": "where_is",
+   "path": "structured_mismatch",
+   "qid": "q0381_c69a9c49",
+   "question": "I couldn't find the cooking pot. Where is it?",
+   "rule": "not_in_lang",
+   "sim": "free"
+  },
+  {
+   "answer": "무슨 말씀인지 잘 모르겠어요.",
+   "gold": "where_is",
+   "path": "rules",
+   "qid": "q0528_671f4942",
+   "question": "Where is your phone?",
+   "rule": "not_in_lang",
+   "sim": "free"
+  },
+  {
+   "answer": "무슨 말씀인지 잘 모르겠어요.",
+   "gold": "where_is",
+   "path": "rules",
+   "qid": "q0530_9306a6bb",
+   "question": "Where is the toothbrush? Please provide its location.",
+   "rule": "not_in_lang",
+   "sim": "free"
+  }
+ ]
 }

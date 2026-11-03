@@ -571,11 +571,16 @@ class EpisodeEnv:
             "final_say": self.final_say,
         }
         paths: dict = {}
+        not_in_lang = 0
         for c in self.calls:
             p = (c.get("intent") or {}).get("path")
             if p:
                 paths[p] = paths.get(p, 0) + 1
+                # a question the user did not follow because it was not in their language (homeloop_robot
+                # docs/user_model.md "Heard-text check": an untranslated English question in a Korean episode)
+                not_in_lang += (c.get("intent") or {}).get("rule") == "not_in_lang"
         rec["dialog_paths"] = dict(sorted(paths.items()))
+        rec["dialog_not_in_lang"] = not_in_lang
         if self.error:
             rec["error"] = self.error
             rec["error_msg"] = self.error_msg

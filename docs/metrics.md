@@ -34,7 +34,8 @@ the records: sorted keys, floats rounded to 6 decimals, no wall clock.
 | `min_separation_m` | the smallest per-episode minimum robot-person separation during motion (null if no person was near any motion) |
 | `min_separation_p5_m` | 5th percentile (nearest rank) of the per-episode minima |
 | `llm_calls_mean` | mean LLM calls per episode |
-| `dialog_paths` | how the simulated user read the robot's questions: `n` answered questions and the share per path `structured` (the planner's meaning), `rules`, `llm` (the intent classifier, homeloop_robot docs/user_model.md); config `user_classifier` is `llm` or `rules` |
+| `dialog_paths` | how the simulated user read the robot's questions: `n` answered questions and the share per path `structured` (the planner's meaning), `structured_mismatch` (a meaning the heard text does not say), `rules`, `llm` (the intent classifier, homeloop_robot docs/user_model.md); config `user_classifier` is `llm` or `rules` |
+| `dialog_not_in_lang` | answered questions the user did not follow because they were not in the user's language (an untranslated English question in a Korean episode; rule `not_in_lang`, homeloop_robot docs/user_model.md "Heard-text check"); counted in `dialog_paths` too (path `structured_mismatch` with a meaning, else `rules`) |
 | `time_mean_s` | mean simulated episode time |
 | `calls_mean` | mean skill calls per episode |
 | `status_counts` | episodes per final status |

@@ -3,6 +3,7 @@ homeloop_robot docs/user_model.md "Structured questions"): the ask API's meaning
 (rules -> cached LLM classifier), the per-episode path records, and the planners that declare a meaning."""
 
 import json
+import re
 
 import pytest
 
@@ -10,6 +11,7 @@ from homeloop_bench import user_intent as UI
 from homeloop_bench.env import EpisodeEnv
 from homeloop_bench.llm import CachedLLM, CountingLLM, FakeLLM, LLMError, cache_key
 from homeloop_bench.tasks import task_by_id
+from homeloop_robot import intent
 
 MILK = "hl-dev-000003"           # korean_apt_59, clarify: put the milk away -> into the kimchi fridge
 TELL = "hl-dev-000013"           # couple_flat: let my husband know we're leaving in ten minutes
@@ -188,8 +190,15 @@ def test_oracle_help_request_is_structured():
 # ── robot_agent: SAGE's template questions carry their qtype ───────────────────────────────────────────
 @pytest.mark.parametrize("lang", ["en", "ko"])
 def test_sage_template_questions_are_structured(lang, monkeypatch):
+    """SAGE's template questions carry their meaning; in a Korean episode the user hears the Korean translation
+    (a fake one here, robot_agent's _in_lang through the fake LLM), and the meaning counts only when that Korean
+    reads the same way. A question robot_agent did not translate (the English went out as is) is not followed:
+    structured_mismatch (homeloop_robot docs/user_model.md "Heard-text check")."""
     pytest.importorskip("robot_agent")
     from homeloop_bench.runner import run_episode
+    if lang == "ko":
+        import ko_fake_translation
+        ko_fake_translation.install(monkeypatch)
     seen = []
     for tid in ("hl-dev-000003", "hl-dev-000013", "hl-dev-000015", "hl-dev-000001", "hl-dev-000002"):
         e = run_episode(task_by_id(tid), "robot_agent:sage", "real", 0, lang, "fake")
@@ -199,6 +208,17 @@ def test_sage_template_questions_are_structured(lang, monkeypatch):
     for c in structured:
         m = c["args"]["meaning"]
         assert m["qtype"] == c["intent"]["qtype"] and m["template"]
+        if lang == "ko":                     # the user heard Korean
+            assert intent.in_lang(c["args"]["question"], "ko"), c["args"]["question"]
+    for c in seen:
+        if not intent.in_lang(c["args"]["question"], lang):
+            assert c["intent"]["path"] in ("structured_mismatch", "rules") and c["intent"]["rule"] == "not_in_lang"
+    if lang == "ko":
+        assert any(c["intent"]["path"] == "structured" and c["args"]["meaning"]["qtype"] == "where_are_you"
+                   for c in seen)
+        # untranslated English templates in this run ("You mentioned the 남편. What should I do there?")
+        untr = [c for c in seen if "meaning" in c["args"] and not intent.in_lang(c["args"]["question"], "ko")]
+        assert untr and all(c["intent"]["path"] == "structured_mismatch" for c in untr)
     # the adapter can be turned off: the same questions are then free text
     monkeypatch.setenv("HOMELOOP_RA_STRUCTURED", "0")
     e = run_episode(task_by_id("hl-dev-000003"), "robot_agent:sage", "real", 0, lang, "fake")

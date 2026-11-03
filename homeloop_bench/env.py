@@ -513,6 +513,15 @@ class EpisodeEnv:
         self.error = type(exc).__name__
         self.error_msg = str(exc)[:500]
 
+    def set_crash(self, error: str, msg: str, say: str = "") -> None:
+        """A planner crash the planner caught itself and reported (robot_agent's "the planner failed: <exception>"):
+        status ``error`` like an exception that reached the runner; ``say`` is what the robot said at the end."""
+        if self.status is None:
+            self.status = "error"
+            self.final_say = str(say or "")
+        self.error = str(error)
+        self.error_msg = str(msg)[:500]
+
     @property
     def llm_budget_hit(self) -> bool:
         """An LLM call was refused because the episode's LLM budget was used up (whoever caught the exception)."""

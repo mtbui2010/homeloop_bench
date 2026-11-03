@@ -13,7 +13,7 @@ the records: sorted keys, floats rounded to 6 decimals, no wall clock.
 | `success_ci95` | task-clustered 95 % interval: Wilson at the effective sample size n / deff (below) |
 | `success_ci95_episode` | the plain Wilson interval over episodes (treats seeds of one task as independent; too narrow when seeds > 1) |
 | `design_effect`, `icc`, `n_eff` | design effect deff = 1 + (m0 - 1) ICC, the intra-task correlation of success (one-way ANOVA estimator) and n / deff; deff = 1 with one seed |
-| `n_error`, `error_rate`, `errors_by_type` | episodes whose planner crashed (status `error`); the CLI exits 4 when `error_rate` > 0.05. LLM-server and import failures abort the run instead (no summary) |
+| `n_error`, `error_rate`, `errors_by_type` | episodes whose planner crashed (status `error`; also a crash the planner caught and reported itself, robot_agent's `RobotAgentSoftwareError`, docs/robot_agent.md); the CLI exits 4 when `error_rate` > 0.05. LLM-server and import failures abort the run instead (no summary) |
 | `give_up_rate` | share of episodes that ended `give_up` (all failures) |
 | `smoke`, `success_reweighted`, `split_shares` | `smoke` is true when the run used only a prefix of the split (`--limit`); then `success_reweighted` = success post-stratified to the full split's shares of `kind` and of `n_subtasks` (null when a stratum is missing), with those shares in `split_shares` |
 | `goal_condition_success` | mean `gc` over feasible and clarify episodes (null if none); `gc` = share of correct subtasks, or of goal atoms for one-subtask tasks (ALFRED / EAI style) |

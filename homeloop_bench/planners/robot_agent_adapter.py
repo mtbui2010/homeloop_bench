@@ -284,6 +284,14 @@ def _url(env):
     return None
 
 
+def _software_crash(final: dict | None) -> bool:
+    """robot_agent's run ended on an exception raised inside one of its own planner / LLM calls that was not the
+    server being down (``AssistLoop._llm_failed``: status failed, code ``software``, evidence {call, error})."""
+    f = final or {}
+    return f.get("status") == "failed" and f.get("code") == "software" and isinstance(f.get("evidence"), dict) \
+        and bool(f["evidence"].get("call"))
+
+
 def _status(final: dict | None) -> str:
     st = (final or {}).get("status") or ""
     if st == "success":
@@ -402,6 +410,13 @@ class _RobotAgentPlanner:
         if env.status is None:
             if env.stop_k is not None:
                 env.finish("done", "stopped")
+            elif _software_crash(final) and not (env.llm_budget_hit and "budget" in str(final.get("msg")).lower()):
+                # robot_agent caught an exception of its own code in a planner / LLM call and ended the run "failed"
+                # (code software): a crash, status error, not a plain give-up (gate pilot round 1, hl-dev-000028 KO:
+                # "the planner failed: 'int' object has no attribute 'strip'" was scored give_up, n_error 0)
+                ev = (final or {}).get("evidence") or {}
+                env.set_crash("RobotAgentSoftwareError", f"{ev.get('call') or final.get('device') or '?'}: "
+                              f"{ev.get('error') or final.get('msg') or ''}", str(final.get("say") or ""))
             else:
                 env.finish(_status(final), str((final or {}).get("say") or ""))
 

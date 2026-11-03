@@ -44,7 +44,11 @@ removed after the episode (`HOMELOOP_KEEP_RA_LOGS=1` keeps them).
    fake node; `_llm_cfg = {"name": "llama", "url": URL, "model": M, "num_ctx": 8192}`.
 5. A run is started on robot_agent's run manager and bound to the thread (`begin_run`), as the API does.
 6. `loop.run_blocking(instruction, lang)` is drained until the `done` event, the episode budget, or (after
-   a stop event) the next motion call. Final status: success -> done, refused -> refuse, else give_up.
+   a stop event) the next motion call. Final status: success -> done, refused -> refuse, else give_up; a run
+   robot_agent ended "failed" with code `software` and evidence `{call, error}` (an exception of its own code in
+   a planner / LLM call, not the server being down nor the LLM budget) is status `error`, error
+   `RobotAgentSoftwareError` (30-task gate round 1, hl-dev-000028 KO: "the planner failed: 'int' object has no
+   attribute 'strip'" was a plain give_up, so `n_error` did not see it; `tests/test_gate30_r1.py`).
 
 ## Seed pool (sage and sage_norag)
 

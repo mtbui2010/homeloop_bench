@@ -289,3 +289,46 @@ only the new raw-id fields and, for KO 035, the Korean refusal (`dialog_not_in_l
 accuracy is unchanged (0.954); one Korean read-back moves to `structured_mismatch` (still correct). The other
 failures of this round (KO 016 false success, KO 035, the 060 LLM-budget hits) were not classified harness /
 simulator by the analysis and are read again in round 2. Round 2 reruns the same 4 tasks in all conditions.
+
+### Fresh batch, round 2 (`results/pilot_r27x/round2/`)
+
+The same 4 tasks and conditions, after the round 1 fixes (homeloop_robot 329ea89, this repository 21d6c0a).
+
+| condition | success | false success | LLM calls / ep. | per task (060 / 016 / 035 / 057) |
+|---|---|---|---|---|
+| sage EN | 1 / 4 | 0 | 13.25 | budget / give_up / refuse / give_up |
+| sage_norag EN | 1 / 4 | 0 | 16.75 | budget / give_up / refuse / budget |
+| sage KO | 0 / 4 | 1 | 23.0 | budget / done (false) / budget / give_up |
+| sage_norag KO | 0 / 4 | 1 | 19.75 | give_up / done (false) / give_up / budget |
+| naive EN, KO | 2 / 4 | 0 | 0 | give_up / give_up / refuse / done |
+| oracle EN, KO | 4 / 4 | 0 | 0 | done / done / refuse / done |
+
+Sim-user paths of the stored round: `structured_mismatch` 2 / 7 (sage KO) and 2 / 8 (sage_norag KO), above the
+20 % gate; 0 in EN.
+
+Not genuine (fixed; homeloop_robot 66f2a7e, 3789041; this repository 4edfcd0):
+
+| task | condition | kind | cause | fix (test) |
+|---|---|---|---|---|
+| 060 | sage_norag KO (outcome-deciding for the dialog; the final outcome probably unchanged), sage KO (outcome-neutral) | simulator | `GoalView._person_ok` took any place said in a compound read-back as "another place" for grandpa unless it was an atom place or a TRUE source of an object. A WRONG source ("the remote from the coffee_table"; the remote was on sofa@living) or the speaker's seat in a go-to clause ("go to the desk_chair") made the right delivery to grandpa "not covered". sage_norag KO got "아니요, 검은 리모컨은 할아버지한테 갖다 주세요." twice for the same read-back, which repeats what the robot had said; the heard Korean actually put the glasses '거실에 바로 놓고' instead of bringing them to the speaker. SAGE gave up ('사용자가 작업을 확인하지 않았습니다.'). In sage KO the English meaning got the same wrong "no", and the heard-text rule turned it into "yes" (`structured_mismatch`). | For a delivery, a place said as a source or a waypoint ("from X", "go to X", 'X에 있는', 'X에 가서', 'X(으)로 가서') is not where the object goes, even when the source is wrong; a place said in the object's own part of the read-back still counts, also when it is another part's destination; messages keep the old rule ('침대에서 ... 말할게요' says where), and 'X에서' is never a source (`dialog.strip_route_places`, `dialog.read_back_clauses`; homeloop_robot `tests/test_dialog_fresh_pilot_r2.py`, including the three audit questions a first version got wrong: q0115, q0373, q0461) |
+| 057 | sage, sage_norag KO read-back (outcome-neutral, counted) | simulator | The right read-back '아이들 책상에서 녹색 책을 거실의 커피 테이블에 두고, 아이들에게 "잠자기 시간이에요"라고 말할 거예요. 맞죠?' was `structured_mismatch`: `intent.entities` read '아이들 책상' as desk@study, because the kid's desk is '아이 책상' and the plural 들 broke the match (the longest-match rule then let '책상' name the study desk). The answer ("네, 맞아요.") was right, but the 2 spurious mismatches put the share above the gate. | A Korean name of several words also matches with 들 on a word before its head (`dialog.ko_plural_forms`, in `mentions` and in the longest-match names): '아이들 책상' is kids_desk@kids (same test file) |
+| 057 | sage_norag EN / KO (outcome-neutral, accounting) | harness | `EpisodeEnv.finish` labelled any give_up after a refused LLM call `budget`, also when a hardware fault after that call ended the episode (the plan ran on, then Find `hw_fault_persistent`; final_say "the robot is not healthy after find failed (hw_fault)"). The status mix and the failure causes counted it as the budget. `llm_budget_hit` was right. | A give_up is `budget` unless a skill call made after the last refused LLM call failed with `hw_fault` or `estop`; then it stays `give_up` (cause `robot_failure`); `llm_budget_hit` unchanged (`tests/test_fresh_pilot_r2.py` replays the 057 calls on profile real, seed 0; docs/runner.md) |
+| 060, 016 | naive EN / KO (outcome-neutral, cosmetic) | harness | The baselines' give-up status notes ("glasses_1 not found", "nothing to place: ...") are not meant for the user, but they were the episode's last message, so they counted in `dialog_not_in_lang` / `final_say_not_in_lang` (naive KO 2) and `dialog_raw_ids` / `final_say_raw_ids` (naive EN / KO 1, glasses_1); round 4 documented this and left it. | Every bench baseline (and the runner's fallback) says a give-up in the user's language ("Sorry, I could not finish that." / '죄송해요, 부탁하신 일을 끝내지 못했어요.'); the note is the new episode field `finish_reason`, which is not said. The checks on what is said are unchanged (a test keeps an English note with a raw id counted); the oracle's "Stopped." is '멈췄어요.' in Korean (`tests/test_fresh_pilot_r2.py`; docs/metrics.md) |
+
+Checks after the fixes, offline (no LLM). A replay of every call of the stored sage / sage_norag episodes of 060 and
+057 through a fresh `EpisodeEnv` (profile real, seed 0) changes only these answers:
+- sage KO 060 Q4 and 057 Q2 ('네, 맞아요.'), and sage_norag KO 057 Q2: the same answer, path `structured` (was
+  `structured_mismatch`);
+- sage_norag KO 060 Q4 / Q5: '아니요, 검은 안경은 저한테 갖다 주세요.', the part the heard Korean got wrong. The path is
+  `structured_mismatch`: the English meaning reads right, the Korean does not (a genuine SAGE-v2 translation error).
+
+In the replay, sage_norag KO 060 Q3 ('여기 있어요? 어디에 가져다줘야 할까요?' for "Where are you?") gets "not sure":
+the stored run used the LLM classifier, the replay has only the rules. The path stays `structured_mismatch`, a genuine
+translation error found in round 4 too.
+
+Mismatch share: sage KO 0 / 7. For sage_norag KO the share cannot be recounted offline, because the dialog after Q4
+changes (two genuine mismatches, Q3 and Q4). oracle / naive rerun on the 4 tasks: no change in success, status,
+calls or goal atoms; naive EN / KO now have `dialog_not_in_lang` 0 and `dialog_raw_ids` 0 (they were 2 and 1). The
+committed sim-user audit reproduces unchanged. Planning would very likely still fail on 060: sage KO, which got
+"yes", ended "the planner produced no plan for the goals" after 30 LLM calls (a SAGE-v2 gap). The other failures of
+this round are genuine by the analysis. Round 3 reruns the same 4 tasks in all conditions.

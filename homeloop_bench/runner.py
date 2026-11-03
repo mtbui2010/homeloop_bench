@@ -19,7 +19,7 @@ from typing import Optional
 from homeloop_robot.rng import r6
 from homeloop_robot.types import _round_tree
 
-from .env import Budgets, EpisodeEnv, task_dict
+from .env import Budgets, EpisodeEnv, give_up_text, task_dict
 from .llm import BudgetExceeded, FakeLLM, LLMError, llm_kind, make_llm
 from .user_intent import classifier_kind
 from .planners import make_planner, needs_llm, planner_available, planner_class
@@ -65,7 +65,7 @@ def run_episode(task, planner_name: str, profile: str, seed: int, lang: str, llm
     try:
         planner.run(env)
         if env.status is None:
-            env.finish("give_up", "planner returned without finishing")
+            env.finish("give_up", give_up_text(env.lang), reason="planner returned without finishing")
     except BudgetExceeded:
         env.set_budget()
     except (LLMError, ImportError) as e:

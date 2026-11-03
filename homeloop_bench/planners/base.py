@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
-from ..env import Finish, ToolCall
+from ..env import Finish, ToolCall, give_up_text
 
 
 # The whole-task refusal the baselines say to the user, in the user's language (fresh pilot round 1: oracle / naive /
@@ -19,6 +19,13 @@ REFUSAL_TEXT = {"en": "I can't do that safely.", "ko": "그건 안전하게 할 
 
 def refusal_text(lang: str) -> str:
     return REFUSAL_TEXT.get(lang, REFUSAL_TEXT["en"])
+
+
+def finish_with(env, a: Finish) -> None:
+    """End the episode with a planner's :class:`Finish`; a give-up with only a status note (``reason``) says the
+    give-up text in the user's language."""
+    say = a.say or (give_up_text(env.lang) if a.status == "give_up" and a.reason else "")
+    env.finish(a.status, say, reason=a.reason)
 
 
 @runtime_checkable
@@ -50,11 +57,11 @@ class StepPlanner:
         self.reset(env)
         while env.status is None:
             if env.over:
-                env.finish("give_up", "budget exhausted")
+                env.finish("give_up", give_up_text(env.lang), reason="budget exhausted")
                 return
             a = self.act(env.observe())
             if isinstance(a, Finish):
-                env.finish(a.status, a.say)
+                finish_with(env, a)
                 return
             env.call(a.skill, **dict(a.args))
 
@@ -83,7 +90,7 @@ class PlanPlanner:
         while queue and env.status is None:
             a = queue.pop(0)
             if isinstance(a, Finish):
-                env.finish(a.status, a.say)
+                finish_with(env, a)
                 return
             if env.over:
                 break
@@ -91,11 +98,14 @@ class PlanPlanner:
             if not r["ok"]:
                 more = self.on_failure(a, r, env.observe())
                 if more is None:
-                    env.finish("give_up", r.get("msg", ""))
+                    env.finish("give_up", give_up_text(env.lang), reason=r.get("msg", ""))
                     return
                 queue = list(more) + queue
         if env.status is None:
-            env.finish("give_up" if env.over else "done")
+            if env.over:
+                env.finish("give_up", give_up_text(env.lang), reason="budget exhausted")
+            else:
+                env.finish("done")
 
 
 MAX_REPAIRS = 2

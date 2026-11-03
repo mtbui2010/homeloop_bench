@@ -13,7 +13,7 @@ from homeloop_robot import make_episode
 from homeloop_robot import oracle as _oracle
 
 from .oracle import note_refusals, observed_modes, solve_target, task_kinds
-from .base import refusal_text
+from .base import give_up_text, refusal_text
 
 
 def start_plan(env) -> list | None:
@@ -62,14 +62,14 @@ class NaivePlanner:
         note_refusals(env)
         plan = start_plan(env)
         if plan is None:
-            env.finish("give_up", "no plan")
+            env.finish("give_up", give_up_text(env.lang), reason="no plan")
             return
         for c in plan:
             if env.over:
-                env.finish("give_up", "budget exhausted")
+                env.finish("give_up", give_up_text(env.lang), reason="budget exhausted")
                 return
             r = env.call(c.skill, **c.args)
             if not r["ok"]:
-                env.finish("give_up", r.get("msg", ""))
+                env.finish("give_up", give_up_text(env.lang), reason=r.get("msg", ""))
                 return
         env.finish("done")

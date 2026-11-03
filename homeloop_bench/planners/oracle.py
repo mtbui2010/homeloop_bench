@@ -20,7 +20,8 @@ from __future__ import annotations
 
 from homeloop_robot import oracle as _oracle
 
-from .base import refusal_text
+from ..env import STOP_TEXT
+from .base import give_up_text, refusal_text
 
 MAX_ATTEMPTS = 3
 
@@ -120,10 +121,10 @@ class OraclePlanner:
         modes, modes_key = None, None
         while env.status is None:
             if env.over:
-                env.finish("give_up", "budget exhausted")
+                env.finish("give_up", give_up_text(env.lang), reason="budget exhausted")
                 return
             if env.stop_k is not None:
-                env.finish("done", "Stopped.")
+                env.finish("done", STOP_TEXT.get(env.lang, STOP_TEXT["en"]))
                 return
             if env.judge("done")["success"]:
                 env.finish("done")
@@ -138,12 +139,12 @@ class OraclePlanner:
                 modes_key = key
             plan = _oracle.solve(w, target, lang=env.lang, people_pos=people, modes=modes) if target["all"] else []
             if not plan:
-                env.finish("give_up", "no plan from the current state")
+                env.finish("give_up", give_up_text(env.lang), reason="no plan from the current state")
                 return
             c = plan[0]
             key = (c.skill, tuple(sorted(c.args.items())))
             if fails.get(key, 0) >= MAX_ATTEMPTS:
-                env.finish("give_up", f"{c} failed {MAX_ATTEMPTS} times")
+                env.finish("give_up", give_up_text(env.lang), reason=f"{c} failed {MAX_ATTEMPTS} times")
                 return
             r = env.call(c.skill, **c.args)
             if r["ok"]:
@@ -152,7 +153,7 @@ class OraclePlanner:
             fails[key] = fails.get(key, 0) + 1
             code = r.get("code")
             if w.robot.estop or (code == "hw_fault" and any(f.clears_on == "never" for f in w.faults.values())):
-                env.finish("give_up", r.get("msg", ""))
+                env.finish("give_up", give_up_text(env.lang), reason=r.get("msg", ""))
                 return
             if code == "cancelled":
                 continue                         # the event (stop / correction) is handled at the top

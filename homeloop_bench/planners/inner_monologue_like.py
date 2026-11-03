@@ -8,8 +8,8 @@ the LLM decides after seeing them (implicit replanning). Docs: docs/planners.md.
 
 from __future__ import annotations
 
-from ..env import Finish, ToolCall
-from .base import ask_json, step_check
+from ..env import Finish, ToolCall, give_up_text
+from .base import ask_json, finish_with, step_check
 from .prompts import step_prompt
 
 
@@ -33,7 +33,7 @@ class LLMStepPlanner:
         prompt = step_prompt(self.mode, obs, self.extra(obs), declined=self.declined)
         obj = ask_json(self.llm, prompt, check=step_check)
         if obj is None:
-            return Finish("give_up", "no valid answer from the LLM")
+            return Finish("give_up", reason="no valid answer from the LLM")
         if "finish" in obj:
             return Finish(obj["finish"], str(obj.get("say") or ""))
         a = obj["action"]
@@ -46,12 +46,12 @@ class LLMStepPlanner:
         n_decline = 0
         while env.status is None:
             if env.over:
-                env.finish("give_up", "budget exhausted")
+                env.finish("give_up", give_up_text(env.lang), reason="budget exhausted")
                 return
             obs = env.observe()
             a = self.decide(obs)
             if isinstance(a, Finish):
-                env.finish(a.status, a.say)
+                finish_with(env, a)
                 return
             if a.skill == "decline":
                 n_decline += 1
@@ -59,7 +59,7 @@ class LLMStepPlanner:
                 self.declined.append(reason)
                 env.note_refusal(reason, subtask=a.args.get("subtask"), obj=a.args.get("obj"))
                 if n_decline > 2:
-                    env.finish("give_up", "repeated declines")
+                    env.finish("give_up", give_up_text(env.lang), reason="repeated declines")
                     return
                 continue
             env.call(a.skill, **a.args)

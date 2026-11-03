@@ -52,7 +52,19 @@ class ToolCall:
 @dataclass(frozen=True)
 class Finish:
     status: str                     # done | refuse | give_up
-    say: str = ""
+    say: str = ""                   # what the robot says to the user
+    reason: str = ""                # a status note, not said (the record's finish_reason)
+
+
+# What a baseline says when it gives up, in the user's language; why it gave up ("no plan", "glasses_1 not found") is
+# its ``reason``, a status note that is not said (fresh pilot round 2: the notes were English, with raw ids, and
+# counted as said in dialog_not_in_lang / dialog_raw_ids)
+GIVE_UP_TEXT = {"en": "Sorry, I could not finish that.", "ko": "죄송해요, 부탁하신 일을 끝내지 못했어요."}
+STOP_TEXT = {"en": "Stopped.", "ko": "멈췄어요."}
+
+
+def give_up_text(lang: str) -> str:
+    return GIVE_UP_TEXT.get(lang, GIVE_UP_TEXT["en"])
 
 
 @dataclass(frozen=True)
@@ -240,9 +252,11 @@ class EpisodeEnv:
         self.last_result = None                  # the last SkillResult (robot_agent proxy)
         self.status: Optional[str] = None
         self.final_say = ""
+        self.finish_reason = ""                  # the planner's status note at finish (not said to the user)
         self.refusals: list = []                 # {"text", "subtask", "obj", "whole"} per refusal
         self.over = False
         self.budget_hit = False                  # a call was refused because the budget was used up
+        self._refused_at_call: list = []         # per skill call: LLM calls refused so far (finish's status)
         self.error: Optional[str] = None
         self.error_msg: Optional[str] = None
         self.planner_name = ""
@@ -354,6 +368,7 @@ class EpisodeEnv:
         self.calls.append({"k": k, "skill": skill, "args": rec["args"], "ok": res.ok, "code": rec["code"],
                            "injected": bool(res.injected), "t": rec["t"], "dur": rec["dur"],
                            "event": (res.truth or {}).get("event")})
+        self._refused_at_call.append(int(getattr(self._llm, "refused", 0) or 0))
         if skill == "ask":          # for the failure analysis only (docs/experiments.md); never shown to planners
             self.calls[-1]["answer"] = (res.data or {}).get("answer")
             self.calls[-1]["reply_kind"] = (res.truth or {}).get("reply_kind")
@@ -460,20 +475,32 @@ class EpisodeEnv:
             n += 0 if hit else 1
         return n
 
-    def finish(self, status: str, say: str = "") -> None:
+    def finish(self, status: str, say: str = "", reason: str = "") -> None:
+        """End the episode. ``say``: what the robot says to the user (checked for the user's language and raw ids);
+        ``reason``: the planner's own status note, never said (``finish_reason`` in the record)."""
         if self.status is not None:
             return
+        self.finish_reason = str(reason or "")
         if status not in FINISH_STATUSES:
             raise ValueError(f"finish status must be one of {FINISH_STATUSES}, got {status!r}")
-        if self.budget_hit or (status == "give_up" and self.llm_budget_hit):
+        if self.budget_hit or (status == "give_up" and self.llm_budget_hit and not self._hw_fault_after_llm_budget()):
             # a planner that gave up after its LLM budget ran out (it caught BudgetExceeded and went on, as robot_agent
-            # does) ended for the budget; a claimed done / refuse keeps the planner's status (the judge is unchanged)
+            # does) ended for the budget; a claimed done / refuse keeps the planner's status (the judge is unchanged).
+            # A hardware fault after the last refused LLM call ended it instead: the plan ran on without the LLM and
+            # the robot broke down (status give_up; ``llm_budget_hit`` still says the budget ran out; fresh pilot
+            # round 2, sage_norag hl-dev-000057: Find hw_fault_persistent was counted as the budget)
             self.status = "budget"
         else:
             self.status = status
         self.final_say = str(say or "")
         if status == "refuse":
             self.refusals.append({"text": self.final_say, "subtask": None, "obj": None, "whole": True})
+
+    def _hw_fault_after_llm_budget(self) -> bool:
+        """A skill call made after the last refused LLM call failed with a hardware fault (or an e-stop)."""
+        last = int(getattr(self._llm, "refused", 0) or 0)
+        return any(not c["ok"] and c.get("code") in ("hw_fault", "estop") and n >= last > 0
+                   for c, n in zip(self.calls, self._refused_at_call))
 
     def set_error(self, exc: BaseException) -> None:
         if self.status is None:
@@ -579,6 +606,7 @@ class EpisodeEnv:
                                for a in self.delivery_atoms()],
             "events": [dict(e) for e in self._events],
             "final_say": self.final_say,
+            "finish_reason": self.finish_reason,
         }
         paths: dict = {}
         not_in_lang = 0

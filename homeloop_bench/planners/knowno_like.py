@@ -19,7 +19,7 @@ from pathlib import Path
 from homeloop_robot import goals as G
 from homeloop_robot.catalog import COLORS
 
-from .base import ask_json, refusal_text
+from .base import ask_json, give_up_text, refusal_text
 from .inner_monologue_like import LLMStepPlanner
 from .prompts import render_observation
 
@@ -165,7 +165,7 @@ class KnowNoLike(LLMStepPlanner):
         obs = env.observe()
         obj = ask_json(self.llm, options_prompt(obs), check=_valid_options)
         if obj is None:
-            env.finish("give_up", "no valid options from the LLM")
+            env.finish("give_up", give_up_text(env.lang), reason="no valid options from the LLM")
             return
         opts = []
         for o in obj["options"][:4]:

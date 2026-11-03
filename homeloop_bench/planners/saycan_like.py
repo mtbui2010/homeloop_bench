@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from homeloop_robot.catalog import MESSAGE_TEXT
 
-from ..env import Finish, ToolCall
+from ..env import Finish, ToolCall, give_up_text
 from .base import ask_json
 from .prompts import render_observation, _args
 
@@ -108,7 +108,7 @@ class SayCanLike:
         b.at = env.observe().robot.get("at")
         while env.status is None:
             if env.over:
-                env.finish("give_up", "budget exhausted")
+                env.finish("give_up", give_up_text(env.lang), reason="budget exhausted")
                 return
             obs = env.observe()
             opts = options(obs, b)
@@ -122,7 +122,7 @@ class SayCanLike:
             obj = ask_json(self.llm, prompt, check=lambda o: None if isinstance(o, dict) and isinstance(o.get("choice"), int)
                            and 0 <= o["choice"] < len(opts) else "choice must be an option number")
             if obj is None:
-                env.finish("give_up", "no valid choice from the LLM")
+                env.finish("give_up", give_up_text(env.lang), reason="no valid choice from the LLM")
                 return
             s, a = opts[obj["choice"]]
             if s == "finish":

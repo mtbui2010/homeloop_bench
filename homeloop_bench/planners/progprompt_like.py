@@ -13,6 +13,7 @@ from __future__ import annotations
 import ast
 import re
 
+from ..env import give_up_text
 from .progprompt_examples import examples_text
 from .prompts import render_observation, tools_text
 
@@ -116,7 +117,7 @@ class ProgPromptLike:
                 p = f"MODE: repair\nYour previous answer had no valid statement ({e}):\n{str(raw)[:400]}\n" \
                     f"Answer again, program only.\n\n{prompt}"
         if prog is None:
-            env.finish("give_up", "no valid program from the LLM")
+            env.finish("give_up", give_up_text(env.lang), reason="no valid program from the LLM")
             return
         self.execute(env, prog)
 
@@ -149,7 +150,7 @@ class ProgPromptLike:
             if env.status is not None:
                 return
             if env.over:
-                env.finish("give_up", "budget exhausted")
+                env.finish("give_up", give_up_text(env.lang), reason="budget exhausted")
                 return
             if st[0] == "call":
                 do(st[1], st[2])

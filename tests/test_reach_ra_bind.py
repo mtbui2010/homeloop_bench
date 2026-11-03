@@ -18,7 +18,7 @@ pytest.importorskip("robot_agent")
 
 from homeloop_robot.catalog import CLASSES  # noqa: E402
 from homeloop_robot.configs.backend import reset_backend, set_backend  # noqa: E402
-from homeloop_robot.configs.tasks import RESERVED_USER_WORDS, env_for, person_key  # noqa: E402
+from homeloop_robot.configs.tasks import RESERVED_USER_WORDS, SPEAKER_KEY, env_for, person_key  # noqa: E402
 from homeloop_robot.episode import make_episode  # noqa: E402
 
 import homeloop_robot  # noqa: E402
@@ -87,7 +87,7 @@ def test_move_to_a_person_ends_at_its_env_loc(house, pid, tmp_path):
     set_backend(ep.robot)
     try:
         with assist_loop(ep.world, tmp_path) as (loop, env):
-            key = person_key(pid)
+            key = person_key(ep.world, pid)
             loc = env[key]["loc"]
             tol = loop.cfg["arrive_tol"]
             # from the start pose, then from every other room's first place (the robot rarely comes from the dock)
@@ -117,7 +117,7 @@ def test_place_on_a_person_uses_the_spot(house, pid, tmp_path):
     set_backend(ep.robot)
     try:
         with assist_loop(ep.world, tmp_path) as (loop, env):
-            key = person_key(pid)
+            key = person_key(ep.world, pid)
             spot = env[key]["spot"]
             oid = _hold_something(ep, loop, env)
             assert oid is not None, house
@@ -156,7 +156,7 @@ def test_no_env_key_is_a_robot_agent_user_word():
             w = AL.words(k)
             assert w not in AL._USER_WORDS and AL._strip_article(w) not in AL._USER_WORDS, (h, k)
         for pid in ep.world.people:
-            key = person_key(pid)
+            key = person_key(ep.world, pid)
             assert env[key]["person"] == pid
             seen_alias |= key != pid
     assert seen_alias            # korean_apt_59 / studio_flat: person 'user'
@@ -183,14 +183,14 @@ def test_reserved_person_alias_maps_back(house, tmp_path):
     set_backend(ep.robot)
     try:
         with assist_loop(ep.world, tmp_path) as (loop, env):
-            assert "user" not in env and "person_user" in env
+            assert "user" not in env and "person_user" not in env and SPEAKER_KEY in env
             from homeloop_robot.configs.adapter import make_adapter
             ad = make_adapter()
-            assert ad.bind({"action": "Handover", "object": "person_user"}) == ("handover", {"inputs": "user"})
+            assert ad.bind({"action": "Handover", "object": SPEAKER_KEY}) == ("handover", {"inputs": "user"})
             oid = _hold_something(ep, loop, env)
-            assert _step(loop, "MoveTo", "person_user").ok
+            assert _step(loop, "MoveTo", SPEAKER_KEY).ok
             from robot_agent.core.planning.robot import run_skill
-            skill, params = ad.bind({"action": "Handover", "object": "person_user"})
+            skill, params = ad.bind({"action": "Handover", "object": SPEAKER_KEY})
             assert run_skill(loop.sr, skill, params, None).ok
             assert ep.world.objects[oid].at == "person:user"
     finally:

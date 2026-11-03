@@ -199,6 +199,7 @@ def _count_embodiplan(env):
             return content, approx(" ".join(str(m.get("content", "")) for m in messages)), approx(content)
         if counter is not None:
             if counter.max_calls is not None and counter.calls >= counter.max_calls:
+                counter.refused = getattr(counter, "refused", 0) + 1
                 raise BudgetExceeded(f"LLM budget of {counter.max_calls} calls exhausted")
             counter.calls += 1
         return chat(self, messages, temperature)

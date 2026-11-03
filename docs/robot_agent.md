@@ -123,8 +123,10 @@ scores are not results.
   handover (homeloop_robot docs/robot_agent.md). The bench passes `env_for` of the start world; it only
   translates names and positions, robot_agent is not changed. Since R2-5 (B1) the spot is applied in the robot
   package's skill functions, because AssistLoop passes the raw ENV key to them; a person's ENV loc is the spot or
-  the robot's stop point beside the person, and a person id that is a robot_agent user word (`user`) is keyed
-  `person_user` (B2). Test: `tests/test_reach_ra_bind.py`.
+  the robot's stop point beside the person. A person's ENV key is what sage reads back to the user, so it is a
+  name, never a raw id: the speaker's entry is `spot near you`, anyone else's is their name (`husband`, `grandpa`);
+  no key is a robot_agent user word (B2, pilot round 1; homeloop_robot `tasks.person_keys`). Tests:
+  `tests/test_reach_ra_bind.py`, `tests/test_pilot_r1.py`.
 - robot_agent has no fetch-and-hand-over goal for an arm robot. Its `deliver` goal (MoveTo + WaitForUnload)
   carries what is already loaded (a tray robot); the homeloop manifest keeps WaitForUnload as an alias of
   Handover, so deliver is not offered (declaring it made sage hand over an empty gripper, homeloop_robot

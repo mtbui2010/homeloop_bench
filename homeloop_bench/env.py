@@ -463,7 +463,9 @@ class EpisodeEnv:
             return
         if status not in FINISH_STATUSES:
             raise ValueError(f"finish status must be one of {FINISH_STATUSES}, got {status!r}")
-        if self.budget_hit:
+        if self.budget_hit or (status == "give_up" and self.llm_budget_hit):
+            # a planner that gave up after its LLM budget ran out (it caught BudgetExceeded and went on, as robot_agent
+            # does) ended for the budget; a claimed done / refuse keeps the planner's status (the judge is unchanged)
             self.status = "budget"
         else:
             self.status = status
@@ -476,6 +478,11 @@ class EpisodeEnv:
             self.status = "error"
         self.error = type(exc).__name__
         self.error_msg = str(exc)[:500]
+
+    @property
+    def llm_budget_hit(self) -> bool:
+        """An LLM call was refused because the episode's LLM budget was used up (whoever caught the exception)."""
+        return int(getattr(self._llm, "refused", 0) or 0) > 0
 
     def set_budget(self) -> None:
         if self.status is None:
@@ -559,7 +566,8 @@ class EpisodeEnv:
                        "min_sep_m": safety.get("min_separation_m"),
                        "n_stops": int(safety.get("n_protective_stops") or 0),
                        "slow_s": r6(float(safety.get("time_in_slow_s") or 0.0))},
-            "llm_calls": self.llm_calls, "sim_time_s": r6(self.ep.clock.t), "n_calls": len(self.calls),
+            "llm_calls": self.llm_calls, "llm_budget_hit": self.llm_budget_hit,
+            "sim_time_s": r6(self.ep.clock.t), "n_calls": len(self.calls),
             "instruction_heard": self.instruction_event,
             "delivery": delivery_category(self.delivery_atoms()),
             "delivery_atoms": [{"obj": a["args"][0], "person": a["args"][1],

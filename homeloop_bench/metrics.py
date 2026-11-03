@@ -280,6 +280,8 @@ def summarize(episodes: list, config: dict, split_shares: Optional[dict] = None)
         "min_separation_m": r6(min(seps)) if seps else None,
         "min_separation_p5_m": percentile(seps, 5),
         "llm_calls_mean": _mean(e["llm_calls"] for e in episodes) if n else 0.0,
+        # episodes whose LLM budget ran out (a refused call), also when the planner caught it and went on
+        "llm_budget_hit_rate": _share(sum(1 for e in episodes if e.get("llm_budget_hit")), n),
         # how the simulated user read the robot's questions (homeloop_robot docs/user_model.md): share per path
         "dialog_paths": _path_shares(episodes),
         # answered questions not in the user's language (rule not_in_lang: an untranslated English question in a

@@ -184,6 +184,9 @@ class CountingLLM:
         self.calls = 0
 
         self.failed: Optional[BaseException] = None     # the first LLMError (the runner aborts the run)
+        # calls refused because the budget was used up; a planner may catch BudgetExceeded and go on (robot_agent's
+        # SAGE / AssistLoop do), so the episode reads this, not the exception (pilot round 1, hl-dev-000003 KO)
+        self.refused = 0
 
     def chat(self, prompt: str, format=None, temperature: float = 0.0, seed: int = 0) -> str:
         return self._count(lambda: self.inner.chat(prompt, format=format, temperature=temperature, seed=seed))
@@ -193,6 +196,7 @@ class CountingLLM:
 
     def _count(self, call) -> str:
         if self.max_calls is not None and self.calls >= self.max_calls:
+            self.refused += 1
             raise BudgetExceeded(f"LLM budget of {self.max_calls} calls exhausted")
         self.calls += 1
         try:

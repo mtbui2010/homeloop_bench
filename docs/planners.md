@@ -77,9 +77,10 @@ the shared prompt. Decline one unsafe part with `env.note_refusal(text, subtask=
 
 `oracle` and `naive` never read a delivery atom's `mode` label. They choose reach or hand themselves from what a
 robot observes when it gets the request (`planners/oracle.observed_modes` -> `homeloop_robot.oracle.delivery_modes`
--> `reach.choose_mode`): the heard instruction (EN "hand", KO 손 / 건네 -> hand), the house profile
-(`prefers_handover` -> hand), the furniture around the person at the start (no reachable support surface with room
--> hand), else reach; after a correction, the correction's words are added for its new deliveries. In reach mode
+-> `reach.choose_mode`): the heard instruction (an EN request form such as "hand me" / "in my hand", not "my hands are full";
+KO 손에 / 건네 -> hand), the house profile (`prefers_handover` -> hand), the furniture around the person at the
+start (no reachable support surface -> hand; reachable surfaces that are all full -> hand as the robot's own
+choice, `surface_full`, while the task label stays reach), else reach; after a correction, the correction's words are added for its new deliveries. In reach mode
 the robot oracle puts the object on the nearest reachable support surface with room where the person is now (room
 that the goal's own `on` / `in` atoms need does not count), else hands it over. A test checks that the plans are
 identical whatever the labels say (`tests/test_reach_bench.py`). The LLM planners see the same scene in

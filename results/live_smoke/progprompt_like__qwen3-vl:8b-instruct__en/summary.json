@@ -10,28 +10,28 @@
   },
   "none": {
    "n": 86,
-   "success": 0.127907,
+   "success": 0.209302,
    "success_ci95": [
-    0.072946,
-    0.214688
+    0.136698,
+    0.306766
    ]
   },
   "preference": {
    "n": 9,
-   "success": 0.111111,
+   "success": 0.222222,
    "success_ci95": [
-    0.019891,
-    0.435
+    0.063225,
+    0.547411
    ]
   }
  },
  "by_capability": {
   "articulate": {
    "n": 12,
-   "success": 0.25,
+   "success": 0.166667,
    "success_ci95": [
-    0.088942,
-    0.532305
+    0.046965,
+    0.448031
    ]
   },
   "contain": {
@@ -44,34 +44,34 @@
   },
   "correction": {
    "n": 11,
-   "success": 0.090909,
+   "success": 0.272727,
    "success_ci95": [
-    0.016232,
-    0.377358
+    0.097461,
+    0.565645
    ]
   },
   "fetch": {
    "n": 16,
-   "success": 0.0625,
+   "success": 0.1875,
    "success_ci95": [
-    0.011119,
-    0.283287
+    0.065916,
+    0.430089
    ]
   },
   "message": {
    "n": 11,
-   "success": 0.181818,
+   "success": 0.363636,
    "success_ci95": [
-    0.051368,
-    0.476981
+    0.151665,
+    0.646199
    ]
   },
   "multi_object": {
    "n": 10,
-   "success": 0.0,
+   "success": 0.2,
    "success_ci95": [
-    0.0,
-    0.277533
+    0.056682,
+    0.509838
    ]
   },
   "navigate": {
@@ -84,10 +84,10 @@
   },
   "rearrange": {
    "n": 13,
-   "success": 0.076923,
+   "success": 0.153846,
    "success_ci95": [
-    0.01371,
-    0.33314
+    0.043258,
+    0.422346
    ]
   },
   "search": {
@@ -99,45 +99,79 @@
    ]
   }
  },
+ "by_delivery": {
+  "hand": {
+   "n": 10,
+   "success": 0.1,
+   "success_ci95": [
+    0.017876,
+    0.40415
+   ]
+  },
+  "mixed": {
+   "n": 4,
+   "success": 0.0,
+   "success_ci95": [
+    0.0,
+    0.489891
+   ]
+  },
+  "none": {
+   "n": 56,
+   "success": 0.267857,
+   "success_ci95": [
+    0.169573,
+    0.395946
+   ]
+  },
+  "reach": {
+   "n": 30,
+   "success": 0.133333,
+   "success_ci95": [
+    0.053097,
+    0.296813
+   ]
+  }
+ },
  "by_house": {
   "couple_flat": {
    "n": 18,
-   "success": 0.222222,
+   "success": 0.388889,
    "success_ci95": [
-    0.090009,
-    0.452146
+    0.203052,
+    0.61381
    ]
   },
   "family_house": {
    "n": 17,
-   "success": 0.117647,
+   "success": 0.294118,
    "success_ci95": [
-    0.03288,
-    0.343364
+    0.1328,
+    0.531331
    ]
   },
   "korean_apt_59": {
    "n": 28,
-   "success": 0.0,
+   "success": 0.035714,
    "success_ci95": [
-    0.0,
-    0.120643
+    0.006333,
+    0.177122
    ]
   },
   "senior_flat": {
    "n": 14,
-   "success": 0.214286,
+   "success": 0.428571,
    "success_ci95": [
-    0.075714,
-    0.475892
+    0.213808,
+    0.674094
    ]
   },
   "shared_flat": {
    "n": 16,
-   "success": 0.1875,
+   "success": 0.0625,
    "success_ci95": [
-    0.065916,
-    0.430089
+    0.011119,
+    0.283287
    ]
   },
   "studio_flat": {
@@ -152,18 +186,18 @@
  "by_kind": {
   "clarify": {
    "n": 14,
-   "success": 0.071429,
+   "success": 0.142857,
    "success_ci95": [
-    0.012722,
-    0.314687
+    0.040094,
+    0.399414
    ]
   },
   "feasible": {
    "n": 81,
-   "success": 0.135802,
+   "success": 0.222222,
    "success_ci95": [
-    0.077555,
-    0.227031
+    0.145446,
+    0.324153
    ]
   },
   "refuse": {
@@ -178,62 +212,62 @@
  "by_lang": {
   "en": {
    "n": 100,
-   "success": 0.12,
+   "success": 0.2,
    "success_ci95": [
-    0.069994,
-    0.198121
+    0.133367,
+    0.288829
    ]
   }
  },
  "by_n_subtasks": {
   "1": {
    "n": 47,
-   "success": 0.212766,
+   "success": 0.319149,
    "success_ci95": [
-    0.119897,
-    0.34904
+    0.203954,
+    0.461673
    ]
   },
   "2": {
    "n": 32,
-   "success": 0.0625,
+   "success": 0.125,
    "success_ci95": [
-    0.017311,
-    0.201471
+    0.049701,
+    0.280683
    ]
   },
   "3": {
    "n": 21,
-   "success": 0.0,
+   "success": 0.047619,
    "success_ci95": [
-    0.0,
-    0.154639
+    0.008456,
+    0.226694
    ]
   }
  },
  "by_structure": {
   "conditional": {
    "n": 4,
-   "success": 0.25,
+   "success": 0.5,
    "success_ci95": [
-    0.045587,
-    0.699358
+    0.150039,
+    0.849961
    ]
   },
   "conjunction": {
    "n": 8,
-   "success": 0.0,
+   "success": 0.125,
    "success_ci95": [
-    0.0,
-    0.324408
+    0.022417,
+    0.470888
    ]
   },
   "correction": {
    "n": 7,
-   "success": 0.0,
+   "success": 0.428571,
    "success_ci95": [
-    0.0,
-    0.35433
+    0.15822,
+    0.749542
    ]
   },
   "ordered": {
@@ -254,18 +288,18 @@
   },
   "shared_object": {
    "n": 9,
-   "success": 0.111111,
+   "success": 0.0,
    "success_ci95": [
-    0.019891,
-    0.435
+    0.0,
+    0.299145
    ]
   },
   "single": {
    "n": 46,
-   "success": 0.217391,
+   "success": 0.304348,
    "success_ci95": [
-    0.122609,
-    0.355737
+    0.190798,
+    0.448056
    ]
   },
   "with_context": {
@@ -277,7 +311,7 @@
    ]
   }
  },
- "calls_mean": 6.8,
+ "calls_mean": 11.34,
  "claim_rate": 1.0,
  "config": {
   "budgets": {
@@ -285,7 +319,7 @@
    "max_llm_calls": 30,
    "max_sim_time_s": 1800.0
   },
-  "data_sha": "8098a58b9afaf912",
+  "data_sha": "3d2db8154a667b5d",
   "lang": "en",
   "limit": 100,
   "llm": "url",
@@ -294,66 +328,88 @@
   "n_tasks": 100,
   "planner": "progprompt_like",
   "profile": "real",
-  "profile_sha": "e1a04501e24f65474af927e30240c4349b7adf2b81e316bec31e08ca7e414804",
+  "profile_sha": "fe93eed0af9c981b12c4eef3eb18b3fab3df7dc776de60d16d8d3cb68c362ede",
   "seeds": 1,
   "split": "dev",
   "versions": {
    "homeloop_bench": "0.1.0",
-   "homeloop_bench_git": "065057e58b89",
+   "homeloop_bench_git": "efb3f21db8da-dirty",
    "homeloop_robot": "0.1.0",
-   "homeloop_robot_git": "c6176b299e91"
+   "homeloop_robot_git": "495c3e0868d9"
   }
  },
- "correct_help_rate": null,
+ "correct_help_rate": 0.0,
+ "delivery_atoms": {
+  "hand:explicit": {
+   "held": 0.0,
+   "n": 2
+  },
+  "hand:no_surface": {
+   "held": 0.125,
+   "n": 8
+  },
+  "hand:user_needs": {
+   "held": 0.4,
+   "n": 5
+  },
+  "reach:None": {
+   "held": 0.157895,
+   "n": 38
+  }
+ },
+ "delivery_mode": {
+  "reach_atoms_handed_over": 5,
+  "reach_atoms_held": 6,
+  "time_mean_s_reach_tasks_handed_over": 124.90985,
+  "time_mean_s_reach_tasks_set_down": 93.115263,
+  "unneeded_handover_rate": 0.833333
+ },
  "design_effect": 1.0,
  "error_rate": 0.0,
  "errors_by_type": {},
  "failures_by_code": {
-  "absent": 210,
-  "blocked": 22,
+  "absent": 289,
+  "blocked": 65,
   "cancelled": 5,
-  "grasp_failed": 21,
-  "hw_fault": 4,
-  "perception_unavailable": 2,
+  "dropped": 1,
+  "grasp_failed": 19,
+  "hw_fault": 7,
+  "perception_unavailable": 4,
   "timeout": 1,
-  "unreachable": 35
+  "unreachable": 20
  },
  "false_rejection_rate": 0.0,
- "false_success": 0.88,
- "false_success_given_claim": 0.88,
+ "false_success": 0.8,
+ "false_success_given_claim": 0.8,
  "give_up_rate": 0.0,
- "goal_condition_success": 0.235088,
- "help_rate": 0.0,
+ "goal_condition_success": 0.35614,
+ "help_rate": 0.01,
  "help_recall": 0.0,
  "icc": 0.0,
  "llm_calls_mean": 1.0,
- "min_separation_m": 1.315295,
- "min_separation_p5_m": 1.4,
+ "min_separation_m": 1.295251,
+ "min_separation_p5_m": 1.315295,
  "n_eff": 100.0,
  "n_episodes": 100,
  "n_error": 0,
  "n_tasks": 100,
  "partial_rejection_rate": 0.0,
- "protective_stops": 5,
+ "protective_stops": 17,
  "recovery_rate_by_code": {
-  "absent": 0.047619,
-  "blocked": 0.0,
-  "cancelled": 0.0,
+  "absent": 0.048443,
+  "blocked": 0.076923,
+  "cancelled": 1.0,
+  "dropped": 0.0,
   "grasp_failed": 0.0,
-  "hw_fault": 0.0,
+  "hw_fault": 0.285714,
   "perception_unavailable": 0.0,
-  "timeout": 0.0,
-  "unreachable": 0.057143
+  "timeout": 1.0,
+  "unreachable": 0.3
  },
  "rejection_rate": 0.0,
- "safety_violations": 0,
- "semantic_by_code": {
-  "electrical_shock": 1,
-  "liquid_spill": 1,
-  "poisoning": 1,
-  "small_item_damage": 1
- },
- "semantic_violations": 4,
+ "safety_violations": 1,
+ "semantic_by_code": {},
+ "semantic_violations": 0,
  "severe_violations": 0,
  "smoke": true,
  "split_shares": {
@@ -371,19 +427,19 @@
  "status_counts": {
   "done": 100
  },
- "subtask_success": 0.232704,
- "success": 0.12,
+ "subtask_success": 0.336478,
+ "success": 0.2,
  "success_ci95": [
-  0.069994,
-  0.198121
+  0.133367,
+  0.288829
  ],
  "success_ci95_episode": [
-  0.069994,
-  0.198121
+  0.133367,
+  0.288829
  ],
  "success_reweighted": {
-  "kind": 0.120808,
-  "n_subtasks": 0.119237
+  "kind": 0.20127,
+  "n_subtasks": 0.199031
  },
- "time_mean_s": 56.126689
+ "time_mean_s": 81.487814
 }

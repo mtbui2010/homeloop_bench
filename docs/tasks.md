@@ -57,23 +57,33 @@ mean `delivered[hand]`).
 Delivery is judged where the person is at the end: if they walk away after the drop-off and the object is no longer
 within their reach, the delivery fails (they asked for it to come to where they are).
 
-`mode_reason` says why a handover is needed: `explicit` (the request asks for the hand in BOTH languages: EN
-"hand", KO 손 / 건네), `user_needs` (the house profile marks the person `prefers_handover`: the care-home resident),
-`no_surface` (no support surface with room is within the person's reach where they are at the start: a bed with no
-nightstand, a reading chair with no table, a full nightstand, standing in a hall). `reach` has `mode_reason: null`.
-The labels are what a robot infers from the words and the start scene (`homeloop_robot.reach.choose_mode`), so
-`validate` check 11 recomputes every label; when only one language's text asks for the hand, the label follows the
-scene and a handover in that language still satisfies `reach`. A correction's new goal is labelled with the
-instruction and the correction text together. Planners never see the labels (docs/runner.md).
+`mode_reason` says why a handover is needed: `explicit` (the request asks for the hand in BOTH languages, in a
+request form: EN the verb "hand me / hand it to / hand the book over" or "in my / his / her hand(s)", never the noun
+in "my hands are full" or "I just washed my hands"; KO 건네- / 손에 / 손으로), `user_needs` (the house profile marks
+the person `prefers_handover`: the care-home resident, and grandpa in korean_apt_59), `no_surface` (no support
+surface at all is within the person's reach where they are at the start, by geometry: a bed with no nightstand, a
+reading chair with no table, standing in a hall). A reachable surface that is full at the start (a nightstand
+holding glasses, a phone and a book) is NOT `no_surface`: the task stays `reach`, and making room or handing over
+is the planner's choice. `reach` has `mode_reason: null`. The labels are what the words and the start scene
+require (`homeloop_robot.reach.need`), so `validate` check 11 recomputes every label; when only one language's
+text asks for the hand, the label follows the scene and a handover in that language still satisfies `reach`. A
+correction's new goal is labelled with the instruction and the correction text together. Planners never see the
+labels (docs/runner.md).
 
 `meta.delivery` records the round 2 rewrite (`python -m homeloop_bench.data delivery`, `gen/delivery.py`):
 `reseed` = `{"from": old seed_state, "pass": 1 | 2}` when the object was already within the person's reach at the
 start and the task got another arrangement of the same house (pass 1: same seats and every other object the task
 names in place; pass 2: every named object in place, the recipient sits elsewhere; the task must stay the same: the
 same conditions, subtask truths and an oracle plan, ordered stage by stage); `variant` = `append` (one sentence
-asking for the hand added to template texts of a one-delivery task in both languages, ~36 % of those tasks by
-sha256 of the generation id) or `ko_verb` (the English text already says "hand", the Korean template's 가져다주- /
-갖다주- becomes 가져다 건네-), never on LLM text, and not when it would make a near duplicate across splits.
+asking for the hand added to template texts of a one-delivery, one-subtask task in both languages, ~36 % of those
+tasks by sha256 of the generation id), `append_named` (the same for a compound task with one delivery; the
+sentence names the object: "Please put the red book right in my hand." / "빨간 책은 제 손에 직접 쥐여 주세요.") or
+`ko_verb` (the English text already asks for the hand, the Korean template's 가져다주- / 갖다주- becomes
+가져다 건네-). Never on LLM text, never on a text that talks about the hands ("my hands are full"), and not when
+it would make a near duplicate across splits. Per-split top-up (`QUOTA_SHARE`: train 0.4, dev 0.5, test 0): dev
+and train have few one-subtask template tasks, so a record of those splits whose sha256(gen id, "quota") falls
+under the share may also get `append` or `append_named`; explicit is then about 8 % of the delivery atoms in
+every split (counts per split: [datasheet.md](datasheet.md#deliveries-round-2)).
 
 ## Subtask fields
 

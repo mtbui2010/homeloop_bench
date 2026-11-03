@@ -553,7 +553,8 @@ class EpisodeEnv:
             "delivery": delivery_category(self.delivery_atoms()),
             "delivery_atoms": [{"obj": a["args"][0], "person": a["args"][1],
                                 "mode": a.get("mode") or ("hand" if a["pred"] == "held_by" else None),
-                                "mode_reason": a.get("mode_reason"), "ok": bool(G.holds(a, w_end))}
+                                "mode_reason": a.get("mode_reason"), "ok": bool(G.holds(a, w_end)),
+                                "handed": _handed(w_end, a["args"][0], a["args"][1])}
                                for a in self.delivery_atoms()],
             "events": [dict(e) for e in self._events],
         }
@@ -561,3 +562,9 @@ class EpisodeEnv:
             rec["error"] = self.error
             rec["error_msg"] = self.error_msg
         return rec
+
+
+def _handed(world, obj: str, person: str) -> bool:
+    """The delivered object is in the person's hand at the end (a handover), as opposed to set down."""
+    o = world.objects.get(obj)
+    return bool(o is not None and o.at == f"person:{person}")

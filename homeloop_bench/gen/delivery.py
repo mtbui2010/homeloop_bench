@@ -48,10 +48,19 @@ from homeloop_robot.world import from_house
 from .textcheck import words
 
 APPEND_SHARE = 0.36              # design choice: about 5 % of the delivery atoms get an explicit-hand sentence
+# per-split top-up of explicit-hand wording (design choice, docs/tasks.md "Delivery"): dev and train hold far fewer
+# one-subtask template tasks than test, so the base ``append`` rule alone gave dev 6 explicit atoms of 490 (test 202
+# of 2418). A record of split s whose sha256(gen id, "quota") falls under QUOTA_SHARE[s] may also get the
+# explicit sentence when the base rule skipped it: a one-subtask task above APPEND_SHARE (``append``), or a
+# compound task whose one delivery is named in the text (``append_named``: the sentence names the object).
+# Per record, so the rewrite stays deterministic and idempotent on any subset.
+QUOTA_SHARE = {"train": 0.4, "dev": 0.5, "test": 0.0}   # test keeps the base rule (8.2 % explicit)
+QUOTA_STRUCTURES = ("sequence", "conjunction", "ordered", "shared_object", "with_context")
 RESEED_TRIES = 4000
 TASK_KEYS = ("goal", "subtasks", "user", "meta")
 PLURAL = {"glasses", "keys", "socks", "scissors"}
 NO_APPEND = {"scissors"}         # a sharp object is not put into a hand on request in the templates
+_HANDS_MENTIONED = re.compile(r"\bhands?\b", re.I)
 KO_VERB = re.compile(r"(가져다|갖다)\s?(주|줘|준|줄|드리|드려|드린|드릴)")
 
 EN_ME = ("Please put it right in my hand.", "Could you put it in my hand, please?",
@@ -67,6 +76,14 @@ EN_OTHER_PL = ("Please put them right in {pos} hand.", "Hand them to {obj} direc
 KO_ME = ("제 손에 직접 쥐여 주세요.", "그냥 두지 말고 제 손에 건네주세요.", "제 손에 바로 건네주세요.")
 KO_OTHER = ("그냥 두지 말고 손에 직접 건네주세요.", "손에 직접 건네주세요.")
 KO_ELDER = ("그냥 두지 말고 손에 직접 건네 드리세요.", "손에 직접 건네 드리세요.")
+# append_named (a compound task: the sentence names the delivered object; {n} = its name in the text)
+EN_ME_N = ("Please put the {n} right in my hand.", "Could you put the {n} in my hand, please?",
+           "I'd like the {n} right in my hand.")
+EN_OTHER_N = ("Please put the {n} right in {pos} hand.", "Hand the {n} to {obj} directly, please.",
+              "Put the {n} right in {pos} hand.")
+KO_ME_N = ("{t} 제 손에 직접 쥐여 주세요.", "{t} 그냥 두지 말고 제 손에 건네주세요.", "{t} 제 손에 바로 건네주세요.")
+KO_OTHER_N = ("{t} 손에 직접 건네주세요.", "{t} 그냥 두지 말고 손에 직접 건네주세요.")
+KO_ELDER_N = ("{t} 손에 직접 건네 드리세요.", "{t} 그냥 두지 말고 손에 직접 건네 드리세요.")
 
 
 def _h(*parts) -> int:
@@ -134,8 +151,7 @@ def label(w, person: str, texts: dict) -> tuple:
     """(mode, mode_reason) a robot infers at the start state from the words and the scene."""
     if wants_hand(texts):
         return "hand", "explicit"
-    m = reach.choose_mode(w, person)            # no words: the house profile, then the furniture
-    return m.mode, m.reason
+    return reach.need(w, person)                # no words: the house profile, then the geometry
 
 
 def correction_texts(r: dict) -> dict:
@@ -282,6 +298,10 @@ def _elder(person) -> bool:
     return lo is not None and lo >= 65
 
 
+def _quota(r: dict) -> bool:
+    return _frac(gen_id(r), "quota") < QUOTA_SHARE.get(r.get("split"), 0.0)
+
+
 def explicit_variant(r: dict, w):
     """(variant, {lang: new text}) or None."""
     atoms = delivery_atoms(r)
@@ -296,16 +316,22 @@ def explicit_variant(r: dict, w):
             and not reach.wording_wants_hand(ko, "ko"):
         new = KO_VERB.sub(lambda m: f"가져다 건네{m.group(2)}", ko)
         return "ko_verb", {"ko": new}
-    if (r.get("structure") != "single" or (r.get("n_subtasks") or 1) != 1 or len(top) != 1
-            or any(a["args"] != top[0]["args"] for _, a in atoms)
+    if (len(top) != 1 or any(a["args"] != top[0]["args"] for _, a in atoms)
             or not (_template_lang(r, "en") and _template_lang(r, "ko"))
-            or reach.wording_wants_hand(en, "en") or reach.wording_wants_hand(ko, "ko")):
-        return None
-    if _frac(gen_id(r), "explicit") >= APPEND_SHARE:
-        return None
+            or reach.wording_wants_hand(en, "en") or reach.wording_wants_hand(ko, "ko")
+            or _HANDS_MENTIONED.search(en) or "손" in ko):
+        return None                     # a text that talks about the hands ("my hands are full") gets no hand sentence
     oid, pid = top[0]["args"]
     cls = w.objects[oid].cls
     if cls in NO_APPEND:
+        return None
+    single = r.get("structure") == "single" and (r.get("n_subtasks") or 1) == 1
+    if single:
+        if _frac(gen_id(r), "explicit") >= APPEND_SHARE and not _quota(r):
+            return None
+    elif r.get("structure") in QUOTA_STRUCTURES and _quota(r):
+        return _named_variant(r, w, oid, pid)
+    else:
         return None
     plural = cls in PLURAL
     i = _h(gen_id(r), "explicit_form")
@@ -321,6 +347,45 @@ def explicit_variant(r: dict, w):
     en2 = _append(en, e, i)
     ko2 = _append(ko, k, i // 7)
     return "append", {"en": en2, "ko": ko2}
+
+
+def _name_in(text: str, names: list, lang: str):
+    """The longest of ``names`` that the text says (EN: as whole words, case-insensitive), or None."""
+    t = text.lower() if lang == "en" else text
+    for n in sorted({x for x in names if x and "'" not in x}, key=lambda x: (-len(x), x)):
+        if lang == "en":
+            if re.search(r"(?<![\w-])" + re.escape(n.lower()) + r"(?![\w-])", t):
+                return n
+        elif n in t:
+            return n
+    return None
+
+
+def _named_variant(r: dict, w, oid: str, pid: str):
+    """``append_named``: a sentence that names the one delivered object of a compound task, or None when the
+    text does not name it by a name no other object of the task shares."""
+    from .ko import josa
+    from .lexicon import Lex
+    lex = Lex(w)
+    names = {lg: _name_in(r["text"][lg], lex.obj_names(oid, lg), lg) for lg in ("en", "ko")}
+    if not all(names.values()):
+        return None
+    for other in objects_named(r, w) - {oid}:
+        for lg in ("en", "ko"):
+            if names[lg] in lex.obj_names(other, lg) or names[lg] == lex.cls_name(w.objects[other].cls, lg):
+                return None
+    i = _h(gen_id(r), "explicit_form")
+    person = w.people[pid]
+    if pid == w.user_id():
+        e, k = EN_ME_N, KO_ME_N
+    else:
+        male = getattr(person, "sex", "") == "male"
+        e = tuple(x.replace("{pos}", "his" if male else "her").replace("{obj}", "him" if male else "her")
+                  for x in EN_OTHER_N)
+        k = KO_ELDER_N if _elder(person) else KO_OTHER_N
+    e = tuple(x.replace("{n}", names["en"]) for x in e)
+    k = tuple(x.replace("{t}", josa(names["ko"], "은/는")) for x in k)
+    return "append_named", {"en": _append(r["text"]["en"], e, i), "ko": _append(r["text"]["ko"], k, i // 7)}
 
 
 def _append(text: str, forms: tuple, i: int) -> str:

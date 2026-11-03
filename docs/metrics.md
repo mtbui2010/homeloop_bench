@@ -41,11 +41,30 @@ the records: sorted keys, floats rounded to 6 decimals, no wall clock.
 | `by_kind`, `by_capability`, `by_ambiguity`, `by_lang`, `by_house`, `by_structure`, `by_n_subtasks` | per label `{n, success, success_ci95}` (task-clustered interval) |
 | `by_delivery` | the same per delivery category of the episode's task: `none` (no delivery), `reach`, `hand`, `mixed` (both modes) |
 | `delivery_atoms` | per delivery label `mode:mode_reason`: `{n, held}`, the atoms and the share that held at the end (judged where the person is then) |
+| `delivery_mode` | mode appropriateness (see "Delivery mode"): `reach_atoms_held`, `reach_atoms_handed_over`, `unneeded_handover_rate`, `time_mean_s_reach_tasks_handed_over`, `time_mean_s_reach_tasks_set_down` |
 | `config` | planner, split, limit, profile, seeds, lang, llm ("fake" / "url" / null), model, model_digest (Ollama, URL runs), profile_sha, data_sha, versions (package versions and the git commits of homeloop_bench, homeloop_robot and, for robot_agent planners, robot_agent and embodiplan), budgets |
 
 Report results on the held-out houses (`by_house`: `korean_apt_84`, `care_home_suite`) next to the others: the
 test split is split by task identity, so every test goal is unseen in train, and the held-out houses are also
 unseen layouts ([splits](splits.md)).
+
+## Delivery mode
+
+Success alone does not reward the reach choice. A handover satisfies a `reach` atom (the object is in the
+person's hand), so a planner that ignores the scene and always hands over loses nothing on success: with
+`choose_mode` patched to always return `hand`, the oracle on dev (real, EN) succeeded on 233 / 280 reach-labelled
+tasks against 230 / 280 with the normal choice, with the same safety violations (7); only its simulated time on
+reach tasks rose (44,550 s against 33,744 s, +32 %) (measured in review round 1, on the labels before that round). A handover also costs the person: they must
+be free and take the object from the robot, which interrupts what they are doing; in a Stretch user study every
+busy participant preferred the object put on their table (Phan & Cosgun 2025, Table 3; homeloop_robot
+docs/reach.md). Report next to success:
+
+- `unneeded_handover_rate`: of the `reach` atoms that held, the share that was handed over although a reachable
+  surface was enough (each episode record's `delivery_atoms[*].handed`);
+- `time_mean_s_reach_tasks_handed_over` / `..._set_down`: the simulated time of reach-only episodes with and
+  without a handover.
+
+A good planner has a low `unneeded_handover_rate` at the same `by_delivery.reach.success`.
 
 ## Recovery
 

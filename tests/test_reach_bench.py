@@ -171,7 +171,7 @@ def test_explicit_wording_in_both_languages(dev):
 def test_variants_only_touch_template_text(dev):
     for r in dev:
         v = (r["meta"].get("delivery") or {}).get("variant")
-        if v == "append":
+        if v in ("append", "append_named"):
             assert r["source_by_lang"] == {"en": "template", "ko": "template"}
             assert r["meta"].get("template_text") in (None, r["text"])
             assert r["text"]["en"].lower().count("please") <= 1
@@ -244,3 +244,85 @@ def test_summary_splits_by_delivery():
     assert s["by_delivery"]["reach"]["n"] == 2 and s["by_delivery"]["reach"]["success"] == 0.5
     assert s["by_delivery"]["hand"]["success"] == 0.0
     assert s["delivery_atoms"] == {"hand:no_surface": {"n": 1, "held": 0.0}, "reach:None": {"n": 2, "held": 0.5}}
+
+
+HAND_NOUN_IDS = ("hl-train-000333", "hl-train-000613", "hl-train-001338", "hl-train-001561", "hl-train-003566",
+                 "hl-dev-000336", "hl-dev-000670", "hl-test-001341", "hl-test-001534", "hl-test-001850",
+                 "hl-test-002818", "hl-test-002906", "hl-test-003389", "hl-test-003663", "hl-test-003762",
+                 "hl-test-004586", "hl-test-004619")
+
+
+@pytest.fixture(scope="module")
+def every():
+    return {s: read_records(s) for s in ("train", "dev", "test")}
+
+
+def test_hands_full_is_not_a_handover_request(every):
+    """Review round 1: 'My hands are full' / 'I just washed my hands' made 17 tasks explicit-hand and put 건네
+    into their Korean text. They are labelled from the scene again and keep their template Korean."""
+    by_id = {r["id"]: r for rs in every.values() for r in rs}
+    for i in HAND_NOUN_IDS:
+        r = by_id[i]
+        assert (r["meta"].get("delivery") or {}).get("variant") is None, i
+        assert not reach.wording_wants_hand(r["text"]["en"], "en"), i
+        assert "건네" not in r["text"]["ko"], i
+        for _, a in D.delivery_atoms(r):
+            assert a["mode_reason"] != "explicit", i
+
+
+def test_no_surface_is_geometry_only(every):
+    """no_surface = no support surface within reach at all; a full reachable surface stays a reach task."""
+    from homeloop_robot.world import from_house
+    n_reach_full = 0
+    for r in every["dev"]:
+        w = from_house(r["house"], r["seed_state"])
+        for path, a in D.delivery_atoms(r):
+            o, p = a["args"]
+            if a["mode_reason"] == "no_surface":
+                assert reach.reachable_surfaces(w, p) == [], r["id"]
+            if a["mode"] == "reach" and not reach.reachable_surfaces(w, p, free_only=True):
+                n_reach_full += 1
+    assert n_reach_full > 0          # such tasks exist (e.g. a nightstand full of small things) and stay reach
+
+
+def test_explicit_and_user_needs_in_every_split(every):
+    """Per-split counts are comparable (gen/delivery.QUOTA_SHARE): explicit 5-12 % of the delivery atoms in every
+    split, and user_needs present in every split."""
+    for s, rs in every.items():
+        st = D.delivery_stats(rs)
+        n = st["delivered_atoms"]
+        ex = st["by_mode_reason"].get("hand:explicit", 0)
+        assert 0.05 <= ex / n <= 0.12, (s, ex, n)
+        assert st["by_mode_reason"].get("hand:user_needs", 0) > 0, s
+
+
+def test_named_variant_names_the_object(every):
+    from homeloop_robot.world import from_house
+    from homeloop_bench.gen.lexicon import Lex
+    n = 0
+    for r in every["dev"] + every["train"]:
+        if (r["meta"].get("delivery") or {}).get("variant") != "append_named":
+            continue
+        n += 1
+        assert r["source_by_lang"] == {"en": "template", "ko": "template"} and r["structure"] != "single"
+        w = from_house(r["house"], r["seed_state"])
+        (o, _p), = {tuple(a["args"]) for _, a in D.delivery_atoms(r)}
+        last_en = r["text"]["en"].rsplit(".", 2)[-2] if r["text"]["en"].endswith(".") else r["text"]["en"]
+        assert any(nm in last_en.lower() for nm in Lex(w).obj_names(o, "en")), r["id"]
+        assert r["text"]["en"].lower().count(" hand") >= 1 and "손" in r["text"]["ko"]
+    assert n > 0
+
+
+def test_unneeded_handover_is_reported():
+    """A handover satisfies reach (success), but the delivery_mode metric counts it as unneeded."""
+    env = EpisodeEnv(task("reach"), "ideal", 0, "en", privileged=True)
+    fetch(env)
+    assert env.call("move", target="grandma")["ok"]
+    assert env.call("handover", person="grandma")["ok"], env.last
+    env.finish("done")
+    ho = env.record()
+    assert ho["success"] and ho["delivery_atoms"][0]["handed"] is True
+    env2, put = drop_at("reach", "side_table@living")
+    assert put["success"] and put["delivery_atoms"][0]["handed"] is False
+    m = summarize([ho, put], {"planner": "t"})["delivery_mode"]
+    assert m["reach_atoms_held"] == 2 and m["reach_atoms_handed_over"] == 1 and m["unneeded_handover_rate"] == 0.5

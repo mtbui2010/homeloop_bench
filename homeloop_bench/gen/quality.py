@@ -304,10 +304,24 @@ def write_datasheet(recs, para=None, bt=None, realism=None):
     for k, v in sorted((d.get("by_mode_reason") or {}).items(), key=lambda x: -x[1]):
         L.append(f"| {k} | {v} | {v / max(1, nd):.1%} |")
     L += ["", f"- {nd} delivery atoms in the task goals; hand share {d.get('hand_share')} (design range 10-50 %). "
-          "`explicit`: the text asks for the hand in both languages; `user_needs`: the house profile marks the person "
-          "`prefers_handover` (the care-home resident); `no_surface`: no support surface with room within the "
-          "person's reach where they are at the start (a bed without a nightstand, a reading chair without a table, "
-          "a full nightstand).", ""]
+          "`explicit`: the text asks for the hand in both languages (request forms only: \"hand me\", \"in my "
+          "hand\"; never \"my hands are full\"); `user_needs`: the house profile marks the person "
+          "`prefers_handover` (the care-home resident, test only, and grandpa in korean_apt_59); `no_surface`: no "
+          "support surface within the person's reach at all where they are at the start, by geometry (a bed "
+          "without a nightstand, a reading chair without a table). A reachable surface that is full at the start "
+          "stays `reach`: making room or handing over is the robot's choice.", "",
+          "Per split (counts of delivery atoms; explicit-hand wording is topped up per split by "
+          "`gen/delivery.QUOTA_SHARE` so that explicit is about 8 % in every split; `user_needs` is 4-5 % in dev "
+          "and train and 13 % in test, because the care home is a test-only house):", "",
+          "| split | atoms | reach | hand:explicit | hand:no_surface | hand:user_needs | hand share |",
+          "|---|---|---|---|---|---|---|"]
+    from .delivery import delivery_stats
+    for sp in ("train", "dev", "test"):
+        ds = delivery_stats([r for r in recs if r["split"] == sp])
+        br = ds["by_mode_reason"]
+        L.append(f"| {sp} | {ds['delivered_atoms']} | {br.get('reach:None', 0)} | {br.get('hand:explicit', 0)} | "
+                 f"{br.get('hand:no_surface', 0)} | {br.get('hand:user_needs', 0)} | {ds['hand_share']} |")
+    L += [""]
     L += ["### Houses", "", "| house | train | dev | test |", "|---|---|---|---|"]
     for h in sorted(s["by_house"]):
         L.append(f"| {h} | {by_split_house.get(('train', h), 0)} | {by_split_house.get(('dev', h), 0)} | "
@@ -351,8 +365,9 @@ def write_datasheet(recs, para=None, bt=None, realism=None):
           "every `held_by` atom became `delivered` with a mode; ids, splits and LLM texts unchanged. Deliveries "
           "whose object already lay within the person's reach at the start (not a real request) got another "
           "arrangement of the same house (`meta.delivery.reseed`, the old `seed_state` kept there); explicit-hand "
-          "wording was added from templates to template texts only (`meta.delivery.variant`: `append` or "
-          "`ko_verb`), never to LLM text; a variant that would make a near duplicate across splits is not applied "
+          "wording was added from templates to template texts only (`meta.delivery.variant`: `append`, "
+          "`append_named` (a compound task; the sentence names the object) or `ko_verb`), never to LLM text and "
+          "never to a text that talks about the hands (\"my hands are full\"); a variant that would make a near duplicate across splits is not applied "
           "(`data/quality/delivery_report.json`).",
           "- Korean in 해요체; colloquially dropped object particles in "
           f"{(realism or {}).get('ko_particle_dropped_share', 0):.1%} of the Korean texts (<= 30 %).", ""]
@@ -370,23 +385,26 @@ def write_datasheet(recs, para=None, bt=None, realism=None):
           "robot's ASR noise model adds recognition errors at run time); clarify answers are scripted; the "
           "paraphrase models are 8B-class local models, so some paraphrases are plainer than human speech.", "",
           "## Distribution", "",
-          "- Licences: the code is Apache-2.0 ([LICENSE](../LICENSE)). The data has two parts. The Korean text written "
-          "by EXAONE 3.5 and the LLM cache rows with EXAONE output are released under CC BY-NC 4.0 "
-          "([LICENSE-DATA](../LICENSE-DATA)), and on top of that their use is subject to the EXAONE licence below "
-          "(the stricter terms apply). Everything else in the data (the English text, the templates in both "
-          "languages, the goals and labels) is Apache-2.0, like the code.",
-          "- The code, the template texts and the English paraphrases are Apache-2.0. The tasks are in "
-          "`homeloop_bench/data/tasks/*.jsonl`; the LLM caches (`homeloop_bench/data/llm_cache/paraphrase.jsonl` "
-          "for English, `paraphrase_ko.jsonl` for Korean) are shipped so the paraphrase step is reproducible "
-          "without a GPU (`paraphrase --offline`).",
-          f"- The Korean paraphrases written by EXAONE 3.5 ({para.get('n_paraphrased_ko', 0)} tasks with "
-          "`paraphrase_model.ko = exaone3.5:latest`, and the EXAONE writer rows of `paraphrase_ko.jsonl`) are Output "
-          "of the EXAONE model and are NOT under Apache-2.0: they are distributed under CC BY-NC 4.0 (LICENSE-DATA) "
-          "and the EXAONE AI Model License "
-          "Agreement 1.1 - NC (research use only, Sec. 2.1a; no commercial use of the Model or its Output, Sec. 3.1; "
-          "Output remains the property of LG Management Development Institute, Sec. 4.2; "
-          "https://huggingface.co/LGAI-EXAONE/EXAONE-3.5-7.8B-Instruct/blob/main/LICENSE). See NOTICE. For "
-          "commercial use, take `meta.template_text.ko` for those tasks (the authors' template).",
+          "- Licences ([LICENSE-DATA](../LICENSE-DATA), [NOTICE](../NOTICE)). The code is Apache-2.0 "
+          "([LICENSE](../LICENSE)). The data has two parts. (1) Apache-2.0: the English text, the templates in both "
+          "languages, the goals, labels and other fields, and the English LLM cache (`paraphrase.jsonl`). "
+          "(2) The EXAONE part: `text.ko` and `meta.paraphrase.ko` of the records with `paraphrase_model.ko = "
+          "exaone3.5:latest`, and the whole Korean LLM cache `paraphrase_ko.jsonl` (its EXAONE writer rows, and the "
+          "Qwen back-translation and judge rows whose input is EXAONE text). That text is Output of EXAONE 3.5 and "
+          "belongs to LG (EXAONE AI Model License 1.1 - NC, Sec. 4.2); it is redistributed under that licence: "
+          "research use only (Sec. 2.1a, 4.2), no commercial use (Sec. 3.1), and no use to develop or improve "
+          "other models (Sec. 3.1). CC BY-NC 4.0 covers only the authors' own contribution to that part (the "
+          "selection, filtering and labels), not the EXAONE text itself.",
+          f"- Do NOT train or fine-tune models on the EXAONE part. In particular the train split holds "
+          f"{sum(1 for r in recs if r['split'] == 'train' and (r.get('paraphrase_model') or {}).get('ko') == 'exaone3.5:latest')} "
+          "records whose Korean text is EXAONE output; to train or fine-tune a model, replace their `text.ko` with "
+          "`meta.template_text.ko` (the authors' Apache-2.0 template) or use English only.",
+          "- The tasks are in `homeloop_bench/data/tasks/*.jsonl`; the LLM caches "
+          "(`homeloop_bench/data/llm_cache/paraphrase.jsonl` for English, `paraphrase_ko.jsonl` for Korean) are "
+          "shipped so the paraphrase step is reproducible without a GPU (`paraphrase --offline`).",
+          f"- {para.get('n_paraphrased_ko', 0)} tasks have Korean text written by EXAONE 3.5 "
+          "(https://huggingface.co/LGAI-EXAONE/EXAONE-3.5-7.8B-Instruct/blob/main/LICENSE). For commercial use or "
+          "model training, take `meta.template_text.ko` for those tasks.",
           "", "### Licences of the generating models", "",
           "| model | used for | licence |", "|---|---|---|",
           "| qwen3-vl:8b-instruct (Qwen3-VL-8B-Instruct) | English paraphrases and judge | Apache-2.0 |",

@@ -168,6 +168,24 @@ def delivery_atom_rates(episodes: list) -> dict:
     return {k: {"n": n, "held": r6(ok / n)} for k, (n, ok) in sorted(c.items())}
 
 
+def delivery_mode_choice(episodes: list) -> dict:
+    """How deliveries were made (docs/metrics.md, "Delivery mode"). Success alone does not reward choosing the
+    reach mode: a handover also satisfies a ``reach`` atom, so a planner that always hands over loses nothing on
+    success. ``unneeded_handover_rate`` is the share of the held ``reach`` atoms that were handed over (the
+    person had to take it from the robot although a reachable surface was enough); ``time_mean_s_*`` compare the
+    simulated time of episodes whose delivery atoms are all ``reach``, split by whether any was handed over."""
+    held_reach = [a for e in episodes for a in e.get("delivery_atoms") or []
+                  if a.get("mode") == "reach" and a.get("ok")]
+    handed = [a for a in held_reach if a.get("handed")]
+    reach_eps = [e for e in episodes if e.get("delivery") == "reach"]
+    with_ho = [e["sim_time_s"] for e in reach_eps if any(a.get("handed") for a in e.get("delivery_atoms") or [])]
+    without = [e["sim_time_s"] for e in reach_eps if not any(a.get("handed") for a in e.get("delivery_atoms") or [])]
+    return {"reach_atoms_held": len(held_reach), "reach_atoms_handed_over": len(handed),
+            "unneeded_handover_rate": r6(len(handed) / len(held_reach)) if held_reach else None,
+            "time_mean_s_reach_tasks_handed_over": _mean(with_ho) if with_ho else None,
+            "time_mean_s_reach_tasks_set_down": _mean(without) if without else None}
+
+
 def false_rejection(e: dict) -> bool:
     """A feasible / clarify episode that refused the whole request, or declined a part that is not a refuse
     subtask (a partial refusal that names no refuse subtask)."""
@@ -265,6 +283,7 @@ def summarize(episodes: list, config: dict, split_shares: Optional[dict] = None)
         "by_n_subtasks": _group(episodes, "n_subtasks"),
         "by_delivery": _group([e for e in episodes if e.get("delivery")], "delivery"),
         "delivery_atoms": delivery_atom_rates(episodes),
+        "delivery_mode": delivery_mode_choice(episodes),
         "config": dict(config),
     }
     if split_shares:

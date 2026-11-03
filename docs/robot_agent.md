@@ -79,18 +79,28 @@ scores are not results.
 
 - ClosedLoop (grace, llm_direct) ignores injected corrections (only AssistLoop reads pending changes).
 - robot_agent moves only to ENV places. The homeloop ENV (`env_for`, homeloop_robot) lists places and, since round
-  2, one entry per person located at the support surface that person can reach (or at the person when there is
-  none); the robot package binds `MoveTo` / `Place` of a person to that surface where the person is now, and
-  `Place` to a handover when there is none (homeloop_robot docs/robot_agent.md). The bench passes `env_for` of the
-  start world; it only translates names and positions, robot_agent is not changed.
+  2, one entry per person. The robot package binds `MoveTo` / `Place` of a person to `person_spot`: the nearest
+  support surface with a free slot within 1.2 m of the person (Hall's personal zone; geometry only, not the
+  judge's reach test). With none, `MoveTo` goes to the person and `Place` fails; the adapter never substitutes a
+  handover (homeloop_robot docs/robot_agent.md). The bench passes `env_for` of the start world; it only
+  translates names and positions, robot_agent is not changed.
 - robot_agent has no fetch-and-hand-over goal for an arm robot. Its `deliver` goal (MoveTo + WaitForUnload)
   carries what is already loaded (a tray robot); the homeloop manifest keeps WaitForUnload as an alias of
   Handover, so deliver is not offered (declaring it made sage hand over an empty gripper, homeloop_robot
-  b6af562). "Bring me X" is an `on` goal to the speaker. Since round 2 that satisfies a `delivered[reach]` goal
-  when X ends on a support surface the person can reach (the person as a place binds to that surface); a
-  `delivered[hand]` goal (`explicit`, `no_surface`, `user_needs`) still needs a handover, which sage's `on` goal
-  gives only when the person has no reachable surface (Place becomes Handover). A message (`said_to`)
-  reaches its person only when sage says it at the place where they are.
+  b6af562). "Bring me X" is an `on` goal to the speaker. Measured behaviour: 3,269 of the 3,273 `reach`
+  delivery atoms go to the speaker, and for the speaker sage does not use the person mapping. It asks "Where are
+  you?", the simulated user names their seat, and sage plans `on(X -> seat)` (a seat fails a `reach` delivery)
+  or stops at its confirmation question after "the me you mentioned is not in my plan". With `--llm fake` on
+  the first 150 dev tasks (ideal, EN): `reach` 0 / 44, `hand` 0 / 18. The person mapping covers only
+  deliveries to third parties (4 reach atoms, about 0.1 %). A `delivered[hand]` goal needs a handover, which
+  sage plans only if its own goals ask for one. A message (`said_to`) reaches its person only when sage says
+  it at the place where they are. Test: `tests/test_robot_agent_adapter.py`
+  (`test_sage_delivery_to_the_speaker_end_to_end`).
+- Planner information is not identical: since review round 1 the adapter's person spot uses only observed
+  geometry (the same `people_now` positions and nearby furniture every planner gets), with no reach verdict and
+  no automatic handover. The LLM baselines (progprompt_like, ...) get `people_now` and the delivery note and
+  choose the surface themselves; sage gets the 1.2 m nearest-free-surface rule as a name translation. Report
+  sage beside the baselines with this difference stated (docs/experiments.md).
 - `--llm fake`: `robot_agent_fake.understand_goals` turns a delivery into `on(X -> person)` when the mode a robot
   would infer (the oracle's `observed_modes`, never the label) is reach, else the old mapping.
 - `say::text` programs of llm_direct carry no language; the robot package's `say` defaults to English, so a

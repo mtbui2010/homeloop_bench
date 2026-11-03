@@ -63,7 +63,7 @@ Label policy: `homeloop_bench/data/label_policy.yaml`. Every kind, capability an
 | conditional | 410 | 4.1% |
 
 - subtasks per task: {'1': 5872, '2': 2526, '3': 1602} (>= 2: 41.3%, 3: 16.0%)
-- long (EN >= 25 words or KO >= 15 어절): 21.7%; mixed kinds in one utterance: 6.7%
+- long (EN >= 25 words or KO >= 15 어절): 22.5%; mixed kinds in one utterance: 6.7%
 - conditional requests have no opened source for their exact wording (assumed) and are capped at 5 %.
 
 ### Deliveries (round 2)
@@ -72,12 +72,20 @@ Label policy: `homeloop_bench/data/label_policy.yaml`. Every kind, capability an
 
 | mode : mode_reason | atoms | share |
 |---|---|---|
-| reach:None | 3122 | 60.4% |
-| hand:no_surface | 1550 | 30.0% |
-| hand:explicit | 279 | 5.4% |
-| hand:user_needs | 220 | 4.3% |
+| reach:None | 3273 | 63.3% |
+| hand:no_surface | 1030 | 19.9% |
+| hand:user_needs | 453 | 8.8% |
+| hand:explicit | 415 | 8.0% |
 
-- 5171 delivery atoms in the task goals; hand share 0.3962 (design range 10-50 %). `explicit`: the text asks for the hand in both languages; `user_needs`: the house profile marks the person `prefers_handover` (the care-home resident); `no_surface`: no support surface with room within the person's reach where they are at the start (a bed without a nightstand, a reading chair without a table, a full nightstand).
+- 5171 delivery atoms in the task goals; hand share 0.367 (design range 10-50 %). `explicit`: the text asks for the hand in both languages (request forms only: "hand me", "in my hand"; never "my hands are full"); `user_needs`: the house profile marks the person `prefers_handover` (the care-home resident, test only, and grandpa in korean_apt_59); `no_surface`: no support surface within the person's reach at all where they are at the start, by geometry (a bed without a nightstand, a reading chair without a table). A reachable surface that is full at the start stays `reach`: making room or handing over is the robot's choice.
+
+Per split (counts of delivery atoms; explicit-hand wording is topped up per split by `gen/delivery.QUOTA_SHARE` so that explicit is about 8 % in every split; `user_needs` is 4-5 % in dev and train and 13 % in test, because the care home is a test-only house):
+
+| split | atoms | reach | hand:explicit | hand:no_surface | hand:user_needs | hand share |
+|---|---|---|---|---|---|---|
+| train | 2263 | 1458 | 184 | 509 | 112 | 0.3557 |
+| dev | 490 | 337 | 39 | 92 | 22 | 0.3122 |
+| test | 2418 | 1478 | 192 | 429 | 319 | 0.3888 |
 
 ### Houses
 
@@ -116,7 +124,7 @@ Houses with more people and rooms (shared flat, couple flat, Korean 59 m2 apartm
 - Realism rules R-a..R-h (typical receptacles, sizes, payload, sources, kind semantics, language, houses) hold for every task (`data/quality/realism_report.json`: 0 violations, 595 intentional refused requests).
 - Korean paraphrases also pass deterministic meaning checks against their template: every goal verb kept (열- for open, 닫- for close, a giving verb for a hand-over, a telling verb for a message), no hand-over turned into "put it next to me", no honorifics on the speaker's own state, no required action turned into a permission, no added find-and-report task, manner or condition (`gen/paraphrase.ko_meaning_filters`).
 - Korean paraphrase error rate: a hand audit of about 200 Korean paraphrases is planned and NOT done yet; no error rate is claimed. A reviewer's spot check of 18 Korean paraphrases before these checks found 5 with a changed meaning or broken grammar; the checks above were written for those error types.
-- Round 2 delivery rewrite (`python -m homeloop_bench.data delivery`, `gen/delivery.py`, deterministic): every `held_by` atom became `delivered` with a mode; ids, splits and LLM texts unchanged. Deliveries whose object already lay within the person's reach at the start (not a real request) got another arrangement of the same house (`meta.delivery.reseed`, the old `seed_state` kept there); explicit-hand wording was added from templates to template texts only (`meta.delivery.variant`: `append` or `ko_verb`), never to LLM text; a variant that would make a near duplicate across splits is not applied (`data/quality/delivery_report.json`).
+- Round 2 delivery rewrite (`python -m homeloop_bench.data delivery`, `gen/delivery.py`, deterministic): every `held_by` atom became `delivered` with a mode; ids, splits and LLM texts unchanged. Deliveries whose object already lay within the person's reach at the start (not a real request) got another arrangement of the same house (`meta.delivery.reseed`, the old `seed_state` kept there); explicit-hand wording was added from templates to template texts only (`meta.delivery.variant`: `append`, `append_named` (a compound task; the sentence names the object) or `ko_verb`), never to LLM text and never to a text that talks about the hands ("my hands are full"); a variant that would make a near duplicate across splits is not applied (`data/quality/delivery_report.json`).
 - Korean in 해요체; colloquially dropped object particles in 11.5% of the Korean texts (<= 30 %).
 
 - Korean back-translation check on 599 sampled tasks: chrF mean 46.7, entity phrases kept 0.822 (`data/quality/ko_backtranslation_report.json`).
@@ -129,9 +137,10 @@ Houses with more people and rooms (shared flat, couple flat, Korean 59 m2 apartm
 
 ## Distribution
 
-- Licences: the code is Apache-2.0 ([LICENSE](../LICENSE)). The data has two parts. The Korean text written by EXAONE 3.5 and the LLM cache rows with EXAONE output are released under CC BY-NC 4.0 ([LICENSE-DATA](../LICENSE-DATA)), and on top of that their use is subject to the EXAONE licence below (the stricter terms apply). Everything else in the data (the English text, the templates in both languages, the goals and labels) is Apache-2.0, like the code.
-- The code, the template texts and the English paraphrases are Apache-2.0. The tasks are in `homeloop_bench/data/tasks/*.jsonl`; the LLM caches (`homeloop_bench/data/llm_cache/paraphrase.jsonl` for English, `paraphrase_ko.jsonl` for Korean) are shipped so the paraphrase step is reproducible without a GPU (`paraphrase --offline`).
-- The Korean paraphrases written by EXAONE 3.5 (5193 tasks with `paraphrase_model.ko = exaone3.5:latest`, and the EXAONE writer rows of `paraphrase_ko.jsonl`) are Output of the EXAONE model and are NOT under Apache-2.0: they are distributed under CC BY-NC 4.0 (LICENSE-DATA) and the EXAONE AI Model License Agreement 1.1 - NC (research use only, Sec. 2.1a; no commercial use of the Model or its Output, Sec. 3.1; Output remains the property of LG Management Development Institute, Sec. 4.2; https://huggingface.co/LGAI-EXAONE/EXAONE-3.5-7.8B-Instruct/blob/main/LICENSE). See NOTICE. For commercial use, take `meta.template_text.ko` for those tasks (the authors' template).
+- Licences ([LICENSE-DATA](../LICENSE-DATA), [NOTICE](../NOTICE)). The code is Apache-2.0 ([LICENSE](../LICENSE)). The data has two parts. (1) Apache-2.0: the English text, the templates in both languages, the goals, labels and other fields, and the English LLM cache (`paraphrase.jsonl`). (2) The EXAONE part: `text.ko` and `meta.paraphrase.ko` of the records with `paraphrase_model.ko = exaone3.5:latest`, and the whole Korean LLM cache `paraphrase_ko.jsonl` (its EXAONE writer rows, and the Qwen back-translation and judge rows whose input is EXAONE text). That text is Output of EXAONE 3.5 and belongs to LG (EXAONE AI Model License 1.1 - NC, Sec. 4.2); it is redistributed under that licence: research use only (Sec. 2.1a, 4.2), no commercial use (Sec. 3.1), and no use to develop or improve other models (Sec. 3.1). CC BY-NC 4.0 covers only the authors' own contribution to that part (the selection, filtering and labels), not the EXAONE text itself.
+- Do NOT train or fine-tune models on the EXAONE part. In particular the train split holds 2084 records whose Korean text is EXAONE output; to train or fine-tune a model, replace their `text.ko` with `meta.template_text.ko` (the authors' Apache-2.0 template) or use English only.
+- The tasks are in `homeloop_bench/data/tasks/*.jsonl`; the LLM caches (`homeloop_bench/data/llm_cache/paraphrase.jsonl` for English, `paraphrase_ko.jsonl` for Korean) are shipped so the paraphrase step is reproducible without a GPU (`paraphrase --offline`).
+- 5193 tasks have Korean text written by EXAONE 3.5 (https://huggingface.co/LGAI-EXAONE/EXAONE-3.5-7.8B-Instruct/blob/main/LICENSE). For commercial use or model training, take `meta.template_text.ko` for those tasks.
 
 ### Licences of the generating models
 
@@ -143,7 +152,7 @@ Houses with more people and rooms (shared flat, couple flat, Korean 59 m2 apartm
 
 ## Maintenance
 
-- Version 0.1.0 (`homeloop_bench/__init__.py`), built and validated against homeloop_robot 0.1.0 at commit d9d81e1e7d27: the houses, the catalog and the oracle come from homeloop_robot, so the tasks are not self-contained without that exact version. Every run records both git commits (`summary.json` `config.versions`).
+- Version 0.1.0 (`homeloop_bench/__init__.py`), built and validated against homeloop_robot 0.1.0 at commit 3c6214f7ded5: the houses, the catalog and the oracle come from homeloop_robot, so the tasks are not self-contained without that exact version. Every run records both git commits (`summary.json` `config.versions`).
 - Pipeline: `python -m homeloop_bench.data generate`, `paraphrase --offline`, `resplit`, `delivery`; `datasheet` rewrites this file from the shipped reports; any change must keep `validate --strict` and `realism --strict` green.
 - Errata and new versions: listed in the repository's changelog with a new version number; older versions stay available as git tags. Contact and contributions: the repository's issue tracker and pull requests (the public URL is added at release).
 - Funding: to be stated by the authors at release (not filled in by the generator).

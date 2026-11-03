@@ -83,7 +83,10 @@ scores are not results.
   support surface with a free slot within 1.2 m of the person (Hall's personal zone; geometry only, not the
   judge's reach test). With none, `MoveTo` goes to the person and `Place` fails; the adapter never substitutes a
   handover (homeloop_robot docs/robot_agent.md). The bench passes `env_for` of the start world; it only
-  translates names and positions, robot_agent is not changed.
+  translates names and positions, robot_agent is not changed. Since R2-5 (B1) the spot is applied in the robot
+  package's skill functions, because AssistLoop passes the raw ENV key to them; a person's ENV loc is the spot or
+  the robot's stop point beside the person, and a person id that is a robot_agent user word (`user`) is keyed
+  `person_user` (B2). Test: `tests/test_reach_ra_bind.py`.
 - robot_agent has no fetch-and-hand-over goal for an arm robot. Its `deliver` goal (MoveTo + WaitForUnload)
   carries what is already loaded (a tray robot); the homeloop manifest keeps WaitForUnload as an alias of
   Handover, so deliver is not offered (declaring it made sage hand over an empty gripper, homeloop_robot

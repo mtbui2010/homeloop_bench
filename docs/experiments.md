@@ -332,3 +332,33 @@ calls or goal atoms; naive EN / KO now have `dialog_not_in_lang` 0 and `dialog_r
 committed sim-user audit reproduces unchanged. Planning would very likely still fail on 060: sage KO, which got
 "yes", ended "the planner produced no plan for the goals" after 30 LLM calls (a SAGE-v2 gap). The other failures of
 this round are genuine by the analysis. Round 3 reruns the same 4 tasks in all conditions.
+
+### Fresh batch, round 3 (`results/pilot_r27x/round3/`)
+
+The same 4 tasks and conditions, after the round 2 fixes (homeloop_robot 66f2a7e, 3789041; this repository
+4edfcd0).
+
+| condition | success | false success | LLM calls / ep. | per task (060 / 016 / 035 / 057) |
+|---|---|---|---|---|
+| sage EN | 1 / 4 | 0 | 13.25 | budget / give_up / refuse / give_up |
+| sage_norag EN | 1 / 4 | 0 | 16.75 | budget / give_up / refuse / give_up |
+| sage KO | 0 / 4 | 1 | 18.0 | give_up / done (false) / budget / give_up |
+| sage_norag KO | 0 / 4 | 1 | 24.5 | budget / done (false) / budget / budget |
+| naive EN, KO | 2 / 4 | 0 | 0 | give_up / give_up / refuse / done |
+| oracle EN, KO | 4 / 4 | 0 | 0 | done / done / refuse / done |
+
+Not genuine (fixed; homeloop_robot b4836bf; this repository a69d7a8, the audit regenerated in the next commit).
+None of them changes an outcome of this round:
+
+| task | condition | kind | cause | fix (test) |
+|---|---|---|---|---|
+| 057 | sage_norag KO (status accounting) | harness | `EpisodeEnv.finish` labelled the episode `budget` although a persistent hardware fault ended it. The run went on after its LLM budget ran out, Find('green book') failed `hw_fault_persistent` (k=6), then robot_agent asked the LLM to translate its give-up message into Korean and the budget refused that call too. The round 2 rule looked only at faults after the LAST refused call, so this later refusal made it `budget` (final_say stayed English, "the robot is not healthy after find failed (hw_fault)"). The same episode in EN, with nothing to translate, was `give_up` / robot_failure. | A `hw_fault_persistent` on a call made after the FIRST refused LLM call ends the episode as `give_up` (cause `robot_failure`), whatever was refused afterwards; a fault while the LLM was still available, followed by a refused call, stays `budget`; `llm_budget_hit` unchanged (`tests/test_fresh_pilot_r2.py`, the 057 calls replayed on profile real, seed 0, KO) |
+| 057 | sage_norag KO (gate counter) | harness | `dialog_not_in_lang` counted questions with rule `not_in_lang` and the last message, not Say / Announce texts. SAGE said the English "It's time to sleep" (Say k=5, lang en) to the Korean child, and no counter saw it: the episode's `dialog_not_in_lang` 1 was the English final_say. The gate rule "no Say / ask in the wrong language" could not be checked from the counters. The English Say itself is a genuine SAGE-v2 gap (the read-back was translated, the Say text was not); scoring stays strict (`said_to` requires the household's language). | New episode / summary field `say_not_in_lang` (Say / Announce texts not in the user's language by the heard-text check `intent.in_lang`, whatever `lang` the planner passed), part of `dialog_not_in_lang` (same test file; docs/metrics.md). Recounted on the stored round: 1 (sage_norag KO 057), 0 in every other condition |
+| 060 | sage_norag KO Q3 (the answer; outcome-neutral, the planning budget then ran out); latent in every KO compound delivery | simulator | `GoalView.covered` confirmed a delivery to the speaker when a "to me" word appeared ANYWHERE in the read-back. ME_RX KO also holds the humble giving verbs 드릴 / 드려, which a Korean read-back uses for giving to any elder ('할아버지께 드릴게요'), and 당신. '안경을 거실 탁자에 두고, 리모컨은 할아버지께 드릴게요. 맞죠?', '... 거실 소파에 두고 ...' and '안경은 거실에 둘게요. 리모컨은 할아버지께 드릴게요' all got '네, 맞아요.'; the EN equivalents got "No, bring the black glasses to me." A room said as the destination ('거실에 바로 올려서') was never checked against the speaker's place (desk_chair@small). The stored read-back 'TV 스탠드에 있는 안경은 거실에 바로 올려서 당신이 쉽게 достать 수 있게 할게요 ...' got "yes" on path structured. | A "to me" word ("you", "hand it", '드리 / 드릴 / 드려', '당신', '손에', '손이 닿는') confirms the speaker's delivery only in that object's own part of the read-back (its clause and the following ones up to the next object, place or person of another part; `GoalView.object_parts`), in a clause naming no other person, and with no place of another room and no other room said as where it goes there (`dialog.room_said_as_dest`: 'X에 / X(으)로', not 'X에 있는'; "to / into / in the X", not "the TV stand in the living room"). The stored read-back and the three probes now get '아니요, 검은 안경은 저한테 갖다 주세요.'; right read-backs ('안경을 가져와서 드리고, ...', "I'll bring you the glasses, then ...") still get "yes" (homeloop_robot `tests/test_dialog_fresh_pilot_r3.py`; docs/user_model.md) |
+| 016 | sage EN Q3, sage_norag EN Q3 (cosmetic, outcome-neutral) | simulator | An informative answer drawn as not sure (`user.answer.p_not_sure`) said the not-understood "I'm not sure what you mean." to the clear question "Where are the reading glasses and the remote?". That wording tells the planner its question was unclear. SAGE had already used its 3 questions. | The draw is unchanged (kind `not_sure`, same mix); the words are "I don't know." / '잘 모르겠어요.' (the existing `dont_know` text). A question the user did not follow still gets "I'm not sure what you mean." (same robot test file; docs/user_model.md) |
+
+Sim-user audit after the fixes (from the committed classifier cache): qtype accuracy unchanged (0.954; EN 0.962, KO
+0.947). Three EN read-backs of hl-dev-000032 (q0056-q0058) now get "No, bring the blue book to me." instead of
+"yes": their only "to me" word was "you" in the preamble ("you did not say the drawer"), while the blue book's own
+clause says "on the partner_a" (a raw id) or "on the sofa in the living" (q0058, a wrong place). One KO read-back
+(q0417) moves from `structured_mismatch` to `structured` with the same answer ("no").

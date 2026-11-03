@@ -88,12 +88,25 @@ def understand_goals(env) -> list:
                             "to": seat(args[1])})
         elif p == "said_to":
             txt = (MESSAGE_TEXT.get(args[1]) or {}).get(env.lang) or args[1]
-            out.append({"type": "say", "object": txt, "from": "", "to": seat(args[0])})
+            # the listener's ENV entry (robot_agent goes to a person entry: its last-seen spot, or the person)
+            out.append({"type": "say", "object": txt, "from": "", "to": _person_key(w, args[0])})
         elif p == "robot_at":
             out.append({"type": "go", "object": "", "from": "", "to": args[0]})
         elif p == "docked":
             out.append({"type": "go", "object": "", "from": "", "to": w.house.dock})
+    # the person's own words for each object (robot_agent understand ``said``): the house's name in the episode
+    # language, as a model would copy it from the request
+    for g in out:
+        if g["type"] in ("on", "in", "deliver") and env.lang != "en":
+            oid = next((o for o in w.objects if _obj_name(w, o) == g["object"]), None)
+            if oid is not None:
+                g["said"] = _obj_name(w, oid, env.lang)
     return out
+
+
+def _person_key(world, pid: str) -> str:
+    from homeloop_robot.configs.tasks import person_key
+    return person_key(world, pid)
 
 
 def _gold_question(env) -> str:
@@ -185,6 +198,12 @@ class GoalPlanner:
     def _steps(self) -> list:
         env = _env()
         out = []
+        try:
+            from robot_agent import skill_configs
+            spots = {v["spot"]: k for k, v in skill_configs.ENV.items()
+                     if isinstance(v, dict) and v.get("person") and v.get("spot")}
+        except Exception:                # noqa: BLE001 - no robot_agent ENV: plain places
+            spots = {}
         for c in oracle_calls(env):
             a = ACTION.get(c.skill)
             if a is None or (self.actions and a not in self.actions and a not in ("MoveTo",)):
@@ -193,8 +212,11 @@ class GoalPlanner:
             if c.skill in ("find", "pick") and arg in env.world0.objects:
                 arg = _obj_name(env.world0, arg)          # the name the understood goals use
             elif arg in env.world0.people:
-                # robot_agent moves to ENV places only: a person target -> the person's seat place
-                arg = env.world0.people[arg].seat if c.skill == "move" else env.world0.people[arg].name.get("en", arg)
+                # a person target -> the person's ENV entry (robot_agent goes to a person entry); a hand-over names them
+                arg = _person_key(env.world0, arg) if c.skill in ("move", "handover") else \
+                    env.world0.people[arg].name.get("en", arg)
+            if a in ("MoveTo", "Place") and arg in spots:
+                arg = spots[arg]             # the support surface beside a person: their ENV entry (robot_agent goal)
             st = {"action": a, "object": arg}
             if c.skill in ("say", "announce", "ask"):
                 st["lang"] = c.args.get("lang", env.lang)

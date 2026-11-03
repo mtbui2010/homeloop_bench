@@ -610,6 +610,7 @@ class EpisodeEnv:
                        "n_stops": int(safety.get("n_protective_stops") or 0),
                        "slow_s": r6(float(safety.get("time_in_slow_s") or 0.0))},
             "llm_calls": self.llm_calls, "llm_budget_hit": self.llm_budget_hit,
+            "llm_calls_translate": int(getattr(self, "llm_calls_translate", 0) or 0),
             "sim_time_s": r6(self.ep.clock.t), "n_calls": len(self.calls),
             "instruction_heard": self.instruction_event,
             "delivery": delivery_category(self.delivery_atoms()),

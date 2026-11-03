@@ -450,3 +450,41 @@ Evidence: `data/quality/translate_ab/`. Scripts: `tools/translate_ab/`.
 **Chosen: `qwen3-vl:30b-a3b-instruct`.** It is the best on meaning, names kept and no garble, and it has the lowest
 heard-text mismatch. Its licence is Apache-2.0. EXAONE's licence is non-commercial (research use at runtime only),
 so we did not choose it.
+
+## SAGE-v2 changes (round 3)
+
+SAGE-v2 is edited on the branch `sage-v2/homeloop` of robot_agent and embodiplan (their mains are not changed).
+The design is scratchpad `DESIGN_SAGEV2.md` (revision 2); every change below is robot-agnostic (driven by the
+manifest, the skill contract or the ENV) and has unit tests that use no dev or test task text. The failure
+classes and ids are those of the 30-task gate, round 1 (`results/gate30_r27/round1/`, section "30-task gate");
+"[x]" = contributing cause. **Dev numbers measured after this tuning are optimistic: the paper must report the
+TEST split (planned after milestone 300).**
+
+| step | change | failure class (gate30 ids) | mechanism | tests |
+|---|---|---|---|---|
+| 1 | F0.1 last `go` goal judged where the plan ends | C5 go goal "reached" at the start, false successes (EN 002 012, KO 002) | `goals.reached(last=True)`, `_goals_hold` by the plan's steps; the robot goes back after the goal checks | `test_sage_v2_step1_bugs.py` |
+| 1 | F0.3 step fields as text; F0.4 closing what the plan opened is not critical | KO 028 crash; C1f [EN 004] | `str()` at the strip sites, embodiplan `parse_steps`; `plan_tidy.closes_only` | same |
+| 2 | F1.2 one sub-goal per understood goal; F0.2 the planner's real calls on the budget; caps from the manifest | C1a sub-goal explosion (EN 006, KO 008; [EN 002 004 005 011 018 029, KO 003 009 021]) | embodiplan 0.2.6 `generate_plan(subgoals=, budget=)`; `AssistLoop._plan_call`; `planner.llm_budget` 26 + `translate_budget` 4 | `test_sage_v2_step2_budget.py`, embodiplan `test_sage_v2_hooks.py` |
+| 3 | F1.3 symbolic gate repair (hoist, dedupe, insert, room, action; complete off) on the sub-goal blocks; F1.1 goal kind from destination; F3.4 / F4.4 empty / invented goals | C1 gate does not converge (EN 004 006 008 017 021, KO 003 008 021 023), C1b one-hand order, C1c on vs in, C1e room targets, C4d invented goals (KO 000 024, [EN 024]) | `plan_repair.py` (an edit kept only when the critical findings drop), `goal_fix.py` | `test_sage_v2_step3_gate.py` |
+| 4 | F2.1 "me" = the speaker's ENV entry; F2.2 a hand-over reaches a person delivery; F2.3 place or hand; F2.4 people not searched; F3.1 / F3.2 mention hygiene, Hangul word boundaries; untracked people: "Where are you?" then the map | C2 (EN 005 011 018, KO 005 010 011), C1d (EN 017 021, KO 023), C3a, C6 (KO 017 019, EN 027) | `persons.py`, ENV contract `person / speaker / seat / spot / surface` (robot_agent docs/env.md) | `test_sage_v2_step4_persons.py`, bench `test_people_tracking.py` |
+| 5 | F4.1 capability refusal checked against the contract / limits; F4.2 "say it again"; F3.3 object mentions in object position, did-you-mean / repeat; F3.5 room-level go; F3.6 messages; F3.7 noisy answers | C4a (EN 001 003), C4b (EN / KO 014), C3b (EN 007 016 029), C3d (EN / KO 020), C3f (EN / KO 015), C3e (KO 019 027) | `reason_type`, `limits.*`; `understand.fuzzy_place` (0.25 a priori, not tuned) | `test_sage_v2_step5_understand.py` |
+| 6 | F5.1 names, not keys; F5.2 fixed phrases in the robot's language; F5.3 `translate_model` (own client, guard, budget); F5.4 Say texts in the user's language | C7 (KO 006 007 012 018 + 15 contributing; KO structured_mismatch 28 / 66) | `speech.py` (`LocalText`, `say_name`, `guard`); homeloop_robot Korean phrases; the bench routes the translator's calls | `test_sage_v2_step6_language.py`, bench `test_people_tracking.py::test_translate_calls_counted` |
+| 7 | F4.5 Korean object coverage through `said`; F4.6 a relayed message is the message | C4e / C4f (KO 004 015 016 025 029), C4g (KO 013) | understand `said` / `content` (same call), `goal_fix.ko_object_issues` / `relay_check` | `test_sage_v2_step7_9.py` |
+| 8 | F4.3 the robot's own hazard rules | C4c (EN / KO 009) | `core/safety` (place class from names, cleaning chemicals from the CHOP Poison Control page, no tags); `hazard_rules` core / pack / off | same |
+| 9 | F6.1 search legs without a replan; F6.2 go on after "I don't know" | C6 (EN 010 027, KO 017 019 027) | spliced legs, `search_total` (manifest `planner.search_legs`) | same |
+
+Not done in round 1: the object field of the understand schema as an enum of ENV labels (F4.5; the ENV contract
+has no object labels yet), and the judge-panel check of the Korean phrases (they are written from a style guide
+and are to be judged once by the 3 translation judges, then frozen; never tuned on the simulated user).
+
+Bench side: planners `robot_agent:sage_ask` (people tracking off), `robot_agent:sage_nohazard`,
+`robot_agent:sage_complete`; `summary.json` `config.planner_config` records `people_tracking`, `translate_model`
+(= `data/quality/translate_ab.json` `chosen`), `llm_budget`, `translate_budget`, `hazard_rules`, `gate_complete`;
+`llm_calls_translate` per episode and `llm_calls_translate_mean` (the translator's calls, on the same 30-call cap,
+cached in `llm_cache/<translate_model>.jsonl`). The sim-user audit was regenerated after the new structured
+templates (`data/quality/sim_user_audit.json`: qtype accuracy 0.9525, EN 0.962, KO 0.943; in-sample).
+
+Overlap risk (clean-room rule): the hand words, into-words, tell verbs, the place-class table and the hazard
+words are written from general sources, not from homeloop_robot's judge or the generator; they may still overlap
+with the benchmark's vocabulary, which is why `robot_agent:sage_nohazard` (and `sage_norag`) run as ablations.
+

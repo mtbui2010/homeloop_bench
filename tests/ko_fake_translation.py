@@ -7,6 +7,8 @@ people by the house's Korean names; any other text stays English (as when the tr
 import re
 
 HEAD = "Translate into natural spoken Korean. Keep it short and polite. Output only the translation:\n"
+# robot_agent SAGE-v2 (translate_model): "Translate into natural polite spoken Korean, ... Output only the translation:\n"
+HEAD_RX = re.compile(r"^Translate into natural[^\n]*Korean[^\n]*Output only the translation:\n")
 
 
 def _place(world, key: str) -> str:
@@ -57,7 +59,8 @@ def install(monkeypatch, world=None):
     chat = fk.FakeUnderstandLLM.chat
 
     def tr_chat(self, prompt="", format=None, **kw):
-        if str(prompt).startswith(HEAD):
-            return translate(str(prompt)[len(HEAD):], world)
+        m = HEAD_RX.match(str(prompt))
+        if m:
+            return translate(str(prompt)[m.end():], world)
         return chat(self, prompt, format, **kw)
     monkeypatch.setattr(fk.FakeUnderstandLLM, "chat", tr_chat)

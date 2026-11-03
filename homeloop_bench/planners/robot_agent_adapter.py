@@ -206,6 +206,53 @@ def _count_embodiplan(env):
     return [(backend, "chat", routed)]
 
 
+class TranslateCounter:
+    """The translator's client (robot_agent's ``translate_model``, SAGE-v2 F5.3): its own model on the same server,
+    its own cache (``llm_cache/<model>.jsonl``), counted on the EPISODE's call counter (the 30-call cap stays one cap)
+    and separately (``env.llm_calls_translate``)."""
+
+    def __init__(self, env, model: str, inner=None):
+        self.env, self.model, self.inner = env, model, inner
+
+    def chat(self, prompt: str, format=None, temperature: float = 0.0, seed: int = 0) -> str:
+        counter = self.env.llm()
+        inner = self.inner if self.inner is not None else counter.inner
+        out = counter._count(lambda: inner.chat(prompt, format=format, temperature=temperature, seed=seed))
+        self.env.llm_calls_translate = getattr(self.env, "llm_calls_translate", 0) + 1
+        return out
+
+
+def translator_inner(env, model: str):
+    """The translate model's client on the episode's server and cache dir (None under --llm fake: the fake
+    answers translation prompts itself)."""
+    from ..llm import CachedLLM, OllamaHTTP
+    url = _url(env)
+    if not url or not model:
+        return None
+    llm = OllamaHTTP(url, model)
+    x = getattr(env, "_llm_inner", None)
+    cache_dir = None
+    for _ in range(4):
+        if x is None:
+            break
+        if isinstance(x, CachedLLM):
+            cache_dir = x.path.parent
+            break
+        x = getattr(x, "inner", None)
+    if cache_dir is not None:
+        llm = CachedLLM(llm, Path(cache_dir) / (model.replace("/", "_").replace(":", "_") + ".jsonl"))
+    return llm
+
+
+def manifest_planner() -> dict:
+    """The homeloop robot package's manifest ``planner:`` section (read without robot_agent)."""
+    import yaml
+
+    import homeloop_robot
+    path = Path(homeloop_robot.__file__).resolve().parent / "configs" / "manifest.yaml"
+    return (yaml.safe_load(path.read_text(encoding="utf-8")) or {}).get("planner") or {}
+
+
 def seed_pool_path():
     """The homeloop robot package's seed pool (its manifest's ``planner.seed_memory``), None without one."""
     import yaml
@@ -312,13 +359,22 @@ class _RobotAgentPlanner:
     description = ""
     structured = True            # SAGE's template questions carry their qtype (structured_asks)
     seed_pool = True             # the robot package's seed pool (manifest planner.seed_memory) is retrieved from
+    people_tracking = True       # the ENV gives people's last-seen positions (False: the robot must ask)
+    loop_options: dict = {}      # AssistLoop options of the variant (hazard_rules, gate_complete)
 
     @classmethod
     def run_config(cls) -> dict:
-        """What summary.json ``config.planner_config`` records: the variant and its seed pool (path, sha256, size)."""
+        """What summary.json ``config.planner_config`` records: the variant, its seed pool (path, sha256, size),
+        people tracking, the translate model and the loop options (SAGE-v2 round 3)."""
         info = seed_pool_info() if cls.seed_pool else {"seed_pool": None, "seed_pool_sha": None, "seed_pool_n": 0}
+        mp = manifest_planner() if cls.loop_kind == "assist" else {}
         return {"variant": "rag" if cls.seed_pool else "norag", "loop": cls.loop_kind, "generator": cls.ra_planner,
-                "live_memory": "per episode (deleted after it)", **info}
+                "live_memory": "per episode (deleted after it)", **info,
+                "people_tracking": bool(cls.people_tracking),
+                "translate_model": mp.get("translate_model"), "llm_budget": mp.get("llm_budget"),
+                "translate_budget": mp.get("translate_budget"),
+                "hazard_rules": cls.loop_options.get("hazard_rules", "core") if cls.loop_kind == "assist" else None,
+                "gate_complete": int(cls.loop_options.get("gate_complete", 0)) if cls.loop_kind == "assist" else None}
 
     def __init__(self, llm=None):
         self.llm = llm
@@ -344,13 +400,22 @@ class _RobotAgentPlanner:
         if fake:
             env._llm = CountingLLM(fk.FakeUnderstandLLM(), env.budgets.max_llm_calls)
         client = RAClient(env.llm())
+        env.llm_calls_translate = 0
+        tm = str(manifest_planner().get("translate_model") or "") if self.loop_kind == "assist" else ""
+        tr_client = RAClient(TranslateCounter(env, tm, None if fake else translator_inner(env, tm))) if tm else None
+
+        def init_client(cfg=None, **k):
+            """robot_agent's LLM client by model: the translator's own (counted apart), else the planner's."""
+            m = (cfg or {}).get("model")
+            return tr_client if tr_client is not None and m == tm and m != client.model else client
         tmp = Path(tempfile.mkdtemp(prefix="homeloop_ra_"))
         node = FakeNode()
         state = FakeState(tmp, node)
         cur = (lambda: state)
         pairs = [(AL, "current", cur), (LP, "current", cur), (state_mod, "current", cur),
                  (AL, "host_id", lambda: "homeloop"), (LP, "host_id", lambda: "homeloop"),
-                 (sc, "ENV", env_for(env.world0)), (ra_llm, "init_llm_client", lambda cfg=None, **k: client)]
+                 (sc, "ENV", env_for(env.world0, people_tracking=self.people_tracking)),
+                 (ra_llm, "init_llm_client", init_client)]
         if not fake:
             pairs += _count_embodiplan(env)
         old_backend = getattr(hb, "_backend", None)
@@ -432,7 +497,7 @@ class _RobotAgentPlanner:
             from robot_agent.core.planning.assist_loop import AssistLoop
             gen = self.generator or (FAKE_GENERATOR if fake else self.ra_planner)
             return AssistLoop(agent, emit=None, generator=gen,
-                              health_wait_s=0, memory_path=str(tmp / "mem.json"), **common)
+                              health_wait_s=0, memory_path=str(tmp / "mem.json"), **dict(self.loop_options), **common)
         from robot_agent.core.planning.loop import ClosedLoop
         planner = self.ra_planner
         if fake and planner == "grace":
@@ -451,6 +516,26 @@ class SageNoRagPlanner(SagePlanner):
     """The same SAGE with an empty seed pool (zero-shot): the only difference from ``robot_agent:sage``."""
     name = "robot_agent:sage_norag"
     seed_pool = False
+
+
+class SageAskPlanner(SagePlanner):
+    """SAGE with people tracking off: the ENV has no positions for people, so SAGE asks "Where are you?" and maps
+    the answer onto the house (the same seed pool as robot_agent:sage)."""
+    name = "robot_agent:sage_ask"
+    people_tracking = False
+
+
+class SageNoHazardPlanner(SagePlanner):
+    """robot_agent:sage with the core safety rules off (``hazard_rules=off``: the model's own 'unsafe' only)."""
+    name = "robot_agent:sage_nohazard"
+    loop_options = {"hazard_rules": "off"}
+
+
+class SageCompletePlanner(SagePlanner):
+    """robot_agent:sage with the gate's 'complete' operator on (it writes a missing goal's segment; reported
+    apart, ``completed_by_gate``)."""
+    name = "robot_agent:sage_complete"
+    loop_options = {"gate_complete": "1"}
 
 
 class GracePlanner(_RobotAgentPlanner):

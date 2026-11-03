@@ -201,8 +201,10 @@ def test_sage_template_questions_are_structured(lang, monkeypatch):
         ko_fake_translation.install(monkeypatch)
     seen = []
     for tid in ("hl-dev-000003", "hl-dev-000013", "hl-dev-000015", "hl-dev-000001", "hl-dev-000002"):
-        e = run_episode(task_by_id(tid), "robot_agent:sage", "real", 0, lang, "fake")
-        seen += [c for c in e["calls"] if c["skill"] == "ask" and c.get("intent")]
+        # SAGE-v2: "Where are you?" is asked only when the ENV does not track people (robot_agent:sage_ask)
+        for pl in ("robot_agent:sage", "robot_agent:sage_ask"):
+            e = run_episode(task_by_id(tid), pl, "real", 0, lang, "fake")
+            seen += [c for c in e["calls"] if c["skill"] == "ask" and c.get("intent")]
     structured = [c for c in seen if c["intent"]["path"] == "structured"]
     assert structured, "no SAGE template question was structured"
     for c in structured:

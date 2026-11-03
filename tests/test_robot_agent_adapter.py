@@ -80,10 +80,9 @@ def test_sage_object_memory_is_seeded_from_the_observed_memory(tmp_path):
 
 def test_sage_delivery_to_the_speaker_end_to_end():
     """'Bring me the red mug' to the speaker (senior_flat, grandma in the armchair, the side table in reach) with
-    --llm fake. Measured behaviour, documented in docs/robot_agent.md: sage does not name the person as the
-    place; it asks "Where are you?", the simulated user names her seat, and sage then plans on(mug -> armchair)
-    (a seat, which a reach delivery does not accept) or stops at its confirmation question. The delivery atom is
-    judged on the true world, and the adapter never turns a Place into a handover."""
+    --llm fake. SAGE-v2 (round 3): "me" grounds to the speaker's ENV entry (its last-seen spot beside her) without
+    asking; the mug is put down on that spot, which a reach delivery accepts. With people tracking off
+    (robot_agent:sage_ask) SAGE asks "Where are you?" first. The adapter never turns a Place into a handover."""
     import copy
     g = {"all": [{"pred": "delivered", "args": ["mug_1", "grandma"], "mode": "reach", "mode_reason": None}]}
     from fixtures import base
@@ -92,12 +91,11 @@ def test_sage_delivery_to_the_speaker_end_to_end():
     t["n_subtasks"], t["structure"] = 1, "single"
     t["text"] = {"en": "Bring me the red mug.", "ko": "빨간 머그컵 좀 가져다주세요."}
     e = run_episode(t, "robot_agent:sage", "ideal", 0, "en", "fake")
-    assert e["delivery_atoms"] == [{"obj": "mug_1", "person": "grandma", "mode": "reach", "mode_reason": None,
-                                    "handed": False,
-                                    "ok": e["success"]}]
+    assert e["delivery_atoms"][0]["mode"] == "reach" and e["delivery_atoms"][0]["ok"] == e["success"]
     asks = [c["args"].get("question", "") for c in e["calls"] if c["skill"] == "ask"]
-    assert asks and asks[0].startswith("Where are you?")
+    assert not any(q.startswith("Where are you?") for q in asks)
     assert not any(c["skill"] == "handover" for c in e["calls"])
-    for c in e["calls"]:
-        if c["skill"] == "place":
-            assert c["args"].get("target") != "side_table@living" or e["success"]
+    assert e["success"], (e["status"], e["finish_reason"], asks)
+    e2 = run_episode(t, "robot_agent:sage_ask", "ideal", 0, "en", "fake")
+    asks2 = [c["args"].get("question", "") for c in e2["calls"] if c["skill"] == "ask"]
+    assert asks2 and asks2[0].startswith("Where are you?")

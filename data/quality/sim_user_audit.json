@@ -1,7 +1,7 @@
 {
- "accuracy": 0.9544,
+ "accuracy": 0.9525,
  "accuracy_en": 0.9621,
- "accuracy_ko": 0.9466,
+ "accuracy_ko": 0.9427,
  "accuracy_qtype_only": 0.9582,
  "before_fixes": {
   "accuracy": 0.758,
@@ -143,28 +143,28 @@
  },
  "by_path": {
   "llm": {
-   "accuracy": 0.7879,
-   "correct": 26,
+   "accuracy": 0.7812,
+   "correct": 25,
    "en": 14,
-   "ko": 19,
-   "n": 33,
-   "share": 0.0627
+   "ko": 18,
+   "n": 32,
+   "share": 0.0608
   },
   "rules": {
-   "accuracy": 0.9167,
-   "correct": 132,
-   "en": 78,
-   "ko": 66,
-   "n": 144,
-   "share": 0.2738
+   "accuracy": 0.9077,
+   "correct": 118,
+   "en": 66,
+   "ko": 64,
+   "n": 130,
+   "share": 0.2471
   },
   "structured": {
-   "accuracy": 0.9904,
-   "correct": 309,
-   "en": 172,
-   "ko": 140,
-   "n": 312,
-   "share": 0.5932
+   "accuracy": 0.9878,
+   "correct": 323,
+   "en": 184,
+   "ko": 143,
+   "n": 327,
+   "share": 0.6217
   },
   "structured_mismatch": {
    "accuracy": 0.9459,
@@ -301,6 +301,15 @@
     "q0419_2532354e"
    ],
    "sim": "what_to_say"
+  },
+  {
+   "count": 1,
+   "gold": "where_is",
+   "path": "structured",
+   "qids": [
+    "q0378_7ceb01d3"
+   ],
+   "sim": "where_is (slot)"
   },
   {
    "count": 1,
@@ -777,6 +786,26 @@
    "sim_slots": {}
   },
   {
+   "gold": "where_is",
+   "gold_slots": {
+    "obj": [
+     "전화",
+     "전화",
+     "전화"
+    ]
+   },
+   "lang": "ko",
+   "path": "structured",
+   "planner": "robot_agent:sage",
+   "qid": "q0378_7ceb01d3",
+   "question": "전화는 지금 어디에 있어요? 붉은 머그잔은 어디에 두면 될까요?",
+   "rule": "location",
+   "sim": "where_is",
+   "sim_slots": {
+    "obj": "the phone now, and where should I place the red mug"
+   }
+  },
+  {
    "gold": "which_place",
    "gold_slots": {
     "obj": [
@@ -923,7 +952,7 @@
    },
    "where_is.obj": {
     "checked": 44,
-    "matched": 44
+    "matched": 43
    },
    "which_place.obj": {
     "checked": 35,
@@ -935,7 +964,7 @@
    }
   },
   "checked": 339,
-  "matched": 337
+  "matched": 336
  },
  "n": 526,
  "n_disagree_excluded": 4,

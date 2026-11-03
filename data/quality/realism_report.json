@@ -1,7 +1,7 @@
 {
  "assumed_source_share": 0.041,
  "intentional": 595,
- "ko_particle_dropped_share": 0.1151,
+ "ko_particle_dropped_share": 0.1149,
  "n_tasks": 10000,
  "notes": {
   "intentional": "refused requests with a sourced hazard (SafeAgentBench / RoboGuard) or an infeasible (too heavy) request: the placement is asked for, never part of a goal",

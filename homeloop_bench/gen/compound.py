@@ -1088,12 +1088,16 @@ def _render_shared(lex, cand, rng, nn, final):
                    f"Can you open up the {c_en} and put {so['o']} in there?",
                    f"Please open the {c_en}, put {so['o']} in, and leave it open, I'll need something else from it.",
                    f"Open the {c_en} for me and stick {so['o']} inside."]
-        pats_ko = [f"{josa(c_ko, '을')} 열고 {oj} 안에 {q('넣')}",
-                   f"{c_ko}{door_ko} 열어서 {oj} 안에 넣어 주세요. 문은 그냥 열어 둬도 돼요." if door_ko else
-                   f"{josa(c_ko, '을')} 열어서 {oj} 안에 넣어 주세요. 그냥 열어 둬도 돼요.",
+        # before 안에 the object keeps its particle: a bare "열쇠 안에 넣어" reads "put it inside the keys" (R2-5 B5)
+        oj_in = josa(name, "을") if oj == name else oj
+        pats_ko = [f"{josa(c_ko, '을')} 열고 {oj_in} 안에 {q('넣')}",
+                   f"{c_ko}{door_ko} 열어서 {oj_in} 안에 넣어 주세요. 문은 그냥 열어 둬도 돼요." if door_ko else
+                   f"{josa(c_ko, '을')} 열어서 {oj_in} 안에 넣어 주세요. 그냥 열어 둬도 돼요.",
                    f"{c_ko}{door_ko} 좀 열고 {oj} 거기 {q('넣')}",
                    f"{josa(c_ko, '을')} 열어서 {oj} 넣고, 그냥 열어 두세요. 이따 또 꺼낼 거예요.",
-                   f"{c_ko}{door_ko} 열고 {oj} 안에 {q('넣')}"]
+                   f"{c_ko}{door_ko} 열고 {oj_in} 안에 {q('넣')}"]
+        if oj_in != oj and nn in (0, 1, 4):
+            dropped = False                  # the particle is back in this pattern
         ents["en"].append(["open"])
         ents["ko"].append(["열"])
     else:   # take_out_put

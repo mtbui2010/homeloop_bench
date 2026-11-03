@@ -10,6 +10,8 @@ quality     paraphrase + Korean back-translation quality report (needs the LLM f
 delivery    round 2: held_by -> delivered(mode, mode_reason), explicit-hand variants, within-reach reseeds
             (gen/delivery.py; deterministic, idempotent); writes <repo>/data/quality/delivery_report.json
 datasheet   rewrite docs/datasheet.md from the shipped quality reports (no LLM)
+kofix       R2-5 B5: Korean texts that put something inside an object ("접시 안에 넣어") fall back to the template
+            text or get the object particle back (gen/kofix.py; deterministic, idempotent)
 """
 
 from __future__ import annotations
@@ -105,6 +107,15 @@ def cmd_delivery(a):
     return 0
 
 
+def cmd_kofix(a):
+    from ..gen.kofix import fix_all
+    out, report = fix_all(_all())
+    for s in SPLITS:
+        _dump([r for r in out if r["split"] == s], TASKS_DIR / f"{s}.jsonl")
+    print(json.dumps(report, sort_keys=True, ensure_ascii=False))
+    return 0
+
+
 def cmd_datasheet(a):
     from ..gen.quality import datasheet_from_reports
     datasheet_from_reports(_all())
@@ -159,8 +170,9 @@ def main(argv=None):
     q.add_argument("--offline", action="store_true")
     sub.add_parser("delivery")
     sub.add_parser("datasheet")
+    sub.add_parser("kofix")
     a = ap.parse_args(argv)
-    return {"delivery": cmd_delivery, "datasheet": cmd_datasheet, "generate": cmd_generate, "validate": cmd_validate, "stats": cmd_stats, "realism": cmd_realism,
+    return {"delivery": cmd_delivery, "datasheet": cmd_datasheet, "kofix": cmd_kofix, "generate": cmd_generate, "validate": cmd_validate, "stats": cmd_stats, "realism": cmd_realism,
             "paraphrase": cmd_paraphrase, "quality": cmd_quality, "resplit": cmd_resplit}[a.cmd](a)
 
 

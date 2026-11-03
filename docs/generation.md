@@ -7,6 +7,8 @@ python -m homeloop_bench.data paraphrase           # LLM paraphrases (cached, re
 python -m homeloop_bench.data quality              # paraphrase + Korean back-translation quality reports (>= 500 tasks)
 bash tools/llm_gpu0.sh stop
 python -m homeloop_bench.data resplit              # final split by task identity (docs/splits.md), renumbers the ids
+python -m homeloop_bench.data delivery             # round 2: delivered(obj, person) goals (docs/tasks.md)
+python -m homeloop_bench.data kofix                # R2-5 B5: no Korean text puts anything inside an object
 python -m homeloop_bench.data validate --strict --workers 8
 python -m homeloop_bench.data realism --strict
 python -m homeloop_bench.data stats --json
@@ -121,3 +123,13 @@ only about 18 % of its Korean outputs passed (USER_FEEDBACK 9).
   all in the caches `homeloop_bench/data/llm_cache/paraphrase.jsonl` (English) and `paraphrase_ko.jsonl` (Korean)).
 
 Results: [paraphrase_quality.md](paraphrase_quality.md).
+
+## Korean "inside an object" fix (R2-5 B5)
+
+A goal's container is always a place, never an object. A few Korean texts said `<object> 안에 넣어` ("put it inside
+the plate", e.g. hl-dev-000001), because the object particle before 안에 was dropped: by the EXAONE paraphrase, or
+by the `open_put` template's particle drop. `kofix` (`gen/kofix.py`) repairs them deterministically: a paraphrase
+falls back to its template text (`source_by_lang.ko = template`), a template text gets the particle back
+(`열쇠 안에` -> `열쇠를 안에`); the old text is kept in `meta.ko_fix`. The generator keeps the particle before 안에
+since then, and `validate` check 12 fails on any such text. Fixed: hl-dev-000001 (template fallback),
+hl-train-000184 and hl-train-000313 (particle).

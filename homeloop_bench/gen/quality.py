@@ -415,7 +415,7 @@ def write_datasheet(recs, para=None, bt=None, realism=None):
           f"commit {_robot_commit()}: the houses, the catalog and the oracle come from homeloop_robot, so the "
           "tasks are not self-contained without that exact version. Every run records both git commits "
           "(`summary.json` `config.versions`).",
-          "- Pipeline: `python -m homeloop_bench.data generate`, `paraphrase --offline`, `resplit`, `delivery`; "
+          "- Pipeline: `python -m homeloop_bench.data generate`, `paraphrase --offline`, `resplit`, `delivery`, `kofix`; "
           "`datasheet` rewrites this file from the shipped reports; any change must "
           "keep `validate --strict` and `realism --strict` green.",
           "- Errata and new versions: listed in the repository's changelog with a new version number; older versions "

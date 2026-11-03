@@ -287,5 +287,10 @@ def validate(paths=None, workers: int = 1, out=print, policy_path=POLICY) -> tup
     line(not d_bad and share_ok, "11 deliveries: delivered(mode, mode_reason) labels observable, explicit "
          "wording, none within reach at the start, hand share 10-50 %",
          f"{len(d_bad)} problems, e.g. {d_bad[:3]}; {ds['by_mode_reason']} hand share {hs}")
+    # 12 Korean texts do not put anything inside an object ("접시 안에 넣어"; R2-5 B5, gen/kofix.py)
+    from .kofix import problems as ko_container_problems
+    k_bad = ko_container_problems(recs)
+    line(not k_bad, "12 no Korean text uses an object as the container ('<object> 안에 넣')",
+         f"{len(k_bad)}: {k_bad[:3]}")
     out(f"== validate: {fails} FAIL, {warns} WARN")
     return fails, warns

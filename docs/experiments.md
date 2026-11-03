@@ -159,3 +159,30 @@ Not genuine (fixed; homeloop_robot 40104e3, e04071a, f19e07c; this repository 3c
 The heard-read-back rule moved 9 Korean read-backs of the sim-user audit set from `structured` to
 `structured_mismatch`; the qtype accuracy is unchanged (0.954; `data/quality/sim_user_audit.json` regenerated,
 homeloop_robot docs/user_model.md). Round 2 reruns the same 4 tasks in all conditions.
+
+### Round 2 (`results/pilot_r27/round2/`)
+
+Same 4 tasks and conditions, after the round 1 fixes.
+
+| condition | success | false success | LLM calls / ep. | per task (010 / 013 / 003 / 001) |
+|---|---|---|---|---|
+| sage EN | 1 / 4 | 0 | 4.0 | give_up / done / refuse / refuse |
+| sage_norag EN | 1 / 4 | 0 | 4.25 | give_up / done / refuse / refuse |
+| sage KO | 1 / 4 | 0 | 15.75 | give_up / give_up / budget / done |
+| sage_norag KO | 1 / 4 | 0 | 14.5 | give_up / give_up / budget / done |
+| naive EN, KO | 2 / 4 | 0 | 0 | give_up / done / give_up / done |
+| oracle EN, KO | 3 / 4 | 0 | 0 | give_up / done / done / done |
+
+Not genuine (fixed; homeloop_robot 592ae2d, 787c256, 9ffb93e, ff7600c, ae27740; this repository 6605cd4):
+
+| task | condition | kind | cause | fix (test) |
+|---|---|---|---|---|
+| 013 | sage, sage_norag KO (outcome-deciding) | harness | The adapter copied the speaker's Korean aliases 나 / 저 into the ENV entry `spot near you`; robot_agent matches a non-ASCII place phrase as a plain substring, so the 나 inside 나간다고 was a place mention: "You mentioned the 나. What should I do there?", then read-backs "(the 나 you mentioned is not in my plan)" until "the user did not confirm the task" (give_up). 220 of 1000 dev KO instructions have 나 or 저 inside another word (하나, 나중에, 저녁). Round 1 had it too (cache [12] / [14]) and it was missed. | A one-syllable Korean person name goes into the ENV as its dative forms (나한테, 나에게, 내게, 저한테, 저에게, 제게; X한테 / X에게 for 애, 딸); homeloop_robot `tests/test_person_alias_forms.py` (robot_agent's own `place_mentions`) |
+| 013 | sage, sage_norag KO (plausibly outcome-deciding) | simulator | The heard read-back '남편이 “10분 있다가 나간다고 말해 주세요”라고 말하는 거죠? 맞죠?' makes the husband the speaker, yet it was judged a correct confirmation: `said_to` was covered once the person was named. The norag wording ('…라고 말할 거예요, 맞죠?') matched the Korean did-you-mean pattern and got "yes + request" (repair_confirm). The p_wrong draw then gave '아니요' (sage) and not_sure (norag); with the correct content "no" the same draw would have said "yes". | A person named as the speaker (subject particle 이 / 가 / 께서, "X will say") does not cover `said_to`; a quoted message must carry the message's keywords (`message_matches`, the test a Say must pass); a read-back of a message is not a heard-word check (homeloop_robot `tests/test_dialog_pilot_r2.py`) |
+| 010 | sage, sage_norag EN (outcome-neutral) | simulator | After a move to a person with no surface beside them (grandpa on a bed without a nightstand), Find returned unreachable "cannot reach green mug: not at a place", a hint that the object is out of reach, which a robot that looked around cannot know. robot_agent counts unreachable and absent alike in `find_fails`, so the ask and the give-up were the same. | Find at no place looks where the robot stands and reports absent (event `not_at_place`); docs/skills.md (homeloop_robot `tests/test_find_at_person.py`) |
+| 010 | sage KO (outcome-neutral, the run had used its 2 read-backs) | simulator | The wrong answer to "hand it to you or put it nearby?" was a place drawn from every surface and container: "옷장 안에 넣어 주세요" for a mug wanted for tea. | A mistaken place is one where an object of the task is usually kept (catalog typical receptacle that fits it, realism R-b); docs/user_model.md item 5 (homeloop_robot `tests/test_user_wrong_place.py`) |
+| seed pool | sage (outcome-neutral here: 013 never reached SAGE planning; EN 010 retrieved the son / come_kitchen seed) | harness | R2-7 review add-on 1 was still open: the message seeds had the dev / test goals said_to(son, come_kitchen) and said_to(son, leaving_soon) (leaving_soon is pilot task 013's goal), with null origin fields, so the leak test passed trivially. Normalised, four fetch seeds also had dev / test goals. | Seeds rewritten with goals no dev / test task has (two example-only messages, `catalog.EXAMPLE_MESSAGES`), origin "hand-written for example_flat"; `tests/test_seed_pool_leak.py` compares normalised goals, message atoms and Say texts (`message_matches`) |
+
+The sim-user audit is unchanged by these fixes (`python -m homeloop_bench.sim_user_audit` from the committed cache
+gives the same `sim_user_audit.json`). The seed pool sha changes, so sage's next runs record the new pool. Round 3
+reruns the same 4 tasks in all conditions.

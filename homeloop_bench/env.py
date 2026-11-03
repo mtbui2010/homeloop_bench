@@ -346,6 +346,9 @@ class EpisodeEnv:
         self.calls.append({"k": k, "skill": skill, "args": rec["args"], "ok": res.ok, "code": rec["code"],
                            "injected": bool(res.injected), "t": rec["t"], "dur": rec["dur"],
                            "event": (res.truth or {}).get("event")})
+        if skill == "ask":          # for the failure analysis only (docs/experiments.md); never shown to planners
+            self.calls[-1]["answer"] = (res.data or {}).get("answer")
+            self.calls[-1]["reply_kind"] = (res.truth or {}).get("reply_kind")
         for e in self._world.semantic_violations[n_sem:]:
             self._sem_k.append((getattr(e, "code", str(e)), k))
         self._hist.append({"skill": skill, "args": rec["args"], "ok": res.ok, "code": rec["code"], "msg": res.msg,
@@ -557,6 +560,7 @@ class EpisodeEnv:
                                 "handed": _handed(w_end, a["args"][0], a["args"][1])}
                                for a in self.delivery_atoms()],
             "events": [dict(e) for e in self._events],
+            "final_say": self.final_say,
         }
         if self.error:
             rec["error"] = self.error

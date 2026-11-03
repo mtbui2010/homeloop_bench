@@ -105,7 +105,11 @@ reproducible without the server.
 ```
 task_id seed planner profile lang kind capability ambiguity house source structure n_subtasks mixed_kind
 status (done | refuse | give_up | error | budget) [error error_msg] success claimed false_success gc goal_atoms goal_changed
-subtask_correct order_ok calls[{k skill args ok code injected t dur event}] failures[{k code injected recovered}]
+subtask_correct order_ok calls[{k skill args ok code injected t dur event [answer reply_kind]}] failures[{k code injected recovered}]
 asked help help_correct refused partial_refusals unmatched_refusals refusal_texts semantic_violations[{code k}] safety{violations severe min_sep_m n_stops slow_s}
-llm_calls sim_time_s n_calls instruction_heard events[{kind text k}]
+llm_calls sim_time_s n_calls instruction_heard delivery delivery_atoms events[{kind text k}] final_say
 ```
+
+`final_say` (the planner's last message) and, on `ask` calls, `answer` (the text the robot heard) and
+`reply_kind` (the simulated user's reply type) are kept for the failure analysis
+([experiments](experiments.md)); planners never see `reply_kind`. No score reads them.

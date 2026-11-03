@@ -173,3 +173,18 @@ def test_user_knows_what_they_asked_for():
 def test_object_memory_is_the_observed_memory():
     env = EpisodeEnv(feasible_tasks(1)[0], "ideal", 0, "en")
     assert tuple(env.object_memory()) == env.observe().memory
+
+
+def test_record_keeps_final_say_and_ask_replies_for_the_analysis():
+    t = feasible_tasks(1)[0]
+    env = EpisodeEnv(t, "ideal", 0, "en")
+    env.call("ask", question="Which one do you mean?", lang="en")
+    env.finish("give_up", "I could not find it.")
+    rec = env.record()
+    assert rec["final_say"] == "I could not find it."
+    ask = [c for c in rec["calls"] if c["skill"] == "ask"][0]
+    assert "answer" in ask and "reply_kind" in ask
+    if ask["ok"]:
+        assert ask["answer"] and ask["reply_kind"]
+    # planners see the reply through the call result only, never the truth-side reply kind
+    assert all("reply_kind" not in h for h in env._hist)

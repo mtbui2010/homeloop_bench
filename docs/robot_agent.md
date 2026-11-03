@@ -67,7 +67,10 @@ messages, refusals and a two-object task.
 * No leak: tests/test_seed_pool_leak.py checks that no example shares a family, gen_id or template id with a dev
   / test task, that none names a dev / test id or an evaluated house, that no EN / KO example text is within
   Jaccard 0.5 of a dev / test text or template text (near duplicate: 0.90), and that each example's plan, run on
-  the mock robot in example_flat, reaches its goal. homeloop_robot tests/test_seed_pool.py checks the format and
+  the mock robot in example_flat, reaches its goal. It also compares goals: no example's goal, normalised (object
+  -> catalog class, place -> receptacle name, person -> speaker / other, delivery mode), is the goal of a dev /
+  test task, no message atom is one, and no Say text would count as a dev / test message (`message_matches`) or is
+  near its canonical text; `origin` must be filled ("hand-written for example_flat"). homeloop_robot tests/test_seed_pool.py checks the format and
   that every plan passes embodiplan's action model with this robot's plan actions.
 * Retrieval is live for sage and absent for sage_norag: `homeloop-bench prompt TASK_ID --planner P --llm fake`
   sets the episode up as a run does, builds the loop's own SAGE planner and captures its first LLM call

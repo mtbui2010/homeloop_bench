@@ -149,3 +149,86 @@ def test_reach_delivery_examples_end_on_a_reachable_surface(pool):
             if a.get("pred") == "delivered":
                 world, _ = _run_plan(e)
                 assert delivered(world, a["args"][0], a["args"][1], a["mode"]), e["task"]
+
+
+# ------------------------------------------------------------------- goals (R2-7 review add-on 1, pilot round 2)
+# The two message seeds used to say said_to(son, come_kitchen) / said_to(son, leaving_soon): the goal of 112 / 72
+# dev + test tasks (pilot task hl-dev-000013 is leaving_soon), with null origin fields, so the checks above passed
+# trivially. The goal checks below compare NORMALISED goal atoms: an object -> its catalog class, a place -> its id
+# prefix (the receptacle name), a person -> their role (the speaker / another person), plus the delivery mode.
+
+def _norm_atom(a, w):
+    def n(x):
+        if x in w.objects:
+            return w.objects[x].cls
+        if x in w.house.places:
+            return x.split("@")[0]
+        if x in w.people:
+            return "person:" + w.people[x].role
+        return x
+    return (a.get("pred"),) + tuple(n(x) for x in a.get("args") or []) + ((a["mode"],) if a.get("mode") else ())
+
+
+def _norm_goal(g, w):
+    return tuple(sorted(_norm_atom(a, w) for a in g.get("all") or [] if "pred" in a))
+
+
+@pytest.fixture(scope="module")
+def held_goals(held):
+    from homeloop_robot.episode import make_episode
+    worlds, goals, atoms = {}, {}, {}
+    for t in held:
+        if t["house"] not in worlds:
+            worlds[t["house"]] = make_episode(t["house"], 0, "ideal", 0).world
+        w = worlds[t["house"]]
+        goals.setdefault(_norm_goal(t["goal"], w), t["id"])
+        for a in t["goal"].get("all") or []:
+            if "pred" in a:
+                atoms.setdefault(_norm_atom(a, w), t["id"])
+    return goals, atoms
+
+
+def _example_world():
+    from homeloop_robot.episode import make_episode
+    return make_episode(PE.example_house(), 0, "ideal", 0).world
+
+
+def test_origin_fields_are_filled_honestly(pool):
+    for e in pool:
+        o = e["origin"]
+        assert o["source"] == "hand-written for example_flat", e["task"]
+        assert all(o.get(k) for k in ("family", "gen_id", "template_id", "split")), o
+
+
+def test_no_seed_goal_is_a_dev_test_goal(pool, held_goals):
+    goals, atoms = held_goals
+    w = _example_world()
+    for e in pool:
+        g = _norm_goal(e["goal"], w)
+        assert g not in goals, (e["task"], g, goals.get(g))
+        for a in e["goal"]["all"]:
+            if a.get("pred") == "said_to":                  # a message: not even one atom in common
+                na = _norm_atom(a, w)
+                assert na not in atoms, (e["task"], na, atoms.get(na))
+
+
+def test_no_seed_say_text_is_a_dev_test_message(pool, held):
+    from homeloop_robot.catalog import MESSAGE_TEXT, MESSAGES, message_matches
+    keys = {a["args"][1] for t in held for a in t["goal"].get("all") or [] if a.get("pred") == "said_to"}
+    says = [(e["lang"], s["object"]) for e in pool for s in json.loads(e["plan_text"])["steps"]
+            if s["action"] == "Say" and not e["goal"].get("refuse")]
+    assert says
+    for lang, text in says:
+        for k in sorted(keys):
+            # semantic: the Say would not count as any dev / test message (the goal check a Say must pass)
+            assert not message_matches(k, text, lang), (text, k)
+            ref = (MESSAGE_TEXT.get(k) or {}).get(lang)
+            assert ref is None or jaccard(shingles(text, lang), shingles(ref, lang)) < MAX_J, (text, ref)
+        assert not any(text == (MESSAGE_TEXT.get(k) or {}).get(lang) for k in MESSAGES)
+
+
+def test_the_old_message_seeds_would_fail(held_goals):
+    """The checks catch the leak they are for: the former seeds' message goals are dev / test goals."""
+    goals, atoms = held_goals
+    for key in ("come_kitchen", "leaving_soon"):
+        assert ("said_to", "person:other", key) in atoms

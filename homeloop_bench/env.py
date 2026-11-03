@@ -597,6 +597,24 @@ class EpisodeEnv:
         # raw world ids in the last message ("looked at counter@kitchen", "kimchi_fridge@kitchen"): reported, not
         # scored (pilot round 4, EN hl-dev-000010; docs/metrics.md)
         rec["final_say_raw_ids"] = raw_ids(self.final_say, w_end)
+        # raw world ids in anything the robot said to the user: questions (read-backs: "the kids_desk in the kids",
+        # "on the coffee_table in the living"), Say / Announce texts and the last message (fresh pilot round 1: 5 of 9
+        # EN robot utterances per sage condition named a raw id, and only the last message was checked). Reported,
+        # not scored (docs/metrics.md)
+        said, n_utt = [], 0
+        for c in self.calls:
+            a = c.get("args") or {}
+            t = a.get("question") if c.get("skill") == "ask" else a.get("text") if c.get("skill") in ("say", "announce") \
+                else None
+            if t:
+                ids = raw_ids(t, w_end)
+                n_utt += bool(ids)
+                said += ids
+        if rec["final_say_raw_ids"]:
+            n_utt += 1
+            said += rec["final_say_raw_ids"]
+        rec["dialog_raw_ids"] = list(dict.fromkeys(said))
+        rec["dialog_raw_id_utterances"] = n_utt
         if self.error:
             rec["error"] = self.error
             rec["error_msg"] = self.error_msg
@@ -616,6 +634,8 @@ def raw_ids(text: str, world) -> list:
     text = str(text or "")
     found = [m.group(0).rstrip(".!?") for m in _RAW_ID_RX.finditer(text)]
     ids = set(world.house.places) | set(world.objects) | set(world.people)
+    # the head of a place key, which robot_agent says with its room: "the kids_desk in the kids" (fresh pilot round 1)
+    ids |= {p.split("@")[0] for p in world.house.places}
     for i in sorted(x for x in ids if "_" in x):
         if re.search(rf"(?<![\w@]){re.escape(i)}(?![\w@])", text):
             found.append(i)

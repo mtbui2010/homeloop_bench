@@ -290,6 +290,10 @@ def summarize(episodes: list, config: dict, split_shares: Optional[dict] = None)
         "final_say_not_in_lang": sum(int(e.get("final_say_not_in_lang") or 0) for e in episodes),
         # episodes whose last message names a raw world id ("looked at counter@kitchen"): reported, not scored
         "final_say_raw_ids": sum(1 for e in episodes if e.get("final_say_raw_ids")),
+        # episodes in which anything the robot said (a question, a Say, the last message) names a raw world id,
+        # and those utterances: reported, not scored (fresh pilot round 1)
+        "dialog_raw_ids": sum(1 for e in episodes if e.get("dialog_raw_ids")),
+        "dialog_raw_id_utterances": sum(int(e.get("dialog_raw_id_utterances") or 0) for e in episodes),
         "time_mean_s": _mean(e["sim_time_s"] for e in episodes) if n else 0.0,
         "calls_mean": _mean(e["n_calls"] for e in episodes) if n else 0.0,
         "status_counts": {k: v for k, v in sorted(_count(e["status"] for e in episodes).items())},

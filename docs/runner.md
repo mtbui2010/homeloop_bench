@@ -28,8 +28,10 @@ One episode (`run_episode`):
 4. The planner runs (`planner.run(env)`) and ends with `env.finish(status)`. A planner exception ends the
    episode with status `error` (only the exception type is recorded). An exhausted LLM budget gives
    status `budget`, also when the planner caught the refused call and then gave up; not when a hardware fault
-   (or an e-stop) after the last refused call ended the episode, which stays `give_up` (`llm_budget_hit` still
-   records the refused call; fresh pilot round 2, sage_norag hl-dev-000057).
+   (or an e-stop) after the last refused call ended the episode, or a persistent hardware fault after the first
+   refused call (a later refused call, such as robot_agent's translation of its give-up message, does not change
+   that), which stays `give_up` (`llm_budget_hit` still records the refused call; fresh pilot rounds 2 and 3,
+   sage_norag hl-dev-000057).
 5. The judge scores the TRUE end state (below) and `env.record()` gives the episode record.
 
 ## The episode environment (`env.py`)

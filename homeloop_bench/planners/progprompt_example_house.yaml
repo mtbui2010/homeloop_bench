@@ -1,0 +1,78 @@
+# The house of progprompt_like's three example programs (ProgPrompt, Singh et al. 2022, arXiv:2209.11302:
+# example programs in the prompt). It is used by no split (train, dev or test) and is not a homeloop_robot house,
+# so no example names a place, object or layout of an evaluated house. A small flat: kitchen, living room, utility.
+house: example_flat
+version: 1
+name: {en: Example flat, ko: 예시 집}
+rooms:
+  kitchen: {type: [kitchen], name: {en: kitchen, ko: 주방}, rect: [0, 0, 5, 4], floor: {pos: [2.5, 1.8], tags: [exit_path]}}
+  living:  {type: [living], name: {en: living room, ko: 거실}, rect: [5, 0, 10, 4], floor: {pos: [7.0, 3.0]}}
+  utility: {type: [utility], name: {en: utility room, ko: 다용도실}, rect: [0, 4, 4, 7], floor: {pos: [2.0, 5.2]}}
+doors:
+  - {rooms: [kitchen, living], at: [5.0, 2.0], width_m: 0.9}
+  - {rooms: [kitchen, utility], at: [2.0, 4.0], width_m: 0.8}
+places:
+  counter@kitchen:
+    {room: kitchen, kind: surface, name: {en: kitchen counter, ko: 조리대}, aliases: {en: [counter], ko: [싱크대]},
+     pos: [1.0, 0.8], yaw_deg: 270, height_m: 0.9, clutter: high, capacity: 6, tags: [food_prep, wet]}
+  stove@kitchen:
+    {room: kitchen, kind: surface, name: {en: stove, ko: 가스레인지}, aliases: {en: [hob], ko: [레인지]},
+     pos: [2.4, 0.7], yaw_deg: 270, height_m: 0.9, clutter: low, capacity: 2, tags: [heat_source]}
+  microwave@kitchen:
+    {room: kitchen, kind: container, container: {type: appliance, openable: true, opened: false},
+     name: {en: microwave, ko: 전자레인지}, aliases: {en: [], ko: []},
+     pos: [3.4, 0.7], yaw_deg: 270, height_m: 1.1, clutter: low, capacity: 1, tags: [electrical]}
+  fridge@kitchen:
+    {room: kitchen, kind: container, container: {type: fridge, openable: true, opened: false},
+     name: {en: fridge, ko: 냉장고}, aliases: {en: [refrigerator], ko: []},
+     pos: [4.3, 0.8], yaw_deg: 270, height_m: 0.85, clutter: medium, capacity: 6, tags: [food_storage]}
+  drawer@kitchen:
+    {room: kitchen, kind: container, container: {type: drawer, openable: true, opened: false},
+     name: {en: kitchen drawer, ko: 주방 서랍}, aliases: {en: [drawer], ko: [서랍]},
+     pos: [0.8, 2.2], yaw_deg: 180, height_m: 0.8, clutter: high, capacity: 6, tags: []}
+  dining_table@kitchen:
+    {room: kitchen, kind: surface, name: {en: dining table, ko: 식탁}, aliases: {en: [table], ko: []},
+     pos: [3.0, 2.6], yaw_deg: 90, height_m: 0.75, clutter: medium, capacity: 6, tags: []}
+  coffee_table@living:
+    {room: living, kind: surface, name: {en: coffee table, ko: 거실 탁자}, aliases: {en: [], ko: [탁자]},
+     pos: [7.0, 2.0], yaw_deg: 0, height_m: 0.45, clutter: medium, capacity: 5, tags: []}
+  sofa@living:
+    {room: living, kind: seat, name: {en: sofa, ko: 소파}, aliases: {en: [couch], ko: []},
+     pos: [8.0, 3.0], yaw_deg: 0, height_m: 0.45, clutter: low, capacity: 3, tags: [], person_pos: [9.4, 3.5]}
+  tv_stand@living:
+    {room: living, kind: surface, name: {en: TV stand, ko: TV 받침대}, aliases: {en: [], ko: [TV장]},
+     pos: [8.6, 0.7], yaw_deg: 270, height_m: 0.5, clutter: low, capacity: 4, tags: [electrical]}
+  dock@living:
+    {room: living, kind: dock, name: {en: charging dock, ko: 충전기}, aliases: {en: [dock, charger], ko: [충전 스테이션]},
+     pos: [6.0, 3.4], yaw_deg: 90, height_m: 0.0, clutter: low, capacity: 0, tags: []}
+  laundry_cabinet@utility:
+    {room: utility, kind: container, container: {type: cabinet, openable: true, opened: false},
+     name: {en: laundry cabinet, ko: 세탁실 수납장}, aliases: {en: [cabinet], ko: [수납장]},
+     pos: [0.8, 6.2], yaw_deg: 90, height_m: 1.0, clutter: medium, capacity: 6, tags: []}
+  drying_rack@utility:
+    {room: utility, kind: surface, name: {en: drying rack, ko: 빨래 건조대}, aliases: {en: [], ko: [건조대]},
+     pos: [2.8, 6.2], yaw_deg: 90, height_m: 1.0, clutter: medium, capacity: 6, tags: []}
+  utility_shelf@utility:
+    {room: utility, kind: surface, name: {en: utility shelf, ko: 다용도실 선반}, aliases: {en: [shelf], ko: [선반]},
+     pos: [3.4, 5.0], yaw_deg: 0, height_m: 1.6, clutter: medium, capacity: 4, tags: [high_shelf]}
+objects:
+  - {id: cup_1, cls: cup, attrs: {color: yellow}, at: dining_table@kitchen, alt: [counter@kitchen]}
+  - {id: cup_2, cls: cup, attrs: {color: blue}, at: counter@kitchen, alt: [dining_table@kitchen]}
+  - {id: mug_1, cls: mug, attrs: {color: red}, at: counter@kitchen, alt: [coffee_table@living]}
+  - {id: mug_2, cls: mug, attrs: {color: green}, at: dining_table@kitchen, alt: [counter@kitchen]}
+  - {id: bowl_1, cls: bowl, attrs: {color: white}, at: counter@kitchen, alt: [dining_table@kitchen]}
+  - {id: apple_1, cls: apple, attrs: {color: red}, at: dining_table@kitchen, alt: [fridge@kitchen]}
+  - {id: milk_1, cls: milk, attrs: {color: white}, at: fridge@kitchen, alt: []}
+  - {id: spoon_1, cls: spoon, attrs: {color: gray}, at: drawer@kitchen, alt: [counter@kitchen]}
+  - {id: detergent_1, cls: detergent, attrs: {color: green}, at: counter@kitchen, alt: [utility_shelf@utility]}
+  - {id: towel_1, cls: towel, attrs: {color: white}, at: laundry_cabinet@utility, alt: [drying_rack@utility]}
+  - {id: towel_2, cls: towel, attrs: {color: blue}, at: drying_rack@utility, alt: [laundry_cabinet@utility]}
+  - {id: socks_1, cls: socks, attrs: {color: gray}, at: drying_rack@utility, alt: [laundry_cabinet@utility]}
+  - {id: book_1, cls: book, attrs: {color: red}, at: coffee_table@living, alt: [tv_stand@living]}
+  - {id: book_2, cls: book, attrs: {color: green}, at: tv_stand@living, alt: [coffee_table@living]}
+  - {id: remote_1, cls: remote, attrs: {color: black}, at: coffee_table@living, alt: [tv_stand@living]}
+  - {id: glasses_1, cls: glasses, attrs: {color: black}, at: coffee_table@living, alt: [tv_stand@living]}
+people:
+  - {id: resident, role: user, name: {en: the resident, ko: 집주인}, aliases: {en: [me], ko: [나, 저]},
+     age_group: "40-49", sex: female, child: false, seat: sofa@living, pos: [9.4, 3.5]}
+robot: {start: dock@living, dock: dock@living}

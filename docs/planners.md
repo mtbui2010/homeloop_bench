@@ -10,7 +10,7 @@ true world and the hidden goal); every other planner sees only the [observation]
 | `naive` | the oracle's plan from the start state, open loop | never | none: the first failed call ends the episode (`give_up`); all calls ok -> `done`, so silent failures become false successes | the ablation that shows what closed-loop recovery buys |
 | `saycan_like` | each step: the calls whose preconditions hold in the planner's own belief (where it is, what it holds, what it found here, what it opened), the LLM picks one by index | no | none beyond the step choice; the prompt has the state only, no failure text | after SayCan (Ahn et al. 2022, https://arxiv.org/abs/2204.01691). SayCan multiplies LLM likelihoods by learned affordance values; a chat API gives no likelihoods, so here the LLM chooses by index among the affordable options |
 | `inner_monologue_like` | step-wise: the LLM sees the history with every result text, user answers and `look` scenes, and returns the next call | yes | whatever the LLM decides after seeing the failure | after Inner Monologue (Huang et al. 2022, https://arxiv.org/abs/2207.05608) |
-| `progprompt_like` | one LLM call writes a program: tool calls plus `assert pred(x) else: call` recovery lines; a small interpreter (no `exec`) runs it | no | the assertion lines only (`holding` reads the gripper sensor through `grasp_check`) | after ProgPrompt (Singh et al. 2022, https://arxiv.org/abs/2209.11302); the live-smoke baseline |
+| `progprompt_like` | one LLM call writes a program: tool calls plus `assert pred(x) else: call` recovery lines; a small interpreter (no `exec`) runs it. The prompt holds three fixed example programs, as in ProgPrompt (see below) | no | the assertion lines only (`holding` reads the gripper sensor through `grasp_check`) | after ProgPrompt (Singh et al. 2022, https://arxiv.org/abs/2209.11302); the live-smoke baseline |
 | `knowno_like` | the LLM lists up to 4 interpretations (goal conditions); 5 samples (temperature 0.7, seeds 0-4) give option frequencies; conformal set {y : freq(y) >= 1 - q_hat} | when the set does not have exactly one option | then the inner-monologue loop with the chosen interpretation | after KnowNo (Ren et al. 2023, https://arxiv.org/abs/2307.01928). KnowNo scores options with next-token probabilities; we use sample frequencies. q_hat comes from `planners/knowno_calib.json` |
 | `robot_agent:sage` | robot_agent's AssistLoop (SAGE, generator grace) on the homeloop robot package | robot_agent's dialog | robot_agent's gate, guard, recovery and replanning | [robot_agent planners](robot_agent.md) |
 | `robot_agent:grace` | robot_agent's ClosedLoop with planner grace | no | robot_agent | [robot_agent planners](robot_agent.md) |
@@ -88,3 +88,21 @@ identical whatever the labels say (`tests/test_reach_bench.py`). The LLM planner
 counter, nightstand or shelf they can reach, or hand it over when they ask for it in their hand or no such surface
 with room is near them.
 
+## progprompt_like example programs
+
+ProgPrompt (Singh et al. 2022, arXiv:2209.11302) prompts the LLM with example programs: Pythonic functions named
+after the task, with comments and `assert ... else:` recovery lines. Until R2-5 (B4) progprompt_like had none
+(zero-shot). It now has three (`planners/progprompt_examples.py`), written for three train-split tasks and placed
+in `example_flat` (`planners/progprompt_example_house.yaml`), a house that no split uses (all eight benchmark
+houses appear in the test split, so no evaluated house is free of evaluation tasks):
+
+| example | source task (train) | shows |
+|---|---|---|
+| take the green mug off the dining table and put it on the coffee table | hl-train-000183 | move to where the object is before `find` |
+| look for my towel and put it back on the drying rack | hl-train-000133 | open the closed container before `find` |
+| store the dish soap in the fridge | hl-train-000218 | decline an unsafe request (`decline`, `finish("refuse")`) |
+
+The instruction of each example is the source task's English template text; the program uses the example
+house's ids. Each example runs with the planner's own interpreter on the mock robot (`ideal`) and reaches its
+goal (`tests/test_progprompt_examples.py`). The finished zero-shot runs are kept as an ablation in
+`results/exp_r2/ablation/progprompt_like_zeroshot__qwen3-vl:8b-instruct__{en,ko}/` ([experiments.md](experiments.md)).

@@ -1,7 +1,8 @@
 """``progprompt_like``: after ProgPrompt (Singh et al. 2022, arXiv:2209.11302).
 
 One LLM call writes a Python-like program over the robot's tools, with ProgPrompt's assertion-based
-recovery lines (``assert holding("mug_1") else: pick("mug_1")``). A small interpreter runs it (no
+recovery lines (``assert holding("mug_1") else: pick("mug_1")``). As in ProgPrompt, the prompt holds three
+example programs (``progprompt_examples``: train-split tasks, in a house no split uses). A small interpreter runs it (no
 ``exec``): plain calls run in order (a failed call does not stop the program), asserts check the robot's
 sensors / belief and run their recovery call when false; ``finish("...")`` ends it. No LLM replanning.
 The live-smoke baseline. Docs: docs/planners.md.
@@ -12,6 +13,7 @@ from __future__ import annotations
 import ast
 import re
 
+from .progprompt_examples import examples_text
 from .prompts import render_observation, tools_text
 
 POSITIONAL = {"move": ["target"], "find": ["obj"], "pick": ["obj"], "place": ["target"], "put_in": ["container"],
@@ -22,7 +24,8 @@ PREDICATES = ("holding", "at", "found", "open")
 _CALL_RX = re.compile(r"^(\w+)\((.*)\)\s*$")
 _ASSERT_RX = re.compile(r"^assert\s+(not\s+)?(\w+)\((.*?)\)\s+else:\s*(.+)$")
 
-PROGRAM_FORMAT = """Write the program, one statement per line, nothing else:
+PROGRAM_FORMAT = """Write the program for the instruction above in the style of the examples: a def line named after the
+task, # comments, and one statement per line:
 - a tool call with positional arguments, e.g. move("counter@kitchen"), find("mug_1"), pick("mug_1"),
   place("table@dining"), put_in("fridge@kitchen"), say("Dinner is ready.", "en")
 - a check with a recovery call: assert holding("mug_1") else: pick("mug_1")
@@ -101,7 +104,7 @@ class ProgPromptLike:
         obs = env.observe()
         prompt = "\n\n".join(["MODE: progprompt",
                               "You control a household robot. Write a program that fulfils the instruction.",
-                              tools_text(), render_observation(obs), PROGRAM_FORMAT])
+                              tools_text(), examples_text(), render_observation(obs), PROGRAM_FORMAT])
         prog = None
         p = prompt
         for _ in range(3):

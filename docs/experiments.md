@@ -4,6 +4,20 @@ The results table, the per-mode / kind / subtask splits and the failure analysis
 are done (`results/exp_r2/<planner>__<model-or-none>__<lang>/`). This page already holds what must be read
 next to them. No result below is a planner score.
 
+## Runs after the early-analysis fixes (R2-5)
+
+A mid-run probe found harness bugs that biased robot_agent:sage (B1 person moves / places, B2 the person id
+`user`, B3 ASR repair questions) and a progprompt_like prompt without ProgPrompt's example programs (B4), plus
+Korean paraphrases with an object as the container (B5). The fixes are in homeloop_robot 1cb5d9d, 8f43038 and in
+this repository (tests: `tests/test_reach_ra_bind.py`, `tests/test_progprompt_examples.py`, homeloop_robot
+`tests/test_dialog_repair.py`). The sage runs that predate them were stopped and deleted; oracle / naive (full
+dev), sage and progprompt_like (300) and live_smoke are rerun after them.
+
+Ablation: the finished **zero-shot** progprompt_like runs (no example programs, before B4) are kept in
+`results/exp_r2/ablation/progprompt_like_zeroshot__qwen3-vl:8b-instruct__{en,ko}/` (300 dev tasks, profile real,
+seed 0). They predate B3 and B5 as well, so compare them with the with-examples runs only as "zero-shot vs three
+examples" under that caveat.
+
 ## Delivery labels per split
 
 Delivery atoms of the task goals after review round 1 (`data/quality/delivery_report.json`, `by_split`):

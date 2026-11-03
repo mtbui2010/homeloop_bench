@@ -64,6 +64,11 @@ class RobotProxy:
     def believed(self) -> dict:
         return self.env.robot.believed
 
+    @property
+    def lang(self) -> str:
+        """The episode's language (ra_skills.speech_lang: a sentence with no script of its own)."""
+        return self.env.lang
+
 
 class RAClient:
     """robot_agent's chat-client surface (``chat(prompt=, format=, temperature=, seed=, ...)``,

@@ -131,5 +131,7 @@ the plate", e.g. hl-dev-000001), because the object particle before 안에 was d
 by the `open_put` template's particle drop. `kofix` (`gen/kofix.py`) repairs them deterministically: a paraphrase
 falls back to its template text (`source_by_lang.ko = template`), a template text gets the particle back
 (`열쇠 안에` -> `열쇠를 안에`); the old text is kept in `meta.ko_fix`. The generator keeps the particle before 안에
-since then, and `validate` check 12 fails on any such text. Fixed: hl-dev-000001 (template fallback),
-hl-train-000184 and hl-train-000313 (particle).
+since then, and `validate` check 12 fails on any such text. The check covers 안에 / 속에 (also 안에다(가),
+안으로) followed by any verb of putting away: 넣, 담, 놓, 두 / 둬, 정리, 보관. Fixed: hl-dev-000001 (template
+fallback), hl-train-000184 and hl-train-000313 (particle); after the check was widened, hl-test-000001 ("양말 안에
+정리해") and hl-train-000361 ("김치통 안에 놓아"), both template fallback.

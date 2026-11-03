@@ -16,6 +16,11 @@ from homeloop_robot.world import from_house
     ("냉장고 문 열어서 접시 안에 넣어 주실 수 있을까요?", ["접시"]),
     ("서랍장을 열어서 열쇠 안에 넣어 주세요.", ["열쇠"]),
     ("냉장고를 열고 하얀 접시 속에 담아 주세요.", ["접시"]),
+    ("옷장 문 열어서 양말 안에 정리해 주실래요?", ["양말"]),        # hl-test-000001 before the fix
+    ("냉장고 문 열어 두고 김치통 안에 놓아 주시겠어요?", ["김치통"]),  # hl-train-000361 before the fix
+    ("서랍 열고 열쇠 안에다가 둬 주세요.", ["열쇠"]),
+    ("냉장고 열고 접시 안으로 넣어 주세요.", ["접시"]),
+    ("서랍 열고 열쇠 속에 보관해 주세요.", ["열쇠"]),
 ])
 def test_detects_an_object_as_the_container(text, hit):
     assert kofix.object_as_container(text, "shared_flat") == hit
@@ -26,6 +31,8 @@ def test_detects_an_object_as_the_container(text, hit):
     "접시를 냉장고 안에 넣어 주세요.",                    # a place as the container
     "서랍 안에 넣어 주세요.",
     "접시 좀 안에 넣어 주세요.",
+    "옷장 문 열어서 양말을 안에 정리해 주실래요?",
+    "냉장고 안에 김치통을 놓아 주세요.",
 ])
 def test_a_place_or_an_object_with_its_particle_is_fine(text):
     assert kofix.object_as_container(text, "shared_flat") == []
@@ -65,7 +72,17 @@ def test_the_shipped_data_has_none():
     recs = [r for s in ("train", "dev", "test") for r in read_records(s)]
     assert kofix.problems(recs) == []
     fixed = {r["id"]: r for r in recs if (r.get("meta") or {}).get("ko_fix")}
-    assert "hl-dev-000001" in fixed and fixed["hl-dev-000001"]["meta"]["ko_fix"]["how"] == "template_fallback"
+    for tid in ("hl-dev-000001", "hl-test-000001", "hl-train-000361"):
+        assert tid in fixed and fixed[tid]["meta"]["ko_fix"]["how"] == "template_fallback", tid
+        assert fixed[tid]["text"]["ko"] != fixed[tid]["meta"]["ko_fix"]["from"]
+    assert "양말 안에 정리" in fixed["hl-test-000001"]["meta"]["ko_fix"]["from"]
+    assert "김치통 안에 놓아" in fixed["hl-train-000361"]["meta"]["ko_fix"]["from"]
+
+
+def test_the_wider_check_restores_the_particle_with_its_own_verb():
+    r = _rec("template", "서랍 열고 열쇠 안에다가 둬 주세요.", "서랍 열고 열쇠 안에다가 둬 주세요.")
+    out, rule = kofix.fix_record(copy.deepcopy(r))
+    assert rule == "particle" and out["text"]["ko"] == "서랍 열고 열쇠를 안에다가 둬 주세요."
 
 
 def test_the_generator_keeps_the_particle_before_an_inside(monkeypatch):

@@ -1,7 +1,7 @@
 """Korean texts that put something inside an object (R2-5 B5): "접시 안에 넣어" = "put it inside the plate".
 
 A container in a goal is always a place (fridge, drawer, cabinet), never an object. A Korean text with
-``<object name> 안에 / 속에 넣 / 담`` therefore says something else than the goal: usually the object particle was
+``<object name> 안에 / 속에 (에다(가), 으로) + 넣 / 담 / 놓 / 두 / 정리 / 보관`` therefore says something else than the goal: usually the object particle was
 dropped before 안에 ("접시를 안에 넣어" -> "접시 안에 넣어"), by the KO paraphraser or by a template's particle drop.
 
 * :func:`object_as_container` finds such a phrase (an object class name of the catalog, not also a place name of
@@ -38,8 +38,15 @@ def _place_names(house: str) -> frozenset:
     return frozenset(x for x in out if x)
 
 
+# "<object> 안에 / 속에 / 안에다(가) / 안으로" + a verb of putting away: 넣, 담, 놓, 두 / 둬, 정리, 보관
+# ("양말 안에 정리해 주실래요?", "김치통 안에 놓아 주시겠어요?")
+PUT_VERBS = ("넣", "담", "놓", "두", "둬", "정리", "보관")
+INSIDE_PARTICLES = ("에다가", "에다", "에", "으로")
+
+
 def _rx(name: str):
-    return re.compile(r"(?<![가-힣])" + re.escape(name) + r"\s*(안|속)에\s*(넣|담)")
+    return re.compile(r"(?<![가-힣])" + re.escape(name) + r"\s*(안|속)(" + "|".join(INSIDE_PARTICLES) + r")\s*("
+                      + "|".join(PUT_VERBS) + r")")
 
 
 def object_as_container(text: str, house: str) -> list:
@@ -56,7 +63,7 @@ def object_as_container(text: str, house: str) -> list:
 
 def _restore_particle(text: str, house: str) -> str:
     for n in object_as_container(text, house):
-        text = _rx(n).sub(lambda m, n=n: f"{josa(n, '을')} {m.group(1)}에 {m.group(2)}", text)
+        text = _rx(n).sub(lambda m, n=n: f"{josa(n, '을')} {m.group(1)}{m.group(2)} {m.group(3)}", text)
     return text
 
 

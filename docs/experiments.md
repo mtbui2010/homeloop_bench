@@ -88,3 +88,37 @@ The per-token ASR model of the app channel gives an assumed upper bound on the s
 instructions (homeloop_robot docs/calibration.md, "Near-field ASR": KO 77.1 %, EN 58.4 % changed on dev). Run
 each LLM planner also with `--set asr.ko.app_cer=0.01,asr.en.app_wer=0.01` and `--set
 asr.ko.app_cer=0.02,asr.en.app_wer=0.02` (same tasks and seed) and report success against the rate.
+
+## Known SAGE-v2 gaps (for the user to decide; robot_agent and embodiplan are not changed)
+
+Counted on the stopped zero-shot sage runs of R2-6 (exp_r2, profile real, seed 0, the first ~50 dev tasks per
+language, qwen3-vl:8b-instruct; one cause per episode, read from the event traces: scratchpad analysis
+`sage_rag/causes.tsv`, ids are hl-dev-000NNN). These runs predate the seed pool, so the RAG runs of round 2.7
+must recount them.
+
+| side | cause | EN | KO | episodes (EN / KO) |
+|---|---|---|---|---|
+| gate | plan explosion (duplicate steps across sub-goals) then the 30-call LLM budget | 9 | 5 | 006 008 021 023 026 032 033 047 048 / 005 019 043 044 046 |
+| gate | one-hand ordering: Open / Close while holding; the sub-goal-local edit cannot move the Open before the Pick | 3 | 0 | 001 002 004 |
+| gate | a person destination vs Handover (the checker wants Place on the person) | 1 | 0 | 017 |
+| gate | a room as MoveTo target (`@kitchen`, `@living`) | 0 | 2 | 011 016 |
+| understand / clarify | find_issues flags "me" / 나 / 저 or asks "Where are you?" again and again | 5 | 2 | 011 018 024 037 039 / 002 033 |
+| understand / clarify | colloquial words or ASR fragments flagged as unknown objects | 4 | 0 | 005 015 029 043 |
+| understand / clarify | a person named by relation (my husband, 남편, partner_a) not grounded | 3 | 3 | 013 030 044 / 007 013 030 |
+| understand / clarify | a spurious go / say goal from understand | 1 | 0 | 046 |
+| understand | KO -> EN entity confusion of the 8B model (과자 -> fruit, 수건 -> shoe, 김치냉장고 as an object) | 0 | 4 | 003 004 023 029 |
+| understand | an object goal dropped (socks -> "go to the bed"), then a false success | 0 | 1 | 025 |
+| understand | "here" grounded to the counter, then a false success | 1 | 0 | 012 |
+| dialog (KO) | the question mistranslated or garbled ("Where are you?" -> "여기 있어요?") | 0 | 8 | 012 015 018 021 024 032 037 047 |
+| dialog (KO) | the read-back mistranslated (person_user, raw ids, kana) | 0 | 5 | 006 008 010 036 048 |
+| safety | missed refusal (bleach / detergent into a fridge) | 1 | 2 | 009 / 009 035 |
+| safety | wrong refusal (ASR "nut the milk" read as pour) | 1 | 0 | 003 |
+| ambiguity | room-level or compound place names (서랍장 vs 서랍, my closet, the owner's place) | 2 | 3 | 020 042 / 020 031 042 |
+| ambiguity | compound container name and on / in (kimchi fridge vs fridge) | 1 | 0 | 041 |
+| retrieval | Korean instructions retrieve no similar example: embodiplan's Jaccard keeps only `[a-z0-9]` tokens, so every Korean query scores 0 and gets the first 3 seed examples (measured with `homeloop-bench prompt`, hl-dev-000003 / 000017 KO) | - | all | - |
+| retrieval | example plans are shown as ASCII-escaped JSON, so a Korean `Say` text reaches the prompt as `\uXXXX` | - | - | - |
+
+Not SAGE-v2 gaps: the harness bugs fixed in round 2.7, the Korean `Say` sent as English (R2-6 H1, KO 040) and the
+simulated user's 냉장고-inside-김치냉장고 match (H2, KO 041); the calibrated skill / hardware faults (EN 6: 010 025
+031 034 036 038; KO 2: 034 039); instructions not heard (EN / KO 014); objects not found (EN 1: 027; KO 5: 017 026
+027 038 049); an ASR-corrupted entity (KO 000: 전자인지).

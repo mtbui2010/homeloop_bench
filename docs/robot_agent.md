@@ -7,7 +7,8 @@ without it and marks these planners unavailable.
 
 | planner | loop |
 |---|---|
-| `robot_agent:sage` | `AssistLoop(agent, generator="grace")`: understand, clarify, the certified gate, guard, recovery, replan |
+| `robot_agent:sage` | `AssistLoop(agent, generator="grace")`: understand, clarify, the certified gate, guard, recovery, replan; SAGE retrieves from the robot's seed pool |
+| `robot_agent:sage_norag` | the same loop with an empty seed pool (zero-shot SAGE) |
 | `robot_agent:grace` | `ClosedLoop(agent, planner="grace")` |
 | `robot_agent:llm_direct` | `ClosedLoop(agent, planner="llm_direct")` |
 
@@ -44,6 +45,43 @@ removed after the episode (`HOMELOOP_KEEP_RA_LOGS=1` keeps them).
 5. A run is started on robot_agent's run manager and bound to the thread (`begin_run`), as the API does.
 6. `loop.run_blocking(instruction, lang)` is drained until the `done` event, the episode budget, or (after
    a stop event) the next motion call. Final status: success -> done, refused -> refuse, else give_up.
+
+## Seed pool (sage and sage_norag)
+
+SAGE-v2 is designed with a seed memory: robot_agent passes the robot manifest's `planner.seed_memory`
+(`RobotView.seed_memory()`) to the SAGE planner it builds, and SAGE puts the 3 most similar solved plans of that pool
+(embodiplan `MemoryRetriever`, Jaccard over word tokens when Chroma is not installed, as here) into its decompose
+and expand prompts. homeloop_robot ships such a pool: `homeloop_robot/planner/seed_memory.jsonl`, 12 examples in
+robot_agent's memory format (`task`, `reasoning`, `plan_text`, `verified`, `source: seed`), 7 EN and 5 KO
+instructions, written for `example_flat`, the house of progprompt_like's example programs, which no split uses
+(its bedroom, side table, son, fork and cooking oil were added for the pool). They cover delivery to a surface
+beside the person (`Place` on the person) and by handover, open before pick, putting into a closed container,
+messages, refusals and a two-object task.
+
+* `robot_agent:sage` runs SAGE as designed, with this pool. `robot_agent:sage_norag` differs only in the pool:
+  `no_seed_pool(loop)` makes that loop's `RobotView.seed_memory()` return None, so SAGE retrieves nothing.
+* Cross-episode memory stays off: each episode's live memory (`live.jsonl`) and object memory are in a temporary
+  directory removed after it, so no episode learns from another.
+* summary.json `config.planner_config` records `variant` (rag / norag), `seed_pool` (path), `seed_pool_sha`
+  (sha256 of the file) and `seed_pool_n`.
+* No leak: tests/test_seed_pool_leak.py checks that no example shares a family, gen_id or template id with a dev
+  / test task, that none names a dev / test id or an evaluated house, that no EN / KO example text is within
+  Jaccard 0.5 of a dev / test text or template text (near duplicate: 0.90), and that each example's plan, run on
+  the mock robot in example_flat, reaches its goal. homeloop_robot tests/test_seed_pool.py checks the format and
+  that every plan passes embodiplan's action model with this robot's plan actions.
+* Retrieval is live for sage and absent for sage_norag: `homeloop-bench prompt TASK_ID --planner P --llm fake`
+  sets the episode up as a run does, builds the loop's own SAGE planner and captures its first LLM call
+  (tests/test_seed_pool_retrieval.py: 3 `RETRIEVED EXAMPLE` blocks for sage, none for sage_norag, the prompts
+  otherwise identical). With `--llm fake` a run itself plans with the fake GoalPlanner, so fake runs of the two
+  variants are the same.
+* Two limits of SAGE's retrieval, measured with `prompt` (robot_agent / embodiplan not changed): its Jaccard
+  tokenizer keeps only `[a-z0-9]` tokens, so a Korean instruction scores 0 against every example and always gets
+  the first 3 examples of the pool (two English, one Korean delivery example); and the examples' plans are shown as
+  ASCII-escaped JSON, so a Korean `Say` text reaches the prompt as `\uXXXX` escapes. The query is the heard
+  instruction (after ASR), as a deployed robot would use it.
+
+The R2-5 / R2-6 sage runs before this pool were zero-shot; they are reported as the RAG ablation's earlier
+partial runs, and the live_smoke sage numbers before round 2.7 predate the pool.
 
 ## Interruptions
 

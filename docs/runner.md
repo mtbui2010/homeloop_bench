@@ -100,6 +100,20 @@ reproducible without the server.
 `--workers N` runs tasks in N spawned processes and merges the results in task order (same files as
 `--workers 1`). robot_agent planners always run in one process (robot_agent keeps module state).
 
+## Shards
+
+robot_agent keeps module-level state, so its planners run one process per run; `--shard K/N` splits a run over N
+processes instead. Shard K plays the tasks at index `i % N == K` of the run's task list (after `--limit`), in the
+same order and with the same seeds, profile, budgets and LLM settings, and writes `DIR/shard<K>/` (episodes,
+summary of the shard, report, its own `llm_cache/`) plus `shard.json`: the full run's task ids, its `config` (as
+an unsharded run writes it: `data_sha` and `n_tasks` of all tasks) and the split shares. `homeloop-bench merge DIR`
+checks that shards 0..N-1 are all there, complete and from the same settings, then writes `DIR/episodes.jsonl`
+sorted like an unsharded run (task order, then seed), `DIR/summary.json` recomputed from those episodes (its
+`config` is the unsharded run's plus `merged_shards: N`), `DIR/report.md`, and `DIR/llm_cache/` (each cache file
+of the shards, one line per key, shard order). Every random draw is keyed by (task, seed), so the merged files
+equal an unsharded run's (tests/test_shard_merge.py; checker part r27). With N shards against one Ollama server,
+raise its `OLLAMA_NUM_PARALLEL` so the requests are served side by side (tools/llm_gpu0.sh).
+
 ## Episode record
 
 ```

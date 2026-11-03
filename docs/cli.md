@@ -6,6 +6,9 @@
 |---|---|
 | `planners` | one line per planner: `name<TAB>description`, plus `<TAB>[unavailable: robot_agent not importable]` for robot_agent planners when robot_agent cannot be imported |
 | `run --planner P --split S --limit N --profile R --seeds K --lang {en,ko} [--llm URL\|fake] [--model M] --out DIR [--workers W] [--tasks FILE]` | play tasks x seeds, write DIR/episodes.jsonl, DIR/summary.json, DIR/report.md |
+| `run ... --shard K/N --out DIR` | only the tasks at index `i % N == K` of the run's task list (same order, seeds, settings), written to DIR/shard<K>/ with its own llm_cache and a shard.json ([runner](runner.md#shards)) |
+| `merge DIR` | merge DIR/shard0..N-1 into DIR: episodes in the unsharded order, a recomputed summary, report.md, the merged llm_cache |
+| `prompt TASK_ID [--planner robot_agent:sage\|robot_agent:sage_norag] [--lang en\|ko] [--full] --llm fake` | the first prompt SAGE builds for the task, with what it retrieved from the seed pool ([robot_agent](robot_agent.md#seed-pool-sage-and-sage_norag)) |
 | `compare DIR_A DIR_B [--json]` | paired McNemar test on episodes with the same (task, seed) |
 | `report DIR` | re-render DIR/report.md from the run's files |
 | `show TASK_ID [--tasks FILE]` | print one task record |

@@ -31,31 +31,41 @@ from homeloop_robot.intent import QTYPES, clean
 
 from .llm import CachedLLM, FakeLLM, LLMError, parse_json
 
-PROMPT_VERSION = "ui1"
+PROMPT_VERSION = "ui2"
 CACHE_NAME = "user_intent.jsonl"
 
+# ui2 (R2-7a audit, data/quality/sim_user_audit.json): ui1 plus the reading conventions of
+# homeloop_robot docs/user_model.md "Free text" (first question decides, open "what should I do?" = repeat,
+# a statement = free, a proposal = confirm, a choice among places = which_place)
 PROMPT = """You read one question that a household robot asked the person who gave it a task. Say what kind of \
-question it is. Pick exactly one qtype:
+question it is, as the person hearing it would understand it. Pick exactly one qtype:
 
 - which_object: asks which object or thing the person means or wants ("Which cup, the red one or the blue \
-one?", "What should I bring?", "우유랑 물 중에 뭘로 드릴까요?"). slots: options (the things offered, as written), obj.
+one?", "What should I bring?", "What is the second item you want me to grab?", "우유랑 물 중에 뭘로 드릴까요?", \
+"냉장고에 무엇을 넣을까요?"). slots: options (the things offered, as written), obj.
 - which_place: asks which place, or where something should go / be put / be brought, or where the robot should \
 go ("Where should I put the mug?", "Which shelf do you mean: A or B?", "Should I put it in the fridge or the \
-kimchi fridge?", "어디에 둘까요?"). slots: options (the places offered), obj (the thing to be placed).
-- confirm: a yes / no check of the robot's reading: a read-back of its plan ("I will put the mug on the \
-counter. Is that right?") or one thing ("Is it the red mug?", "빨간 컵 맞아요?"). slots: goal (the read-back \
-sentence) or obj.
+kimchi fridge?", "어디에 둘까요?", "어떤 서랍이요?"). A choice among places or furniture is which_place. \
+slots: options (the places offered), obj (the thing to be placed).
+- confirm: a yes / no check of one proposed action or reading: a read-back of its plan ("I will put the mug on \
+the counter. Is that right?"), a proposal ("Should I bring it to you?", "저한테 가져다드릴까요?") or one thing \
+("Is it the red mug?", "빨간 컵 맞아요?"). slots: goal (the read-back / proposed action) or obj.
 - where_are_you: asks where the person is now ("Where are you?", "지금 어디 계세요?").
-- where_is: asks where an object or another person is now ("Where is the remote?", "할아버지 어디 계세요?"). \
-slots: obj.
-- repeat: asks the person to say their request or their last answer again, or to restate the task ("Could you \
-repeat that?", "What should I do exactly?", "다시 말씀해 주시겠어요?"). slots: about = "request" or "answer".
-- did_you_mean: checks a word the robot may have misheard in the person's own words ("Did you say 'kitchen'?", \
-"'주방'이라고 하셨어요?"). slots: word (that word).
+- where_is: asks where an object or another person is now ("Where is the remote?", "할아버지 어디 계세요?", \
+"전화기 위치를 알려주세요"). slots: obj.
+- repeat: asks the person to say their request or their last answer again, or to restate the task because the \
+robot does not know what to do: an open question that names nothing specific ("Could you repeat that?", "What \
+should I do exactly?", "Which objects should I move and where?", "무슨 물건을 어디에 둘까요?", "다시 말씀해 \
+주시겠어요?"). slots: about = "request" or "answer".
+- did_you_mean: checks a word the robot may have misheard in the person's own words, or asks what a quoted word \
+means ("Did you say 'kitchen'?", "What do you mean by 'sec'?", "'주방'이라고 하셨어요?", "'여쇠'가 뭐예요?"). \
+slots: word (that word).
 - what_to_say: asks what message to give someone ("What should I tell your husband?"). slots: person.
 - help: asks the person to help with an obstacle or to clear the way.
-- free: none of these.
+- free: none of these, or no question at all (a remark or a message to someone, "Grandpa, here is your towel.").
 
+Rules: when the robot asks several questions at once, classify the FIRST question. Ignore an apology before it \
+("Sorry, I didn't hear you."). A sentence like "You mentioned the X." only introduces the question after it.
 Copy slot values exactly as they appear in the question (do not translate). Leave out slots that do not apply.
 Answer with JSON only: {{"qtype": "...", "options": [...], "obj": "...", "goal": "...", "word": "...", \
 "person": "...", "about": "..."}}

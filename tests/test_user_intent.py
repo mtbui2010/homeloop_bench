@@ -13,7 +13,7 @@ from homeloop_bench.tasks import task_by_id
 
 MILK = "hl-dev-000003"           # korean_apt_59, clarify: put the milk away -> into the kimchi fridge
 TELL = "hl-dev-000013"           # couple_flat: let my husband know we're leaving in ten minutes
-FREE_Q = {"en": "Any particular words you want me to use for him?", "ko": "남편분께 뭐라고 전해 드리면 될까요?"}
+FREE_Q = {"en": "Any particular words you want me to use for him?", "ko": "그분께 쓰고 싶은 특별한 표현이 있으세요?"}  # the rules do not read these
 
 
 class StubLLM:

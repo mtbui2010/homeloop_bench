@@ -37,7 +37,8 @@ def cmd_run(a) -> int:
               file=sys.stderr)
         return 2
     try:
-        s = run_many(a.planner, a.split, a.limit, a.profile, a.seeds, a.lang, a.llm, a.out, model=a.model,
+        prof = f"{a.profile}+{a.set}" if getattr(a, "set", None) else a.profile
+        s = run_many(a.planner, a.split, a.limit, prof, a.seeds, a.lang, a.llm, a.out, model=a.model,
                      workers=a.workers, tasks_file=a.tasks, budgets=_budgets(a), progress=True)
     except PlannerConfigError as e:
         print(str(e), file=sys.stderr)
@@ -177,6 +178,9 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--out", required=True)
     r.add_argument("--workers", type=int, default=1)
     r.add_argument("--tasks", default=None, help="a task JSONL file instead of the packaged split")
+    r.add_argument("--set", default=None, metavar="KEY=V[,KEY=V]",
+                   help="override scalar profile parameters, e.g. asr.ko.app_cer=0.02 (sensitivity runs; the "
+                        "summary's config.profile and profile_sha record it)")
     r.add_argument("--max-calls", type=int, default=None)
     r.add_argument("--max-sim-time-s", type=float, default=None)
     r.add_argument("--max-llm-calls", type=int, default=None)

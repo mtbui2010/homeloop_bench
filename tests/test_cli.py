@@ -64,3 +64,16 @@ def test_live_smoke_dir_names(tmp_path):
                  "--tasks", f]) == 0
     for lang in ("en", "ko"):
         assert (tmp_path / "ls" / f"progprompt_like__qwen3-vl:8b-instruct__{lang}" / "summary.json").exists()
+
+
+def test_run_with_profile_override(tmp_path):
+    """--set overrides scalar profile parameters for sensitivity runs and is recorded in the summary."""
+    out = tmp_path / "s"
+    assert main(["run", "--planner", "naive", "--split", "dev", "--limit", "5", "--profile", "real", "--lang",
+                 "ko", "--set", "asr.ko.app_cer=0.01", "--out", str(out)]) == 0
+    s = json.load(open(out / "summary.json"))
+    assert s["config"]["profile"] == "real+asr.ko.app_cer=0.01"
+    base = tmp_path / "b"
+    assert main(["run", "--planner", "naive", "--split", "dev", "--limit", "5", "--profile", "real", "--lang",
+                 "ko", "--out", str(base)]) == 0
+    assert json.load(open(base / "summary.json"))["config"]["profile_sha"] != s["config"]["profile_sha"]

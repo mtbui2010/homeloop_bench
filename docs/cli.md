@@ -17,7 +17,9 @@
 Defaults: `--split dev`, `--limit` all, `--seeds 1`, `--lang en`, `--profile real`, `--model
 qwen3-vl:8b-instruct`. `--tasks FILE` reads tasks from a JSONL file instead of the packaged split.
 Budgets can be changed with `--max-calls`, `--max-sim-time-s`, `--max-llm-calls` (defaults in
-[runner](runner.md#budgets)).
+[runner](runner.md#budgets)). `--set KEY=V[,KEY=V]` overrides scalar parameters of the profile for a sensitivity
+run (e.g. `--set asr.ko.app_cer=0.02,asr.en.app_wer=0.02`); `config.profile` and `config.profile_sha` record it
+(homeloop_robot docs/profiles.md).
 
 An LLM planner without `--llm` is an error: `planner X needs --llm URL or --llm fake` (exit 2).
 `--llm fake` is for tests only.

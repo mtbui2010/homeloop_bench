@@ -231,7 +231,7 @@ Same 4 tasks and conditions, after the round 3 fixes.
 | naive EN, KO | 2 / 4 | 0 | 0 | give_up / done / give_up / done |
 | oracle EN, KO | 3 / 4 | 0 | 0 | give_up / done / done / done |
 
-Not genuine (fixed or reported; homeloop_robot df354d1; this repository
+Not genuine (fixed or reported; homeloop_robot 4a6ec64; this repository
 104202c). Both are outcome-neutral: the judge reads `final_say` only through
 `refusal_texts` of a refuse.
 

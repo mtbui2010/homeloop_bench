@@ -1,0 +1,922 @@
+{
+ "accuracy": 0.9527,
+ "accuracy_en": 0.9659,
+ "accuracy_ko": 0.9396,
+ "accuracy_qtype_only": 0.9584,
+ "before_fixes": {
+  "accuracy": 0.758,
+  "accuracy_en": 0.7879,
+  "accuracy_ko": 0.7283,
+  "accuracy_qtype_only": 0.7637,
+  "by_path": {
+   "llm": {
+    "accuracy": 0.5397,
+    "correct": 34,
+    "en": 22,
+    "ko": 41,
+    "n": 63,
+    "share": 0.1191
+   },
+   "rules": {
+    "accuracy": 0.5035,
+    "correct": 72,
+    "en": 80,
+    "ko": 63,
+    "n": 143,
+    "share": 0.2703
+   },
+   "structured": {
+    "accuracy": 0.9133,
+    "correct": 295,
+    "en": 162,
+    "ko": 161,
+    "n": 323,
+    "share": 0.6106
+   }
+  },
+  "classifier": {
+   "kind": "llm",
+   "model": "qwen3-vl:8b-instruct",
+   "prompt_version": "ui1"
+  },
+  "code": {
+   "homeloop_bench": "5215e4c",
+   "homeloop_robot": "a3e97d7"
+  },
+  "confusions": [
+   {
+    "count": 14,
+    "gold": "repeat",
+    "path": "rules",
+    "sim": "which_place"
+   },
+   {
+    "count": 14,
+    "gold": "repeat",
+    "path": "structured",
+    "sim": "which_place"
+   },
+   {
+    "count": 8,
+    "gold": "where_is",
+    "path": "rules",
+    "sim": "which_place"
+   },
+   {
+    "count": 8,
+    "gold": "which_object",
+    "path": "rules",
+    "sim": "which_place"
+   },
+   {
+    "count": 7,
+    "gold": "repeat",
+    "path": "llm",
+    "sim": "which_place"
+   },
+   {
+    "count": 6,
+    "gold": "repeat",
+    "path": "rules",
+    "sim": "which_object"
+   },
+   {
+    "count": 5,
+    "gold": "free",
+    "path": "structured",
+    "sim": "which_place"
+   },
+   {
+    "count": 5,
+    "gold": "which_place",
+    "path": "llm",
+    "sim": "which_object"
+   },
+   {
+    "count": 4,
+    "gold": "confirm",
+    "path": "structured",
+    "sim": "which_place"
+   },
+   {
+    "count": 4,
+    "gold": "did_you_mean",
+    "path": "rules",
+    "sim": "which_object"
+   },
+   {
+    "count": 4,
+    "gold": "where_is",
+    "path": "rules",
+    "sim": "which_object"
+   },
+   {
+    "count": 3,
+    "gold": "confirm",
+    "path": "rules",
+    "sim": "which_place"
+   },
+   {
+    "count": 3,
+    "gold": "did_you_mean",
+    "path": "rules",
+    "sim": "which_place"
+   },
+   {
+    "count": 3,
+    "gold": "free",
+    "path": "rules",
+    "sim": "confirm"
+   },
+   {
+    "count": 3,
+    "gold": "repeat",
+    "path": "llm",
+    "sim": "what_to_say"
+   }
+  ],
+  "n": 529,
+  "n_disagree_excluded": 4,
+  "n_en": 264,
+  "n_ko": 265,
+  "note": "before the R2-7a audit fixes: the same audit set and scorer, rules of dialog.compose on the whole text, classifier prompt ui1, no Korean heard-text check"
+ },
+ "by_path": {
+  "llm": {
+   "accuracy": 0.8286,
+   "correct": 29,
+   "en": 15,
+   "ko": 20,
+   "n": 35,
+   "share": 0.0662
+  },
+  "rules": {
+   "accuracy": 0.9167,
+   "correct": 132,
+   "en": 77,
+   "ko": 67,
+   "n": 144,
+   "share": 0.2722
+  },
+  "structured": {
+   "accuracy": 0.9851,
+   "correct": 330,
+   "en": 172,
+   "ko": 163,
+   "n": 335,
+   "share": 0.6333
+  },
+  "structured_mismatch": {
+   "accuracy": 0.8667,
+   "correct": 13,
+   "en": 0,
+   "ko": 15,
+   "n": 15,
+   "share": 0.0284
+  }
+ },
+ "classifier": {
+  "kind": "llm",
+  "model": "qwen3-vl:8b-instruct",
+  "prompt_version": "ui2"
+ },
+ "confusions": [
+  {
+   "count": 3,
+   "gold": "which_place",
+   "path": "rules",
+   "qids": [
+    "q0043_38d25d41",
+    "q0060_fef77b7b",
+    "q0166_50b2d26f"
+   ],
+   "sim": "confirm"
+  },
+  {
+   "count": 2,
+   "gold": "free",
+   "path": "rules",
+   "qids": [
+    "q0069_b38a6a2d",
+    "q0162_2fc62947"
+   ],
+   "sim": "confirm"
+  },
+  {
+   "count": 2,
+   "gold": "where_is",
+   "path": "structured",
+   "qids": [
+    "q0150_9a29a273",
+    "q0434_e305dcdd"
+   ],
+   "sim": "where_is (slot)"
+  },
+  {
+   "count": 2,
+   "gold": "which_place",
+   "path": "llm",
+   "qids": [
+    "q0144_0fd0d666",
+    "q0293_220b51b5"
+   ],
+   "sim": "confirm"
+  },
+  {
+   "count": 1,
+   "gold": "confirm",
+   "path": "rules",
+   "qids": [
+    "q0230_cb6c8c0d"
+   ],
+   "sim": "which_object"
+  },
+  {
+   "count": 1,
+   "gold": "confirm",
+   "path": "rules",
+   "qids": [
+    "q0408_a279cffb"
+   ],
+   "sim": "which_place"
+  },
+  {
+   "count": 1,
+   "gold": "confirm",
+   "path": "structured",
+   "qids": [
+    "q0079_c60148b1"
+   ],
+   "sim": "which_place"
+  },
+  {
+   "count": 1,
+   "gold": "did_you_mean",
+   "path": "rules",
+   "qids": [
+    "q0002_5073b3d1"
+   ],
+   "sim": "did_you_mean (slot)"
+  },
+  {
+   "count": 1,
+   "gold": "repeat",
+   "path": "llm",
+   "qids": [
+    "q0265_e6cad712"
+   ],
+   "sim": "confirm"
+  },
+  {
+   "count": 1,
+   "gold": "repeat",
+   "path": "llm",
+   "qids": [
+    "q0326_97eb1cf6"
+   ],
+   "sim": "which_object"
+  },
+  {
+   "count": 1,
+   "gold": "repeat",
+   "path": "rules",
+   "qids": [
+    "q0432_6b3f74a0"
+   ],
+   "sim": "which_place"
+  },
+  {
+   "count": 1,
+   "gold": "where_is",
+   "path": "rules",
+   "qids": [
+    "q0063_ed9bc4a7"
+   ],
+   "sim": "confirm"
+  },
+  {
+   "count": 1,
+   "gold": "where_is",
+   "path": "llm",
+   "qids": [
+    "q0420_d45b244a"
+   ],
+   "sim": "what_to_say"
+  },
+  {
+   "count": 1,
+   "gold": "where_is",
+   "path": "structured_mismatch",
+   "qids": [
+    "q0419_2532354e"
+   ],
+   "sim": "what_to_say"
+  },
+  {
+   "count": 1,
+   "gold": "which_object",
+   "path": "llm",
+   "qids": [
+    "q0160_8ec97de8"
+   ],
+   "sim": "which_place"
+  },
+  {
+   "count": 1,
+   "gold": "which_object",
+   "path": "rules",
+   "qids": [
+    "q0129_e18d9559"
+   ],
+   "sim": "which_place"
+  },
+  {
+   "count": 1,
+   "gold": "which_object",
+   "path": "structured",
+   "qids": [
+    "q0452_cba11489"
+   ],
+   "sim": "which_place"
+  },
+  {
+   "count": 1,
+   "gold": "which_place",
+   "path": "structured_mismatch",
+   "qids": [
+    "q0338_06834e96"
+   ],
+   "sim": "confirm"
+  },
+  {
+   "count": 1,
+   "gold": "which_place",
+   "path": "structured",
+   "qids": [
+    "q0099_3b3787c8"
+   ],
+   "sim": "repeat"
+  },
+  {
+   "count": 1,
+   "gold": "which_place",
+   "path": "rules",
+   "qids": [
+    "q0404_62c48191"
+   ],
+   "sim": "which_object"
+  }
+ ],
+ "disagreements": [
+  {
+   "labels": [
+    "repeat",
+    "which_object",
+    "where_is"
+   ],
+   "lang": "en",
+   "qid": "q0235_f86acc7a",
+   "question": "Who should I tell 'lunch is ready' to, and where are they?"
+  },
+  {
+   "labels": [
+    "which_place",
+    "free",
+    "repeat"
+   ],
+   "lang": "en",
+   "qid": "q0287_b7c025f9",
+   "question": "Do you mean to wait for a specific time, or are you asking the robot to wait somewhere?"
+  },
+  {
+   "labels": [
+    "which_place",
+    "free",
+    "repeat"
+   ],
+   "lang": "ko",
+   "qid": "q0391_31206f6a",
+   "question": "로봇이 특정 장소로 가는지, 아니면 당신을 따라가는지요?"
+  },
+  {
+   "labels": [
+    "which_place",
+    "where_is",
+    "confirm"
+   ],
+   "lang": "ko",
+   "qid": "q0421_040c7d3d",
+   "question": "아버님께 직접 말씀드려야 할까요, 아니면 침대@마스터 같은 특정 장소에서 말해야 할까요?"
+  }
+ ],
+ "errors": [
+  {
+   "gold": "did_you_mean",
+   "gold_slots": {
+    "word": [
+     "kitchen",
+     "while you're in the kitchen",
+     "while you're in the kitchen"
+    ]
+   },
+   "lang": "en",
+   "path": "rules",
+   "planner": "robot_agent:sage",
+   "qid": "q0002_5073b3d1",
+   "question": "Did you mean 'while you're in the kitchen' and 'in my hand'?",
+   "rule": "repair_confirm",
+   "sim": "did_you_mean",
+   "sim_slots": {
+    "word": "in my hand"
+   }
+  },
+  {
+   "gold": "which_place",
+   "gold_slots": {
+    "obj": [
+     "vitamins",
+     "vitamins",
+     "vitamins"
+    ]
+   },
+   "lang": "en",
+   "path": "rules",
+   "planner": "robot_agent:sage",
+   "qid": "q0043_38d25d41",
+   "question": "Do you want the vitamins placed on you, or should I bring them to a specific location?",
+   "rule": "goal_confirm",
+   "sim": "confirm",
+   "sim_slots": {}
+  },
+  {
+   "gold": "which_place",
+   "gold_slots": {
+    "obj": [
+     "blue book",
+     "reading glasses",
+     "blue book and reading glasses",
+     "blue book and reading glasses"
+    ],
+    "options": [
+     "bed",
+     "hold them"
+    ]
+   },
+   "lang": "en",
+   "path": "rules",
+   "planner": "robot_agent:sage",
+   "qid": "q0060_fef77b7b",
+   "question": "Should I bring the blue book and reading glasses to the bed, or do you want me to hold them there?",
+   "rule": "goal_confirm",
+   "sim": "confirm",
+   "sim_slots": {}
+  },
+  {
+   "gold": "where_is",
+   "gold_slots": {
+    "obj": [
+     "red book",
+     "red book",
+     "red book"
+    ]
+   },
+   "lang": "en",
+   "path": "rules",
+   "planner": "robot_agent:sage",
+   "qid": "q0063_ed9bc4a7",
+   "question": "Is the red book on the coffee table, or should I look for the blue book instead?",
+   "rule": "goal_correct",
+   "sim": "confirm",
+   "sim_slots": {}
+  },
+  {
+   "gold": "free",
+   "gold_slots": {},
+   "lang": "en",
+   "path": "rules",
+   "planner": "robot_agent:sage",
+   "qid": "q0069_b38a6a2d",
+   "question": "Should I go tell Dad now, or wait until I’m free to do it?",
+   "rule": "goal_confirm",
+   "sim": "confirm",
+   "sim_slots": {}
+  },
+  {
+   "gold": "confirm",
+   "gold_slots": {
+    "goal": [
+     "put them on the bed",
+     "put the green book and glasses on the bed",
+     "put the green book and glasses on the bed"
+    ],
+    "obj": [
+     "green book",
+     "glasses"
+    ]
+   },
+   "lang": "en",
+   "path": "structured",
+   "planner": "robot_agent:sage",
+   "qid": "q0079_c60148b1",
+   "question": "What should I do with the green book and glasses? Should I put them on the bed?",
+   "rule": "goal_destination",
+   "sim": "which_place",
+   "sim_slots": {
+    "obj": "green book and glasses"
+   }
+  },
+  {
+   "gold": "which_place",
+   "gold_slots": {
+    "obj": [
+     "김치냉장고",
+     "김치냉장고",
+     "김치냉장고"
+    ]
+   },
+   "lang": "ko",
+   "path": "structured",
+   "planner": "robot_agent:sage",
+   "qid": "q0099_3b3787c8",
+   "question": "죄송해요, 잘 안 들었어요. 김치냉장고 얘기하셨던데, 그거 어떻게 해야 할까요? 어디에 두면 될까요?",
+   "rule": "repeat_request",
+   "sim": "repeat",
+   "sim_slots": {
+    "about": "request"
+   }
+  },
+  {
+   "gold": "which_object",
+   "gold_slots": {
+    "obj": [
+     "검은 물건",
+     "검은색 물건",
+     "검은 물건"
+    ]
+   },
+   "lang": "ko",
+   "path": "rules",
+   "planner": "robot_agent:sage",
+   "qid": "q0129_e18d9559",
+   "question": "어떤 검은 물건을 로봇이 가져가야 할까요, 어디로 가져가야 할까요?",
+   "rule": "goal_destination",
+   "sim": "which_place",
+   "sim_slots": {}
+  },
+  {
+   "gold": "which_place",
+   "gold_slots": {
+    "obj": [
+     "파란색 사탕",
+     "파란색 사탕",
+     "파란색 사탕"
+    ]
+   },
+   "lang": "ko",
+   "path": "llm",
+   "planner": "robot_agent:sage",
+   "qid": "q0144_0fd0d666",
+   "question": "파란색 사탕을 특정 위치에 두고 싶으세요, 아니면 그대로 두면 돼요?",
+   "rule": "goal_correct",
+   "sim": "confirm",
+   "sim_slots": {
+    "goal": "파란색 사탕을 특정 위치에 두고 싶으세요"
+   }
+  },
+  {
+   "gold": "where_is",
+   "gold_slots": {
+    "obj": [
+     "접시",
+     "접시",
+     "접시"
+    ]
+   },
+   "lang": "ko",
+   "path": "structured",
+   "planner": "robot_agent:sage",
+   "qid": "q0150_9a29a273",
+   "question": "접시 찾을 수 없어요. 어디에요?",
+   "rule": "location",
+   "sim": "where_is",
+   "sim_slots": {
+    "obj": "plates"
+   }
+  },
+  {
+   "gold": "which_object",
+   "gold_slots": {
+    "obj": [
+     "책"
+    ]
+   },
+   "lang": "ko",
+   "path": "llm",
+   "planner": "robot_agent:sage",
+   "qid": "q0160_8ec97de8",
+   "question": "죄송해요, 잘 안 들었어요. 읽을 책은 의자나 소파에 어떤 걸 두면 되고, 다음에 가져다드릴 책은 어떤 걸 원하세요?",
+   "rule": "goal_destination",
+   "sim": "which_place",
+   "sim_slots": {
+    "obj": "책",
+    "options": [
+     "의자",
+     "소파"
+    ]
+   }
+  },
+  {
+   "gold": "free",
+   "gold_slots": {},
+   "lang": "ko",
+   "path": "rules",
+   "planner": "robot_agent:sage",
+   "qid": "q0162_2fc62947",
+   "question": "누군가가 거실에 있는 TV 스탠드를 tv_stand에 놓으라고 했어요. 먼저 해야 할까요? 아니면 지금 작업이 끝나면 그 후에 할까요?",
+   "rule": "goal_correct",
+   "sim": "confirm",
+   "sim_slots": {
+    "goal": "먼저 해야 할까요?"
+   }
+  },
+  {
+   "gold": "which_place",
+   "gold_slots": {
+    "obj": [
+     "파란 책",
+     "안경",
+     "파란 책과 안경",
+     "파란 책과 안경"
+    ]
+   },
+   "lang": "ko",
+   "path": "rules",
+   "planner": "robot_agent:sage",
+   "qid": "q0166_50b2d26f",
+   "question": "파란 책과 안경은 누가 받을까요? 어디에 가져가야 할까요?",
+   "rule": "goal_correct",
+   "sim": "confirm",
+   "sim_slots": {}
+  },
+  {
+   "gold": "confirm",
+   "gold_slots": {
+    "goal": [
+     "bring the red book if it's on the coffee table, else the blue book",
+     "bring the red book if it is on the coffee table, else the blue book"
+    ]
+   },
+   "lang": "en",
+   "path": "rules",
+   "planner": "robot_agent:sage",
+   "qid": "q0230_cb6c8c0d",
+   "question": "Should I bring the red book if it's on the coffee table, or the blue book if not?",
+   "rule": "goal_object",
+   "sim": "which_object",
+   "sim_slots": {}
+  },
+  {
+   "gold": "repeat",
+   "gold_slots": {
+    "about": [
+     "request",
+     "request",
+     "request"
+    ]
+   },
+   "lang": "en",
+   "path": "llm",
+   "planner": "robot_agent:sage",
+   "qid": "q0265_e6cad712",
+   "question": "Do you want me to do nothing, or was there a misunderstanding?",
+   "rule": "not_understood",
+   "sim": "confirm",
+   "sim_slots": {
+    "goal": "do nothing"
+   }
+  },
+  {
+   "gold": "which_place",
+   "gold_slots": {
+    "obj": [
+     "shopping list",
+     "shopping list"
+    ]
+   },
+   "lang": "en",
+   "path": "llm",
+   "planner": "robot_agent:sage",
+   "qid": "q0293_220b51b5",
+   "question": "Should I put the shopping list somewhere, or is it just for reference?",
+   "rule": "not_understood",
+   "sim": "confirm",
+   "sim_slots": {
+    "goal": "put the shopping list somewhere"
+   }
+  },
+  {
+   "gold": "repeat",
+   "gold_slots": {
+    "about": [
+     "request",
+     "request",
+     "request"
+    ]
+   },
+   "lang": "ko",
+   "path": "llm",
+   "planner": "robot_agent:sage",
+   "qid": "q0326_97eb1cf6",
+   "question": "�이 마이크로웨이브를 확인할지, 문을 열지, 어떤 게 좋을까요? 그리고 마이크로웨이브를 어디에 두면 될까요?",
+   "rule": "not_understood",
+   "sim": "which_object",
+   "sim_slots": {
+    "obj": "마이크로웨이브",
+    "options": [
+     "마이크로웨이브",
+     "문"
+    ]
+   }
+  },
+  {
+   "gold": "which_place",
+   "gold_slots": {
+    "obj": [
+     "파란 책",
+     "파란 책",
+     "파란 책"
+    ],
+    "options": [
+     "안락의자",
+     "TV대",
+     "안락의자",
+     "TV대",
+     "안락의자",
+     "TV대"
+    ]
+   },
+   "lang": "ko",
+   "path": "structured_mismatch",
+   "planner": "robot_agent:sage",
+   "qid": "q0338_06834e96",
+   "question": "파란 책은 결국 거실의 안락의자에요, 아니면 TV대에요? 두 곳에 동시에 놓을 수는 없어요.",
+   "rule": "goal_correct",
+   "sim": "confirm",
+   "sim_slots": {}
+  },
+  {
+   "gold": "which_place",
+   "gold_slots": {
+    "obj": [
+     "세제",
+     "세제",
+     "세제"
+    ]
+   },
+   "lang": "ko",
+   "path": "rules",
+   "planner": "robot_agent:sage",
+   "qid": "q0404_62c48191",
+   "question": "세제를 넣을 캐비닛은 어디인가요?",
+   "rule": "scripted_answer",
+   "sim": "which_object",
+   "sim_slots": {}
+  },
+  {
+   "gold": "confirm",
+   "gold_slots": {
+    "goal": [
+     "put the towel in the storage cabinet",
+     "수건을 찾아서 보관장에 놓기"
+    ]
+   },
+   "lang": "ko",
+   "path": "rules",
+   "planner": "robot_agent:sage",
+   "qid": "q0408_a279cffb",
+   "question": "로봇이 수건을 찾아서 보관장에 놓을까요, 아니면 다른 요청이신가요? 위치와 수건에 대해 구체적으로 알려주세요.",
+   "rule": "goal_destination",
+   "sim": "which_place",
+   "sim_slots": {}
+  },
+  {
+   "gold": "where_is",
+   "gold_slots": {
+    "obj": [
+     "아버님",
+     "아버님",
+     "아버님"
+    ]
+   },
+   "lang": "ko",
+   "path": "structured_mismatch",
+   "planner": "robot_agent:sage",
+   "qid": "q0419_2532354e",
+   "question": "어디에 말씀드려야 할까요?",
+   "rule": "goal_message",
+   "sim": "what_to_say",
+   "sim_slots": {}
+  },
+  {
+   "gold": "where_is",
+   "gold_slots": {
+    "obj": [
+     "아버님",
+     "아버님"
+    ]
+   },
+   "lang": "ko",
+   "path": "llm",
+   "planner": "robot_agent:sage",
+   "qid": "q0420_d45b244a",
+   "question": "아버지께 메시지를 어디에 남겨야 할까요? 특정 장소에 남기는 게 맞는지, 아니면 직접 누군가에게 전하는 게 좋을지 궁금합니다.",
+   "rule": "goal_message",
+   "sim": "what_to_say",
+   "sim_slots": {
+    "person": "아버지"
+   }
+  },
+  {
+   "gold": "repeat",
+   "gold_slots": {
+    "about": [
+     "request",
+     "request"
+    ]
+   },
+   "lang": "ko",
+   "path": "rules",
+   "planner": "robot_agent:sage",
+   "qid": "q0432_6b3f74a0",
+   "question": "무슨 물건을挪그게 어디에 두면 될까요?",
+   "rule": "goal_room",
+   "sim": "which_place",
+   "sim_slots": {}
+  },
+  {
+   "gold": "where_is",
+   "gold_slots": {
+    "obj": [
+     "티셔츠",
+     "티셔츠",
+     "티셔츠"
+    ]
+   },
+   "lang": "ko",
+   "path": "structured",
+   "planner": "robot_agent:sage",
+   "qid": "q0434_e305dcdd",
+   "question": "티셔츠를 찾지 못했어요. 어디에 있는지 알려주세요.",
+   "rule": "location",
+   "sim": "where_is",
+   "sim_slots": {
+    "obj": "tshirt"
+   }
+  },
+  {
+   "gold": "which_object",
+   "gold_slots": {
+    "obj": [
+     "빨간 컵",
+     "빨간 컵",
+     "빨간 컵"
+    ],
+    "options": [
+     "안락의자",
+     "침대",
+     "커피테이블",
+     "카운터",
+     "안락의자",
+     "침대",
+     "커피테이블",
+     "카운터"
+    ]
+   },
+   "lang": "ko",
+   "path": "structured",
+   "planner": "robot_agent:sage",
+   "qid": "q0452_cba11489",
+   "question": "어떤 빨간 컵을 말씀하시는 건가요? 거실의 안락의자, 침실의 침대, 거실의 커피테이블, 아니면 주방의 카운터인가요?",
+   "rule": "goal_place",
+   "sim": "which_place",
+   "sim_slots": {
+    "options": [
+     "armchair in the living",
+     "bed in the bedroom",
+     "coffee_table in the living",
+     "counter in the kitchen"
+    ]
+   }
+  }
+ ],
+ "key_slots": {
+  "checked": 134,
+  "matched": 131
+ },
+ "n": 529,
+ "n_disagree_excluded": 4,
+ "n_en": 264,
+ "n_ko": 265,
+ "n_questions": 533,
+ "set": "data/quality/sim_user_audit"
+}

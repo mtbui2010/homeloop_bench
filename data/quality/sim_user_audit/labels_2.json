@@ -1,0 +1,4090 @@
+{
+"judge": 2,
+"labels": [
+{
+"note": "asks whether 'chicken' was a mishearing of 'kitchen'",
+"qid": "q0000_bb713a93",
+"qtype": "did_you_mean",
+"slots": {
+"word": "chicken"
+}
+},
+{
+"note": "asks what to do with ASR fragments; restate task",
+"qid": "q0001_913de5bc",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0002_5073b3d1",
+"qtype": "did_you_mean",
+"slots": {
+"word": "while you're in the kitchen"
+}
+},
+{
+"note": "role of 'me'; second part 'where should I put the ?' has empty object",
+"qid": "q0003_76a7a76b",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0004_a7a82db5",
+"qtype": "which_place",
+"slots": {
+"obj": "towel"
+}
+},
+{
+"qid": "q0005_c2655066",
+"qtype": "where_are_you",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0006_9e07d3a6",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "user never said 'he'; second part asks where the towel goes",
+"qid": "q0007_e3a86e48",
+"qtype": "did_you_mean",
+"slots": {
+"word": "he"
+}
+},
+{
+"qid": "q0008_56485634",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "asks what to do with 'the'",
+"qid": "q0009_17f602e5",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "read-back",
+"qid": "q0010_736d68ea",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0011_1d342021",
+"qtype": "which_place",
+"slots": {
+"obj": "green mug"
+}
+},
+{
+"note": "read-back",
+"qid": "q0012_1dc2861a",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "asks user to move the mug closer",
+"qid": "q0013_e90b887d",
+"qtype": "help",
+"slots": {}
+},
+{
+"qid": "q0014_413d55d9",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0015_7b3ecb84",
+"qtype": "which_place",
+"slots": {
+"obj": "red mug and water bottle",
+"options": [
+"you at the armchair",
+"somewhere else"
+]
+}
+},
+{
+"note": "could be read as what_to_say for husband",
+"qid": "q0016_23713709",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0017_1a9eeaf0",
+"qtype": "confirm",
+"slots": {
+"goal": "say something to my husband"
+}
+},
+{
+"note": "read-back",
+"qid": "q0018_2f9bf01c",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0019_68956efb",
+"qtype": "confirm",
+"slots": {
+"goal": "say 'We are leaving in ten minutes.' to partner_b"
+}
+},
+{
+"qid": "q0020_9a6161ba",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0021_352d7283",
+"qtype": "which_object",
+"slots": {
+"obj": "the black one"
+}
+},
+{
+"qid": "q0022_aa573e27",
+"qtype": "which_object",
+"slots": {
+"obj": "the black one"
+}
+},
+{
+"note": "then also where are you",
+"qid": "q0023_b37e0fa2",
+"qtype": "which_place",
+"slots": {
+"options": [
+"counter",
+"dining_table",
+"drawer",
+"floor",
+"fridge",
+"kimchi_fridge",
+"kitchen_sink",
+"microwave",
+"stove"
+]
+}
+},
+{
+"note": "then also where are you",
+"qid": "q0024_1ee22129",
+"qtype": "which_place",
+"slots": {
+"options": [
+"counter",
+"dining_table",
+"drawer",
+"floor",
+"fridge",
+"kimchi_fridge",
+"kitchen_sink",
+"microwave",
+"stove"
+]
+}
+},
+{
+"note": "second part: where to bring it",
+"qid": "q0025_312cb8c8",
+"qtype": "where_is",
+"slots": {
+"obj": "red book"
+}
+},
+{
+"qid": "q0026_43db4eb3",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0027_4bb52176",
+"qtype": "confirm",
+"slots": {
+"goal": "put the reading glasses and remote on the coffee table"
+}
+},
+{
+"note": "read-back",
+"qid": "q0028_889b56a8",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0029_4cdc4b7c",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0030_f7ea18b0",
+"qtype": "where_is",
+"slots": {
+"obj": "remote"
+}
+},
+{
+"qid": "q0031_ae1fe727",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "second part: bring phone to Grandpa vs give directly",
+"qid": "q0032_ffd9ef57",
+"qtype": "did_you_mean",
+"slots": {
+"word": "please"
+}
+},
+{
+"note": "read-back",
+"qid": "q0033_b3addcdf",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0034_c9178f7b",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0035_01041407",
+"qtype": "which_place",
+"slots": {
+"options": [
+"bed",
+"dresser",
+"floor",
+"nightstand",
+"wardrobe"
+]
+}
+},
+{
+"note": "where in bedroom to wait",
+"qid": "q0036_1d61c420",
+"qtype": "which_place",
+"slots": {}
+},
+{
+"note": "where in bedroom to wait",
+"qid": "q0037_392536c2",
+"qtype": "which_place",
+"slots": {}
+},
+{
+"qid": "q0038_2ac0f947",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "read-back",
+"qid": "q0039_cfbb8e3b",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "object slot empty",
+"qid": "q0040_4761e70f",
+"qtype": "which_place",
+"slots": {}
+},
+{
+"qid": "q0041_36ae2c3b",
+"qtype": "which_place",
+"slots": {
+"obj": "red snack bag"
+}
+},
+{
+"note": "read-back",
+"qid": "q0042_4a746f9c",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0043_38d25d41",
+"qtype": "which_place",
+"slots": {
+"obj": "vitamins"
+}
+},
+{
+"note": "read-back",
+"qid": "q0044_d4f014d9",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0045_2b10919e",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0046_39d1dfc3",
+"qtype": "where_is",
+"slots": {
+"obj": "socks"
+}
+},
+{
+"note": "read-back",
+"qid": "q0047_676dd4da",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0048_dc9c8527",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0049_a5829c17",
+"qtype": "where_is",
+"slots": {
+"obj": "book"
+}
+},
+{
+"qid": "q0050_919dbd87",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "asks which objects and where: restate task",
+"qid": "q0051_975f34d0",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0052_ec5b9535",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "second part what_to_say husband",
+"qid": "q0053_df416875",
+"qtype": "which_place",
+"slots": {
+"obj": "milk",
+"options": [
+"fridge",
+"table"
+]
+}
+},
+{
+"note": "second part what_to_say husband",
+"qid": "q0054_9c24b31a",
+"qtype": "which_place",
+"slots": {
+"obj": "milk",
+"options": [
+"fridge",
+"table"
+]
+}
+},
+{
+"qid": "q0055_3b44b652",
+"qtype": "which_place",
+"slots": {
+"obj": "yellow book",
+"options": [
+"sofa",
+"reading chair"
+]
+}
+},
+{
+"note": "read-back",
+"qid": "q0056_ea907725",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0057_b50b008c",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0058_1a2c2711",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0059_9a69db3f",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0060_fef77b7b",
+"qtype": "which_place",
+"slots": {
+"obj": "blue book and reading glasses"
+}
+},
+{
+"note": "read-back",
+"qid": "q0061_55200a38",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0062_470154ca",
+"qtype": "did_you_mean",
+"slots": {
+"word": "blue book"
+}
+},
+{
+"qid": "q0063_ed9bc4a7",
+"qtype": "where_is",
+"slots": {
+"obj": "red book"
+}
+},
+{
+"qid": "q0064_43d13ae5",
+"qtype": "where_is",
+"slots": {
+"obj": "aluminum foil"
+}
+},
+{
+"note": "read-back",
+"qid": "q0065_0ffb36fa",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0066_55b279c9",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "empty object; second part about \"moment\"; could be repeat",
+"qid": "q0067_2264e5e9",
+"qtype": "which_place",
+"slots": {}
+},
+{
+"note": "meaning question rather than mishearing",
+"qid": "q0068_634c5ca7",
+"qtype": "did_you_mean",
+"slots": {
+"word": "when you have a moment"
+}
+},
+{
+"note": "timing question (now or later); no qtype fits",
+"qid": "q0069_b38a6a2d",
+"qtype": "free",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0070_92cf421c",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0071_273ad7f7",
+"qtype": "which_place",
+"slots": {
+"obj": "milk carton"
+}
+},
+{
+"note": "read-back",
+"qid": "q0072_0f9b03ba",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0073_aac91548",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "second part which desk",
+"qid": "q0074_53f41705",
+"qtype": "which_place",
+"slots": {
+"options": [
+"closet in room_a",
+"closet in room_c"
+]
+}
+},
+{
+"note": "second part which desk",
+"qid": "q0075_8b7f8f6b",
+"qtype": "which_place",
+"slots": {
+"options": [
+"closet in room_a",
+"closet in room_c"
+]
+}
+},
+{
+"note": "second part which desk",
+"qid": "q0076_2de8ef16",
+"qtype": "which_place",
+"slots": {
+"options": [
+"closet in room_a",
+"closet in room_c"
+]
+}
+},
+{
+"qid": "q0077_12cc94b3",
+"qtype": "which_place",
+"slots": {
+"options": [
+"desk in room_a",
+"desk in room_c",
+"desk_chair in room_a"
+]
+}
+},
+{
+"qid": "q0078_d32688c4",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0079_c60148b1",
+"qtype": "confirm",
+"slots": {
+"goal": "put the green book and glasses on the bed"
+}
+},
+{
+"qid": "q0080_ae196bc4",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "kitchen places",
+"qid": "q0081_a2b848fe",
+"qtype": "which_place",
+"slots": {
+"options": [
+"counter",
+"drawer",
+"floor",
+"fridge",
+"kitchen_sink",
+"microwave",
+"stove",
+"table",
+"upper_cabinet"
+]
+}
+},
+{
+"qid": "q0082_ffc18775",
+"qtype": "where_is",
+"slots": {
+"obj": "wallet"
+}
+},
+{
+"qid": "q0083_9d92eb17",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0084_04c3a448",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "read-back",
+"qid": "q0085_375bee12",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "second part where is towel",
+"qid": "q0086_bb140953",
+"qtype": "which_place",
+"slots": {
+"obj": "glasses"
+}
+},
+{
+"note": "read-back",
+"qid": "q0087_5cbfa466",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0088_064db6b8",
+"qtype": "which_place",
+"slots": {
+"obj": "drink",
+"options": [
+"drawer in the kitchen",
+"me"
+]
+}
+},
+{
+"qid": "q0089_59d4ee61",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "read-back",
+"qid": "q0090_53872739",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "where to put the microwave (odd)",
+"qid": "q0091_8a87f2fb",
+"qtype": "which_place",
+"slots": {
+"obj": "전자레인지"
+}
+},
+{
+"qid": "q0092_be729e42",
+"qtype": "confirm",
+"slots": {
+"goal": "전자레인지 문 열기"
+}
+},
+{
+"qid": "q0093_fa9e88d5",
+"qtype": "confirm",
+"slots": {
+"goal": "전자레인지 문 열기"
+}
+},
+{
+"qid": "q0094_fb339c3b",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "read-back; 抽屉 is Chinese but rest understandable",
+"qid": "q0095_cda8ebbc",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0096_d04b114d",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "what and where: restate task",
+"qid": "q0097_46b58f3b",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "user never said kimchi fridge",
+"qid": "q0098_2221e83b",
+"qtype": "which_place",
+"slots": {
+"obj": "김치냉장고"
+}
+},
+{
+"qid": "q0099_3b3787c8",
+"qtype": "which_place",
+"slots": {
+"obj": "김치냉장고"
+}
+},
+{
+"note": "contains Chinese 东西",
+"qid": "q0100_c35152ce",
+"qtype": "confirm",
+"slots": {
+"goal": "김치냉장고에 물건 넣기"
+}
+},
+{
+"note": "read-back",
+"qid": "q0101_6f55a365",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0102_97ffba39",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "first part asks role of 수납장",
+"qid": "q0103_ee9e970c",
+"qtype": "which_place",
+"slots": {
+"obj": "회색 신발"
+}
+},
+{
+"note": "read-back",
+"qid": "q0104_26ea8480",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0105_66479eb4",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0106_74903836",
+"qtype": "which_place",
+"slots": {
+"obj": "흰색 머그잔"
+}
+},
+{
+"note": "read-back",
+"qid": "q0107_1d8a05f0",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0108_9702aee0",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0109_6fba29f0",
+"qtype": "which_place",
+"slots": {}
+},
+{
+"note": "what to put in fridge; second part where towel goes",
+"qid": "q0110_29b17ead",
+"qtype": "which_object",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0111_3fd63e7a",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "Chinese 抽屉 not understandable to a Korean user; partner_a/partner_b ids",
+"qid": "q0112_868a28e3",
+"qtype": "free",
+"slots": {}
+},
+{
+"note": "Chinese 抽屉 not understandable; partner ids",
+"qid": "q0113_2d3d0f64",
+"qtype": "free",
+"slots": {}
+},
+{
+"qid": "q0114_d6cb7fe5",
+"qtype": "which_place",
+"slots": {
+"obj": "파란 책",
+"options": [
+"안락의자",
+"TV 스탠드"
+]
+}
+},
+{
+"note": "read-back",
+"qid": "q0115_208d02cf",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0116_38105715",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0117_0af546d0",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0118_8b61e3a8",
+"qtype": "which_place",
+"slots": {
+"obj": "녹색 머그잔"
+}
+},
+{
+"note": "read-back",
+"qid": "q0119_5646ec49",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "'여기 있어요?' does not mean 'where are you'; heard as where to bring it",
+"qid": "q0120_0656ea6b",
+"qtype": "which_place",
+"slots": {}
+},
+{
+"note": "second part where is red book",
+"qid": "q0121_6bcc9a2a",
+"qtype": "which_place",
+"slots": {
+"obj": "분홍색 컵"
+}
+},
+{
+"qid": "q0122_0c295d79",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "read-back",
+"qid": "q0123_8179470e",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0124_935223b7",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0125_adcbf284",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0126_2c5d14f3",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0127_3ca452ea",
+"qtype": "which_object",
+"slots": {
+"obj": "검은색 물건"
+}
+},
+{
+"qid": "q0128_7004d45c",
+"qtype": "which_object",
+"slots": {
+"obj": "검은색 물건"
+}
+},
+{
+"qid": "q0129_e18d9559",
+"qtype": "which_object",
+"slots": {
+"obj": "검은색 물건"
+}
+},
+{
+"qid": "q0130_64ea1641",
+"qtype": "which_object",
+"slots": {
+"obj": "검은색 물건"
+}
+},
+{
+"qid": "q0131_0018f20f",
+"qtype": "which_place",
+"slots": {
+"options": [
+"카운터",
+"식탁",
+"서랍",
+"바닥",
+"냉장고",
+"김치냉장고",
+"싱크대",
+"마이크로웨이브",
+"스토브"
+]
+}
+},
+{
+"qid": "q0132_540effc1",
+"qtype": "which_place",
+"slots": {
+"options": [
+"카운터",
+"식탁",
+"서랍",
+"바닥",
+"냉장고",
+"김치냉장고",
+"싱크대",
+"마이크로웨이브",
+"스토브"
+]
+}
+},
+{
+"qid": "q0133_c46f31f5",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0134_cb9e9bc4",
+"qtype": "where_is",
+"slots": {
+"obj": "장난감 자동차"
+}
+},
+{
+"note": "and phone; second part where to bring",
+"qid": "q0135_cd229cf9",
+"qtype": "where_is",
+"slots": {
+"obj": "초록색 책"
+}
+},
+{
+"qid": "q0136_a2354fca",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0137_87b23008",
+"qtype": "which_place",
+"slots": {
+"options": [
+"침대",
+"화장대",
+"바닥",
+"밤탁자",
+"옷장"
+]
+}
+},
+{
+"qid": "q0138_0b15e43f",
+"qtype": "which_place",
+"slots": {
+"options": [
+"침대",
+"화장대",
+"바닥",
+"밤탁자",
+"옷장"
+]
+}
+},
+{
+"note": "garbled",
+"qid": "q0139_bc91e054",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0140_f4c198d1",
+"qtype": "did_you_mean",
+"slots": {
+"word": "여쇠"
+}
+},
+{
+"qid": "q0141_12010d4e",
+"qtype": "which_place",
+"slots": {
+"options": [
+"침대",
+"옷장",
+"바닥",
+"밤탁자",
+"서랍장"
+]
+}
+},
+{
+"qid": "q0142_85308435",
+"qtype": "which_place",
+"slots": {
+"obj": "유리잔"
+}
+},
+{
+"note": "misreads snack as candy",
+"qid": "q0143_498191f3",
+"qtype": "which_place",
+"slots": {
+"obj": "파란색 사탕"
+}
+},
+{
+"qid": "q0144_0fd0d666",
+"qtype": "which_place",
+"slots": {
+"obj": "파란색 사탕"
+}
+},
+{
+"qid": "q0145_507553ab",
+"qtype": "which_place",
+"slots": {
+"obj": "파란색 사탕"
+}
+},
+{
+"note": "'which child' with place options; confusing",
+"qid": "q0146_4b6ce4b2",
+"qtype": "which_place",
+"slots": {
+"options": [
+"바닥",
+"침대",
+"책상",
+"장난감 상자"
+]
+}
+},
+{
+"qid": "q0147_809c4ea1",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "read-back",
+"qid": "q0148_71118708",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0149_36bb5dae",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0150_9a29a273",
+"qtype": "where_is",
+"slots": {
+"obj": "접시"
+}
+},
+{
+"qid": "q0151_26a59e3c",
+"qtype": "where_is",
+"slots": {
+"obj": "책"
+}
+},
+{
+"qid": "q0152_a81c1c2f",
+"qtype": "which_place",
+"slots": {
+"obj": "하얀 머그잔"
+}
+},
+{
+"note": "read-back",
+"qid": "q0153_8103ef40",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0154_ce6f70af",
+"qtype": "which_place",
+"slots": {
+"options": [
+"샤워케이스",
+"침대",
+"커피테이블",
+"카운터"
+]
+}
+},
+{
+"note": "could be what_to_say 남편",
+"qid": "q0155_8b0e2613",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "what to put in fridge; second part what_to_say 남편",
+"qid": "q0156_8deb279b",
+"qtype": "which_object",
+"slots": {}
+},
+{
+"qid": "q0157_0840dc85",
+"qtype": "which_place",
+"slots": {
+"options": [
+"침대",
+"옷장",
+"바닥",
+"밤탁자",
+"독서의자"
+]
+}
+},
+{
+"qid": "q0158_43e9398e",
+"qtype": "which_place",
+"slots": {
+"options": [
+"침대",
+"화장대",
+"바닥",
+"밤탁자",
+"독서의자"
+]
+}
+},
+{
+"note": "which book to place and which to bring",
+"qid": "q0159_a63f897c",
+"qtype": "which_object",
+"slots": {}
+},
+{
+"qid": "q0160_8ec97de8",
+"qtype": "which_object",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0161_10d7da00",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "incoherent",
+"qid": "q0162_2fc62947",
+"qtype": "free",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0163_e65e1b31",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0164_2f59977e",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0165_dedcee7b",
+"qtype": "which_place",
+"slots": {
+"options": [
+"카운터",
+"식탁",
+"서랍",
+"바닥",
+"냉장고",
+"싱크대",
+"마이크로웨이브",
+"싱크대 캐비닛",
+"가스레인지"
+]
+}
+},
+{
+"qid": "q0166_50b2d26f",
+"qtype": "which_place",
+"slots": {
+"obj": "파란 책과 안경"
+}
+},
+{
+"note": "read-back",
+"qid": "q0167_48528cd1",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0168_65155ab5",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0169_f4a1ab0a",
+"qtype": "which_place",
+"slots": {
+"obj": "파란 책",
+"options": [
+"me",
+"신발장"
+]
+}
+},
+{
+"note": "read-back",
+"qid": "q0170_08a0e33f",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0171_6d3dedad",
+"qtype": "which_place",
+"slots": {
+"obj": "책"
+}
+},
+{
+"qid": "q0172_7858047e",
+"qtype": "where_is",
+"slots": {
+"obj": "쿠킹포일"
+}
+},
+{
+"note": "read-back",
+"qid": "q0173_ce227f6e",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "meaning question",
+"qid": "q0174_a2aabf14",
+"qtype": "did_you_mean",
+"slots": {
+"word": "정리해"
+}
+},
+{
+"note": "read-back",
+"qid": "q0175_59cf5d15",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "second part which desk",
+"qid": "q0176_421ad569",
+"qtype": "which_place",
+"slots": {
+"options": [
+"방_a의 옷장",
+"방_c의 옷장"
+]
+}
+},
+{
+"qid": "q0177_ef75a876",
+"qtype": "which_place",
+"slots": {
+"options": [
+"방_a의 옷장",
+"방_c의 옷장"
+]
+}
+},
+{
+"qid": "q0178_959b0bc5",
+"qtype": "which_place",
+"slots": {
+"options": [
+"방_a의 옷장",
+"방_c의 옷장"
+]
+}
+},
+{
+"note": "read-back",
+"qid": "q0179_defa61d3",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0180_f02afdb9",
+"qtype": "did_you_mean",
+"slots": {
+"word": "저한텍"
+}
+},
+{
+"note": "read-back",
+"qid": "q0181_2dee5908",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "color word in Thai script; rest understandable",
+"qid": "q0182_5a7b7287",
+"qtype": "where_is",
+"slots": {
+"obj": "초록색 머그잔"
+}
+},
+{
+"qid": "q0183_0aad1ea5",
+"qtype": "help",
+"slots": {}
+},
+{
+"qid": "q0184_df306eae",
+"qtype": "did_you_mean",
+"slots": {
+"word": "while you're in the kitchen"
+}
+},
+{
+"qid": "q0185_bd4973c5",
+"qtype": "did_you_mean",
+"slots": {
+"word": "while you're in the kitchen"
+}
+},
+{
+"note": "first part empty object",
+"qid": "q0186_ddad1931",
+"qtype": "which_place",
+"slots": {
+"obj": "towel"
+}
+},
+{
+"note": "read-back",
+"qid": "q0187_0c8707f5",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0188_8f17da61",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0189_e41eb434",
+"qtype": "which_place",
+"slots": {
+"obj": "blue book",
+"options": [
+"armchair",
+"TV stand"
+]
+}
+},
+{
+"note": "read-back",
+"qid": "q0190_86d2a63a",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0191_078bdc31",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0192_b67b1acd",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0193_6bd2f89b",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "also asks where",
+"qid": "q0194_ed3efe49",
+"qtype": "confirm",
+"slots": {
+"goal": "say 'we're leaving in ten minutes' to your husband"
+}
+},
+{
+"qid": "q0195_7892f87b",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0196_4a491dc5",
+"qtype": "which_place",
+"slots": {
+"options": [
+"counter",
+"dining_table",
+"drawer",
+"floor",
+"fridge",
+"kimchi_fridge",
+"kitchen_sink",
+"microwave",
+"stove"
+]
+}
+},
+{
+"note": "second part where to bring",
+"qid": "q0197_8317f05b",
+"qtype": "where_is",
+"slots": {
+"obj": "red book"
+}
+},
+{
+"qid": "q0198_a9f3a422",
+"qtype": "confirm",
+"slots": {
+"goal": "place the reading glasses and remote on the coffee table"
+}
+},
+{
+"qid": "q0199_aa197693",
+"qtype": "where_is",
+"slots": {
+"obj": "reading glasses and remote"
+}
+},
+{
+"note": "read-back",
+"qid": "q0200_63540d44",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0201_5aa653b5",
+"qtype": "which_object",
+"slots": {
+"obj": "toy car"
+}
+},
+{
+"qid": "q0202_8af5b10f",
+"qtype": "which_object",
+"slots": {
+"obj": "toy car"
+}
+},
+{
+"note": "second part about son",
+"qid": "q0203_1fd68ebb",
+"qtype": "which_place",
+"slots": {
+"obj": "red toy car"
+}
+},
+{
+"note": "second part about son",
+"qid": "q0204_2915dc0f",
+"qtype": "which_place",
+"slots": {
+"obj": "red toy car"
+}
+},
+{
+"note": "read-back",
+"qid": "q0205_3eb481ee",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "then where to bring; which grandpa with place options",
+"qid": "q0206_45eb5ebb",
+"qtype": "where_are_you",
+"slots": {}
+},
+{
+"note": "empty object; second part about please",
+"qid": "q0207_a7811b03",
+"qtype": "which_place",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0208_69ef76d7",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0209_29c30e71",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "read-back",
+"qid": "q0210_d07516f7",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0211_56b1e3e6",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0212_cdd5c642",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "garbled",
+"qid": "q0213_5441f981",
+"qtype": "which_place",
+"slots": {
+"obj": "toy_box@kids"
+}
+},
+{
+"note": "read-back",
+"qid": "q0214_d751c1cf",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0215_5b77fd20",
+"qtype": "which_place",
+"slots": {
+"obj": "vitamins",
+"options": [
+"bed in the master",
+"somewhere else"
+]
+}
+},
+{
+"note": "read-back",
+"qid": "q0216_be981150",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0217_240ab839",
+"qtype": "where_is",
+"slots": {
+"obj": "socks"
+}
+},
+{
+"note": "read-back",
+"qid": "q0218_8b57f784",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0219_dceeb150",
+"qtype": "where_is",
+"slots": {
+"obj": "plate"
+}
+},
+{
+"note": "second part what_to_say husband",
+"qid": "q0220_8f3cea97",
+"qtype": "which_place",
+"slots": {
+"obj": "milk",
+"options": [
+"fridge",
+"leave it"
+]
+}
+},
+{
+"note": "second part what_to_say husband",
+"qid": "q0221_62d39fc3",
+"qtype": "which_place",
+"slots": {
+"obj": "milk",
+"options": [
+"fridge",
+"leave it"
+]
+}
+},
+{
+"note": "second part where is blue book",
+"qid": "q0222_21449b28",
+"qtype": "which_place",
+"slots": {
+"obj": "yellow book",
+"options": [
+"sofa",
+"reading chair"
+]
+}
+},
+{
+"note": "read-back",
+"qid": "q0223_1c4ae3da",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0224_b8d21c63",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0225_ac9426c1",
+"qtype": "help",
+"slots": {}
+},
+{
+"qid": "q0226_a025fe56",
+"qtype": "which_place",
+"slots": {
+"obj": "red book"
+}
+},
+{
+"note": "read-back",
+"qid": "q0227_e52d45a9",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0228_8657a539",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0229_33c7d170",
+"qtype": "where_is",
+"slots": {
+"obj": "reading glasses"
+}
+},
+{
+"qid": "q0230_cb6c8c0d",
+"qtype": "confirm",
+"slots": {
+"goal": "bring the red book if it is on the coffee table, else the blue book"
+}
+},
+{
+"note": "empty/garbled object",
+"qid": "q0231_456d6d69",
+"qtype": "which_place",
+"slots": {}
+},
+{
+"note": "second part about Grandpa",
+"qid": "q0232_ef9fea71",
+"qtype": "which_place",
+"slots": {
+"obj": "white bowl"
+}
+},
+{
+"note": "read-back",
+"qid": "q0233_464f70be",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "empty/garbled object",
+"qid": "q0234_822d7e12",
+"qtype": "which_place",
+"slots": {}
+},
+{
+"note": "asks who to tell and where they are",
+"qid": "q0235_f86acc7a",
+"qtype": "which_object",
+"slots": {
+"obj": "person to tell"
+}
+},
+{
+"qid": "q0236_48778ae6",
+"qtype": "which_place",
+"slots": {
+"options": [
+"desk in room A",
+"desk in room C",
+"desk_chair in room A"
+]
+}
+},
+{
+"note": "read-back",
+"qid": "q0237_28853185",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "what to do with green book and glasses; could be which_place",
+"qid": "q0238_d02f075d",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0239_c7f027ba",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0240_0e364fe2",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "second part where husband goes",
+"qid": "q0241_8ad82828",
+"qtype": "confirm",
+"slots": {
+"goal": "move the wallet to the shoe cabinet if it is on the nightstand"
+}
+},
+{
+"note": "read-back",
+"qid": "q0242_70a60cea",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0243_7be998d4",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0244_5977f07d",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0245_49695e2b",
+"qtype": "which_place",
+"slots": {
+"obj": "drink",
+"options": [
+"fridge in the kitchen",
+"dock in the living"
+]
+}
+},
+{
+"qid": "q0246_fd30cce3",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "read-back",
+"qid": "q0247_223e1598",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0248_9dd5f71d",
+"qtype": "where_is",
+"slots": {
+"obj": "milk"
+}
+},
+{
+"qid": "q0249_56d396f6",
+"qtype": "where_is",
+"slots": {
+"obj": "green mug"
+}
+},
+{
+"note": "and where they are",
+"qid": "q0250_59ac478c",
+"qtype": "which_object",
+"slots": {
+"obj": "keys"
+}
+},
+{
+"note": "empty object",
+"qid": "q0251_232b48c8",
+"qtype": "which_place",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0252_bd680637",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0253_3dba34a5",
+"qtype": "did_you_mean",
+"slots": {
+"word": "disk"
+}
+},
+{
+"qid": "q0254_6bec2486",
+"qtype": "did_you_mean",
+"slots": {
+"word": "disk"
+}
+},
+{
+"qid": "q0255_3e429b53",
+"qtype": "did_you_mean",
+"slots": {
+"word": "disk"
+}
+},
+{
+"note": "empty object",
+"qid": "q0256_b49a543e",
+"qtype": "which_place",
+"slots": {}
+},
+{
+"qid": "q0257_446d775d",
+"qtype": "where_is",
+"slots": {
+"obj": "milk"
+}
+},
+{
+"qid": "q0258_fa48b983",
+"qtype": "where_is",
+"slots": {
+"obj": "milk"
+}
+},
+{
+"qid": "q0259_8bd0ed52",
+"qtype": "which_place",
+"slots": {
+"obj": "green book and cell phone"
+}
+},
+{
+"qid": "q0260_e5d8458b",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "read-back",
+"qid": "q0261_d0915a63",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0262_d7aa87f8",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "what object to put in the cabinet",
+"qid": "q0263_8ebb1729",
+"qtype": "which_object",
+"slots": {}
+},
+{
+"qid": "q0264_7dcdf983",
+"qtype": "which_object",
+"slots": {}
+},
+{
+"note": "do nothing or misunderstanding: restate task",
+"qid": "q0265_e6cad712",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0266_58fc9f94",
+"qtype": "where_is",
+"slots": {
+"obj": "glasses and remote"
+}
+},
+{
+"qid": "q0267_38b85ac3",
+"qtype": "where_is",
+"slots": {
+"obj": "glasses and remote"
+}
+},
+{
+"note": "'which grandpa' with place options",
+"qid": "q0268_d8e2f040",
+"qtype": "which_place",
+"slots": {
+"options": [
+"bed in the master",
+"bookshelf in the small",
+"coffee_table in the living",
+"counter in the kitchen"
+]
+}
+},
+{
+"note": "read-back",
+"qid": "q0269_2f1ecd35",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0270_0a6bd088",
+"qtype": "where_are_you",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0271_f50e1e4f",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0272_8458b66a",
+"qtype": "where_is",
+"slots": {
+"obj": "mug"
+}
+},
+{
+"qid": "q0273_fb6843c1",
+"qtype": "where_is",
+"slots": {
+"obj": "Grandpa"
+}
+},
+{
+"qid": "q0274_ea9e4149",
+"qtype": "confirm",
+"slots": {
+"goal": "hand the glasses to Grandpa after he sips water"
+}
+},
+{
+"note": "read-back",
+"qid": "q0275_ac770eb9",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0276_2ef96952",
+"qtype": "where_is",
+"slots": {
+"obj": "towel"
+}
+},
+{
+"qid": "q0277_c3f1bcb8",
+"qtype": "which_place",
+"slots": {
+"obj": "towel"
+}
+},
+{
+"note": "read-back",
+"qid": "q0278_60cce651",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0279_8c061d9d",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0280_27058644",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0281_e8d5e4e5",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0282_33ad6397",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0283_b4a07556",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0284_748974de",
+"qtype": "did_you_mean",
+"slots": {
+"word": "head black to your look"
+}
+},
+{
+"note": "second item",
+"qid": "q0285_42e24836",
+"qtype": "which_object",
+"slots": {}
+},
+{
+"note": "second item",
+"qid": "q0286_8451bf7c",
+"qtype": "which_object",
+"slots": {}
+},
+{
+"note": "wait for a time vs wait somewhere",
+"qid": "q0287_b7c025f9",
+"qtype": "free",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0288_94d0c55b",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0289_61f39171",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "read-back",
+"qid": "q0290_e8d5a64d",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0291_ce722fb4",
+"qtype": "which_object",
+"slots": {
+"obj": "the green one"
+}
+},
+{
+"qid": "q0292_1083ae57",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0293_220b51b5",
+"qtype": "which_place",
+"slots": {
+"obj": "shopping list"
+}
+},
+{
+"note": "read-back",
+"qid": "q0294_57d6c4de",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0295_5c58fe40",
+"qtype": "where_is",
+"slots": {
+"obj": "keys"
+}
+},
+{
+"note": "read-back",
+"qid": "q0296_1ae6b74d",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0297_196acfd1",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0298_335cd578",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0299_dad3e5b6",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0300_8feab2c9",
+"qtype": "which_place",
+"slots": {
+"options": [
+"counter",
+"drawer",
+"floor",
+"fridge",
+"kitchen_sink",
+"microwave",
+"stove",
+"table",
+"upper_cabinet"
+]
+}
+},
+{
+"qid": "q0301_ccfb7bc8",
+"qtype": "which_place",
+"slots": {
+"options": [
+"counter",
+"drawer",
+"floor",
+"fridge",
+"kitchen_sink",
+"microwave",
+"stove",
+"table",
+"upper_cabinet"
+]
+}
+},
+{
+"qid": "q0302_be89fdf4",
+"qtype": "where_is",
+"slots": {
+"obj": "wallet"
+}
+},
+{
+"note": "then where are you",
+"qid": "q0303_e0ebe232",
+"qtype": "which_place",
+"slots": {
+"obj": "red mug",
+"options": [
+"fridge in the kitchen",
+"me"
+]
+}
+},
+{
+"note": "and towel",
+"qid": "q0304_12a85f54",
+"qtype": "where_is",
+"slots": {
+"obj": "green book"
+}
+},
+{
+"qid": "q0305_24fc0b27",
+"qtype": "where_is",
+"slots": {
+"obj": "green book"
+}
+},
+{
+"qid": "q0306_ad9e12f6",
+"qtype": "where_is",
+"slots": {
+"obj": "green book"
+}
+},
+{
+"qid": "q0307_614c86d6",
+"qtype": "where_is",
+"slots": {
+"obj": "green book"
+}
+},
+{
+"qid": "q0308_0f8c69ec",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0309_0aaf5f19",
+"qtype": "did_you_mean",
+"slots": {
+"word": "the bit"
+}
+},
+{
+"qid": "q0310_316ad511",
+"qtype": "which_object",
+"slots": {
+"options": [
+"banana",
+"blue toy car"
+]
+}
+},
+{
+"qid": "q0311_4176885c",
+"qtype": "what_to_say",
+"slots": {
+"person": "husband"
+}
+},
+{
+"qid": "q0312_d1146adc",
+"qtype": "what_to_say",
+"slots": {
+"person": "husband"
+}
+},
+{
+"qid": "q0313_1f326714",
+"qtype": "which_place",
+"slots": {
+"obj": "drinking glass"
+}
+},
+{
+"note": "read-back",
+"qid": "q0314_ba9b1be5",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "garbled object",
+"qid": "q0315_344d2c79",
+"qtype": "which_place",
+"slots": {}
+},
+{
+"note": "where to tell him; second part where is glass",
+"qid": "q0316_7285bec2",
+"qtype": "where_is",
+"slots": {
+"obj": "husband"
+}
+},
+{
+"note": "read-back",
+"qid": "q0317_ed532d0d",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "what to do with the bowl",
+"qid": "q0318_7237f597",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "read-back",
+"qid": "q0319_ee2cf314",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0320_8f2c9562",
+"qtype": "where_is",
+"slots": {
+"obj": "bowl"
+}
+},
+{
+"qid": "q0321_40da14ce",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "which object and where: restate task",
+"qid": "q0322_51eae855",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0323_7eabddd8",
+"qtype": "which_place",
+"slots": {
+"obj": "마이크로웨이브"
+}
+},
+{
+"qid": "q0324_fb122c3a",
+"qtype": "which_place",
+"slots": {
+"obj": "마이크로웨이브"
+}
+},
+{
+"qid": "q0325_73b1154e",
+"qtype": "which_place",
+"slots": {
+"obj": "마이크로웨이브"
+}
+},
+{
+"note": "check vs open the microwave; garbled first char",
+"qid": "q0326_97eb1cf6",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "read-back",
+"qid": "q0327_0c2938fc",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0328_dbe6f254",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "garbled yes/no",
+"qid": "q0329_920aa62f",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0330_bc747a3c",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0331_ab716ea9",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0332_28f538c7",
+"qtype": "which_place",
+"slots": {
+"obj": "회색 신발"
+}
+},
+{
+"note": "'사과 위치' ambiguous (where it is / where it goes)",
+"qid": "q0333_a8541ca8",
+"qtype": "where_is",
+"slots": {
+"obj": "사과"
+}
+},
+{
+"qid": "q0334_438652ac",
+"qtype": "which_place",
+"slots": {
+"obj": "수건"
+}
+},
+{
+"note": "Chinese 抽屉 not understandable",
+"qid": "q0335_828e11cd",
+"qtype": "free",
+"slots": {}
+},
+{
+"note": "garbled",
+"qid": "q0336_acf19bb1",
+"qtype": "free",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0337_4bdbf2c0",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0338_06834e96",
+"qtype": "which_place",
+"slots": {
+"obj": "파란 책",
+"options": [
+"안락의자",
+"TV대"
+]
+}
+},
+{
+"qid": "q0339_0c289ac2",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "read-back",
+"qid": "q0340_ca7bb5fa",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "Thai script color",
+"qid": "q0341_3515ec25",
+"qtype": "where_is",
+"slots": {
+"obj": "초록색 머그잔"
+}
+},
+{
+"note": "robot echoes the request as an imperative; no question",
+"qid": "q0342_ce662315",
+"qtype": "free",
+"slots": {}
+},
+{
+"note": "asks to explain the request sentence",
+"qid": "q0343_f52ddbb2",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "who to tell or which object to move",
+"qid": "q0344_a49851ca",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0345_8ea12636",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0346_b34c9041",
+"qtype": "which_object",
+"slots": {
+"obj": "검은 물건"
+}
+},
+{
+"qid": "q0347_a7c5de64",
+"qtype": "which_object",
+"slots": {
+"obj": "검은 물건"
+}
+},
+{
+"qid": "q0348_3177db3c",
+"qtype": "which_object",
+"slots": {
+"obj": "검은 물건"
+}
+},
+{
+"qid": "q0349_dc04fae7",
+"qtype": "which_object",
+"slots": {
+"obj": "검은 물건"
+}
+},
+{
+"note": "ASR-like typos but understandable",
+"qid": "q0350_3a1d0470",
+"qtype": "confirm",
+"slots": {
+"goal": "아버지께 주방으로 오시라고 전하기"
+}
+},
+{
+"qid": "q0351_a6d36a14",
+"qtype": "confirm",
+"slots": {
+"goal": "아버지께 주방으로 오시라고 전하기"
+}
+},
+{
+"note": "read-back",
+"qid": "q0352_0aafeb4a",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0353_99553910",
+"qtype": "which_place",
+"slots": {
+"obj": "장난감 자동차"
+}
+},
+{
+"qid": "q0354_3a5395ba",
+"qtype": "which_place",
+"slots": {
+"obj": "장난감 자동차"
+}
+},
+{
+"note": "read-back",
+"qid": "q0355_18a25eb7",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "and phone and father",
+"qid": "q0356_5aebcf1a",
+"qtype": "where_is",
+"slots": {
+"obj": "초록 책"
+}
+},
+{
+"note": "'which father' with place options",
+"qid": "q0357_a9044dd1",
+"qtype": "which_place",
+"slots": {
+"options": [
+"침대",
+"서재",
+"커피 테이블",
+"카운터"
+]
+}
+},
+{
+"qid": "q0358_b4a5db4a",
+"qtype": "which_place",
+"slots": {
+"options": [
+"침대",
+"서재",
+"커피 테이블",
+"카운터"
+]
+}
+},
+{
+"qid": "q0359_b28be1ef",
+"qtype": "which_place",
+"slots": {
+"options": [
+"침대",
+"화장대",
+"바닥",
+"밤탁자",
+"옷장"
+]
+}
+},
+{
+"note": "what object and where (contains Chinese 挪)",
+"qid": "q0360_de97f5bc",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0361_a433dede",
+"qtype": "did_you_mean",
+"slots": {
+"word": "여쇠"
+}
+},
+{
+"note": "first part asks role of 탁자",
+"qid": "q0362_f63a6bfc",
+"qtype": "which_place",
+"slots": {
+"obj": "파란 머그잔"
+}
+},
+{
+"note": "read-back",
+"qid": "q0363_c2f06b0b",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0364_12d15139",
+"qtype": "which_place",
+"slots": {
+"obj": "빨간 사탕"
+}
+},
+{
+"note": "second part whether blue one wanted",
+"qid": "q0365_2a5a7553",
+"qtype": "which_place",
+"slots": {
+"obj": "빨간 사탕"
+}
+},
+{
+"qid": "q0366_7aa2de61",
+"qtype": "which_place",
+"slots": {
+"obj": "빨간 사탕"
+}
+},
+{
+"note": "statement, no question",
+"qid": "q0367_c2b19ef0",
+"qtype": "free",
+"slots": {}
+},
+{
+"qid": "q0368_74fd667f",
+"qtype": "which_place",
+"slots": {
+"obj": "영양제"
+}
+},
+{
+"note": "read-back",
+"qid": "q0369_2949c555",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0370_15570170",
+"qtype": "which_place",
+"slots": {
+"obj": "마이크로웨이브"
+}
+},
+{
+"note": "read-back",
+"qid": "q0371_0d2e1901",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "'우팩' typo",
+"qid": "q0372_8ae2f8d1",
+"qtype": "which_place",
+"slots": {
+"obj": "우유팩"
+}
+},
+{
+"note": "read-back",
+"qid": "q0373_e45b7e38",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0374_a55ca9db",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "what to put on reading chair; which blue book",
+"qid": "q0375_d04ed48e",
+"qtype": "which_object",
+"slots": {}
+},
+{
+"qid": "q0376_13703886",
+"qtype": "which_object",
+"slots": {}
+},
+{
+"qid": "q0377_a28fed4e",
+"qtype": "which_object",
+"slots": {}
+},
+{
+"note": "second part where red mug goes",
+"qid": "q0378_7ceb01d3",
+"qtype": "where_is",
+"slots": {
+"obj": "전화"
+}
+},
+{
+"qid": "q0379_0e0cd996",
+"qtype": "where_is",
+"slots": {
+"obj": "전화"
+}
+},
+{
+"qid": "q0380_77959ac8",
+"qtype": "which_place",
+"slots": {
+"obj": "파란 책"
+}
+},
+{
+"note": "English text in a KO episode",
+"qid": "q0381_c69a9c49",
+"qtype": "where_is",
+"slots": {
+"obj": "cooking pot"
+}
+},
+{
+"note": "robot echoes the request back to the user",
+"qid": "q0382_75cae5ec",
+"qtype": "free",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0383_c71944c5",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0384_543bc299",
+"qtype": "which_place",
+"slots": {
+"obj": "점심"
+}
+},
+{
+"note": "mostly Chinese; Korean quoted message + 맞아요",
+"qid": "q0385_089ad4c7",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0386_135a8153",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "read-back",
+"qid": "q0387_21cb93bd",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "contains Chinese 挪",
+"qid": "q0388_fc8b9f87",
+"qtype": "which_place",
+"slots": {
+"obj": "우유"
+}
+},
+{
+"note": "second part which desk",
+"qid": "q0389_5e5417e2",
+"qtype": "which_place",
+"slots": {
+"options": [
+"A번 방의 옷장",
+"C번 방의 옷장"
+]
+}
+},
+{
+"qid": "q0390_dd3bf1ad",
+"qtype": "help",
+"slots": {}
+},
+{
+"note": "go to a place or follow you",
+"qid": "q0391_31206f6a",
+"qtype": "free",
+"slots": {}
+},
+{
+"qid": "q0392_778dc4e3",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "garbled '경'",
+"qid": "q0393_dca57eb4",
+"qtype": "where_is",
+"slots": {
+"obj": "안경"
+}
+},
+{
+"qid": "q0394_93c64613",
+"qtype": "confirm",
+"slots": {
+"goal": "bring it to you"
+}
+},
+{
+"note": "garbled; second part which cup",
+"qid": "q0395_8e1f85f4",
+"qtype": "which_place",
+"slots": {
+"options": [
+"서가",
+"책상"
+]
+}
+},
+{
+"note": "'지금 어디에 있나요?' then where to bring",
+"qid": "q0396_0fc60a8a",
+"qtype": "where_are_you",
+"slots": {}
+},
+{
+"note": "and where it is",
+"qid": "q0397_b5374aa8",
+"qtype": "which_object",
+"slots": {
+"obj": "열쇠"
+}
+},
+{
+"qid": "q0398_f1d90f84",
+"qtype": "where_is",
+"slots": {
+"obj": "노란 열쇠"
+}
+},
+{
+"note": "which desk; also which glasses",
+"qid": "q0399_62ca855a",
+"qtype": "which_place",
+"slots": {
+"obj": "안경"
+}
+},
+{
+"note": "which desk, which glass",
+"qid": "q0400_edbcfd33",
+"qtype": "which_place",
+"slots": {
+"obj": "유리잔"
+}
+},
+{
+"qid": "q0401_c6401e7d",
+"qtype": "which_place",
+"slots": {
+"obj": "유리잔"
+}
+},
+{
+"note": "garbled color",
+"qid": "q0402_4cd222c4",
+"qtype": "where_is",
+"slots": {
+"obj": "초록색 책"
+}
+},
+{
+"qid": "q0403_d84f742f",
+"qtype": "where_is",
+"slots": {
+"obj": "초록색 책"
+}
+},
+{
+"qid": "q0404_62c48191",
+"qtype": "which_place",
+"slots": {
+"obj": "세제"
+}
+},
+{
+"qid": "q0405_6ea8fcf6",
+"qtype": "which_place",
+"slots": {
+"obj": "초록 책"
+}
+},
+{
+"note": "read-back",
+"qid": "q0406_30c068f7",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0407_51d3f842",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0408_a279cffb",
+"qtype": "confirm",
+"slots": {
+"goal": "수건을 찾아서 보관장에 놓기"
+}
+},
+{
+"note": "read-back",
+"qid": "q0409_73a091ad",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0410_460222dd",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0411_194b20fd",
+"qtype": "which_place",
+"slots": {
+"obj": "흰 머그잔",
+"options": [
+"주방 카운터",
+"침실 침대"
+]
+}
+},
+{
+"qid": "q0412_20435bd5",
+"qtype": "did_you_mean",
+"slots": {
+"word": "언경"
+}
+},
+{
+"qid": "q0413_bc811079",
+"qtype": "did_you_mean",
+"slots": {
+"word": "언경"
+}
+},
+{
+"qid": "q0414_58952336",
+"qtype": "did_you_mean",
+"slots": {
+"word": "언경"
+}
+},
+{
+"qid": "q0415_75a47541",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "read-back",
+"qid": "q0416_eebbaece",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0417_8a6ab533",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0418_14673f2e",
+"qtype": "where_is",
+"slots": {
+"obj": "머그잔"
+}
+},
+{
+"note": "where to tell him",
+"qid": "q0419_2532354e",
+"qtype": "where_is",
+"slots": {
+"obj": "아버님"
+}
+},
+{
+"note": "where to leave the message",
+"qid": "q0420_d45b244a",
+"qtype": "where_is",
+"slots": {
+"obj": "아버님"
+}
+},
+{
+"note": "directly or at a place",
+"qid": "q0421_040c7d3d",
+"qtype": "where_is",
+"slots": {
+"obj": "아버님"
+}
+},
+{
+"note": "statement, no question",
+"qid": "q0422_5c98f555",
+"qtype": "free",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0423_838ff837",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0424_22c8e396",
+"qtype": "which_place",
+"slots": {
+"obj": "물병",
+"options": [
+"부엌 냉장고",
+"거실 소파"
+]
+}
+},
+{
+"qid": "q0425_0751c43f",
+"qtype": "which_place",
+"slots": {
+"options": [
+"주방 냉장고",
+"거실 소파"
+]
+}
+},
+{
+"qid": "q0426_85573b83",
+"qtype": "which_place",
+"slots": {
+"obj": "물병"
+}
+},
+{
+"note": "contains Chinese 送给",
+"qid": "q0427_2570a993",
+"qtype": "which_place",
+"slots": {
+"obj": "유리잔"
+}
+},
+{
+"qid": "q0428_9748a80e",
+"qtype": "where_is",
+"slots": {
+"obj": "안경과 핸드폰"
+}
+},
+{
+"note": "'어디에요?' then where to take it",
+"qid": "q0429_3a4295c3",
+"qtype": "where_are_you",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0430_cf8e3981",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0431_25535658",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "contains Chinese 挪",
+"qid": "q0432_6b3f74a0",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0433_12129053",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0434_e305dcdd",
+"qtype": "where_is",
+"slots": {
+"obj": "티셔츠"
+}
+},
+{
+"qid": "q0435_2da20f2f",
+"qtype": "which_place",
+"slots": {
+"obj": "파란 그릇"
+}
+},
+{
+"note": "read-back",
+"qid": "q0436_a4546951",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0437_b05bc6e8",
+"qtype": "did_you_mean",
+"slots": {
+"word": "육리잔"
+}
+},
+{
+"qid": "q0438_1c7fd071",
+"qtype": "did_you_mean",
+"slots": {
+"word": "육리잔"
+}
+},
+{
+"note": "and where",
+"qid": "q0439_8dc2ec58",
+"qtype": "which_object",
+"slots": {
+"obj": "열쇠"
+}
+},
+{
+"qid": "q0440_1b8bbfc9",
+"qtype": "which_place",
+"slots": {
+"obj": "파란색 머그잔"
+}
+},
+{
+"qid": "q0441_14a3dbef",
+"qtype": "which_place",
+"slots": {
+"obj": "파란색 머그잔"
+}
+},
+{
+"note": "read-back",
+"qid": "q0442_7822a686",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0443_b96c2694",
+"qtype": "which_place",
+"slots": {
+"obj": "흰 수건"
+}
+},
+{
+"note": "read-back",
+"qid": "q0444_b9dfa3ba",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0445_2757124b",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0446_7bd1ea97",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "message addressed to husband, no question",
+"qid": "q0447_8875b82f",
+"qtype": "free",
+"slots": {}
+},
+{
+"qid": "q0448_aca459cf",
+"qtype": "free",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0449_e96d64e0",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0450_23277183",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0451_edcaaae1",
+"qtype": "did_you_mean",
+"slots": {
+"word": "브라우즈"
+}
+},
+{
+"note": "options are places",
+"qid": "q0452_cba11489",
+"qtype": "which_object",
+"slots": {
+"obj": "빨간 컵",
+"options": [
+"안락의자",
+"침대",
+"커피테이블",
+"카운터"
+]
+}
+},
+{
+"note": "'어디에요?' then where to bring; which father",
+"qid": "q0453_c29ba147",
+"qtype": "where_are_you",
+"slots": {}
+},
+{
+"qid": "q0454_5e877680",
+"qtype": "where_is",
+"slots": {
+"obj": "초록 책"
+}
+},
+{
+"qid": "q0455_f3668a04",
+"qtype": "where_is",
+"slots": {
+"obj": "초록 책"
+}
+},
+{
+"note": "also asks about 노아주시고 / 장난검 상자",
+"qid": "q0456_123c6400",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0457_a5e74214",
+"qtype": "did_you_mean",
+"slots": {
+"word": "노아주시고"
+}
+},
+{
+"qid": "q0458_204eea8b",
+"qtype": "confirm",
+"slots": {
+"goal": "남편한테 10분 후 출발한다고 말하기"
+}
+},
+{
+"qid": "q0459_829e404a",
+"qtype": "confirm",
+"slots": {
+"goal": "남편한테 10분 후 출발한다고 말하기"
+}
+},
+{
+"qid": "q0460_d75d8223",
+"qtype": "what_to_say",
+"slots": {
+"person": "남편"
+}
+},
+{
+"note": "read-back",
+"qid": "q0461_8f68c968",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0462_768089a9",
+"qtype": "which_place",
+"slots": {
+"obj": "유리잔"
+}
+},
+{
+"note": "read-back",
+"qid": "q0463_430af0ac",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"note": "read-back",
+"qid": "q0464_6a65b198",
+"qtype": "confirm",
+"slots": {}
+},
+{
+"qid": "q0465_90259354",
+"qtype": "which_place",
+"slots": {
+"obj": "milk",
+"options": [
+"fridge",
+"kimchi fridge"
+]
+}
+},
+{
+"qid": "q0466_6871716a",
+"qtype": "which_object",
+"slots": {
+"options": [
+"white mug",
+"black mug"
+]
+}
+},
+{
+"qid": "q0467_0ac808f9",
+"qtype": "which_object",
+"slots": {
+"options": [
+"red toy car",
+"blue toy car"
+]
+}
+},
+{
+"qid": "q0468_be5017ef",
+"qtype": "which_object",
+"slots": {
+"options": [
+"white glass",
+"green glass"
+]
+}
+},
+{
+"qid": "q0469_91b24970",
+"qtype": "help",
+"slots": {}
+},
+{
+"qid": "q0470_cd169b50",
+"qtype": "which_object",
+"slots": {
+"options": [
+"red book",
+"blue book"
+]
+}
+},
+{
+"qid": "q0471_8c9dde63",
+"qtype": "which_place",
+"slots": {
+"obj": "milk carton",
+"options": [
+"fridge",
+"kimchi fridge"
+]
+}
+},
+{
+"qid": "q0472_ebf7c30f",
+"qtype": "which_object",
+"slots": {
+"options": [
+"milk",
+"water"
+]
+}
+},
+{
+"qid": "q0473_c161b3bc",
+"qtype": "which_object",
+"slots": {
+"options": [
+"gray keys",
+"yellow keys"
+]
+}
+},
+{
+"qid": "q0474_78ffc7e5",
+"qtype": "which_object",
+"slots": {
+"options": [
+"red mug",
+"blue mug"
+]
+}
+},
+{
+"qid": "q0475_a471c496",
+"qtype": "which_object",
+"slots": {
+"options": [
+"juice",
+"milk"
+]
+}
+},
+{
+"qid": "q0476_8e44273c",
+"qtype": "which_object",
+"slots": {
+"options": [
+"gray keys",
+"yellow keys"
+]
+}
+},
+{
+"qid": "q0477_fd1ffa73",
+"qtype": "which_object",
+"slots": {
+"options": [
+"white bowl",
+"blue bowl"
+]
+}
+},
+{
+"qid": "q0478_2d746d98",
+"qtype": "which_place",
+"slots": {
+"obj": "towel",
+"options": [
+"dresser",
+"storage cabinet"
+]
+}
+},
+{
+"qid": "q0479_0ea36882",
+"qtype": "which_object",
+"slots": {
+"options": [
+"red book",
+"green book"
+]
+}
+},
+{
+"qid": "q0480_6cf42949",
+"qtype": "which_object",
+"slots": {
+"options": [
+"white mug",
+"green mug"
+]
+}
+},
+{
+"qid": "q0481_34615923",
+"qtype": "which_object",
+"slots": {
+"options": [
+"red mug",
+"blue mug"
+]
+}
+},
+{
+"qid": "q0482_5d9f6226",
+"qtype": "which_object",
+"slots": {
+"options": [
+"red book",
+"green book"
+]
+}
+},
+{
+"qid": "q0483_4a751824",
+"qtype": "which_object",
+"slots": {
+"options": [
+"yellow cup",
+"pink cup"
+]
+}
+},
+{
+"qid": "q0484_fa68a9f5",
+"qtype": "which_object",
+"slots": {
+"options": [
+"yellow cup",
+"pink cup"
+]
+}
+},
+{
+"qid": "q0485_17c31da9",
+"qtype": "which_object",
+"slots": {
+"options": [
+"red snack bag",
+"blue snack bag"
+]
+}
+},
+{
+"qid": "q0486_3b337c0f",
+"qtype": "which_object",
+"slots": {
+"options": [
+"juice",
+"water"
+]
+}
+},
+{
+"qid": "q0487_4d22e67d",
+"qtype": "which_object",
+"slots": {
+"options": [
+"red book",
+"blue book"
+]
+}
+},
+{
+"qid": "q0488_8010410f",
+"qtype": "which_object",
+"slots": {
+"options": [
+"white towel",
+"gray towel"
+]
+}
+},
+{
+"qid": "q0489_ccd18a04",
+"qtype": "which_object",
+"slots": {
+"options": [
+"white mug",
+"black mug"
+]
+}
+},
+{
+"qid": "q0490_764a0c8c",
+"qtype": "which_object",
+"slots": {
+"options": [
+"white bowl",
+"blue bowl"
+]
+}
+},
+{
+"qid": "q0491_864454dc",
+"qtype": "which_place",
+"slots": {
+"obj": "towel",
+"options": [
+"dresser",
+"storage cabinet"
+]
+}
+},
+{
+"qid": "q0492_582d24fe",
+"qtype": "which_object",
+"slots": {
+"options": [
+"red snack bag",
+"blue snack bag"
+]
+}
+},
+{
+"qid": "q0493_664f8637",
+"qtype": "which_object",
+"slots": {
+"options": [
+"blue book",
+"yellow book"
+]
+}
+},
+{
+"qid": "q0494_57038e6b",
+"qtype": "which_object",
+"slots": {
+"options": [
+"white glass",
+"green glass"
+]
+}
+},
+{
+"qid": "q0495_b3b5e3bf",
+"qtype": "which_object",
+"slots": {
+"options": [
+"blue book",
+"yellow book"
+]
+}
+},
+{
+"qid": "q0496_1464725b",
+"qtype": "which_place",
+"slots": {
+"obj": "우유",
+"options": [
+"냉장고",
+"김치냉장고"
+]
+}
+},
+{
+"qid": "q0497_103cdc79",
+"qtype": "which_object",
+"slots": {
+"options": [
+"하얀 머그컵",
+"검은 머그컵"
+]
+}
+},
+{
+"qid": "q0498_fc4c11bf",
+"qtype": "which_object",
+"slots": {
+"options": [
+"빨간 장난감 자동차",
+"파란 장난감 자동차"
+]
+}
+},
+{
+"qid": "q0499_2e88dad4",
+"qtype": "which_object",
+"slots": {
+"options": [
+"하얀 유리잔",
+"초록색 유리잔"
+]
+}
+},
+{
+"qid": "q0500_50074b66",
+"qtype": "help",
+"slots": {}
+},
+{
+"qid": "q0501_f99a31a1",
+"qtype": "which_object",
+"slots": {
+"options": [
+"빨간 책",
+"파란 책"
+]
+}
+},
+{
+"qid": "q0502_f62c4f44",
+"qtype": "which_place",
+"slots": {
+"obj": "우유",
+"options": [
+"냉장고",
+"김치냉장고"
+]
+}
+},
+{
+"qid": "q0503_c20c294b",
+"qtype": "which_object",
+"slots": {
+"options": [
+"우유",
+"물"
+]
+}
+},
+{
+"qid": "q0504_5503c2f4",
+"qtype": "which_object",
+"slots": {
+"options": [
+"회색 열쇠",
+"노란 열쇠"
+]
+}
+},
+{
+"qid": "q0505_c38410e8",
+"qtype": "which_object",
+"slots": {
+"options": [
+"빨간 머그컵",
+"파란 머그컵"
+]
+}
+},
+{
+"qid": "q0506_d7747bc0",
+"qtype": "which_object",
+"slots": {
+"options": [
+"주스",
+"우유"
+]
+}
+},
+{
+"qid": "q0507_a816e90c",
+"qtype": "which_object",
+"slots": {
+"options": [
+"빨간 머그컵",
+"파란 머그컵"
+]
+}
+},
+{
+"qid": "q0508_e26273f9",
+"qtype": "which_object",
+"slots": {
+"options": [
+"하얀 그릇",
+"파란 그릇"
+]
+}
+},
+{
+"qid": "q0509_d9fba1c1",
+"qtype": "which_place",
+"slots": {
+"obj": "수건",
+"options": [
+"서랍장",
+"수납장"
+]
+}
+},
+{
+"qid": "q0510_02762980",
+"qtype": "which_object",
+"slots": {
+"options": [
+"빨간 책",
+"초록색 책"
+]
+}
+},
+{
+"qid": "q0511_ada2ff26",
+"qtype": "which_object",
+"slots": {
+"options": [
+"하얀 머그컵",
+"초록색 머그컵"
+]
+}
+},
+{
+"qid": "q0512_21729093",
+"qtype": "which_object",
+"slots": {
+"options": [
+"빨간 머그컵",
+"파란 머그컵"
+]
+}
+},
+{
+"qid": "q0513_80fe3c98",
+"qtype": "which_object",
+"slots": {
+"options": [
+"빨간 책",
+"초록색 책"
+]
+}
+},
+{
+"qid": "q0514_5af7a5dd",
+"qtype": "which_object",
+"slots": {
+"options": [
+"노란 컵",
+"분홍색 컵"
+]
+}
+},
+{
+"qid": "q0515_67343fb9",
+"qtype": "which_object",
+"slots": {
+"options": [
+"노란 컵",
+"분홍색 컵"
+]
+}
+},
+{
+"qid": "q0516_6b8a0922",
+"qtype": "which_object",
+"slots": {
+"options": [
+"빨간 책",
+"초록색 책"
+]
+}
+},
+{
+"qid": "q0517_801e8f07",
+"qtype": "which_object",
+"slots": {
+"options": [
+"빨간 과자",
+"파란 과자"
+]
+}
+},
+{
+"qid": "q0518_9212bed6",
+"qtype": "which_object",
+"slots": {
+"options": [
+"주스",
+"물"
+]
+}
+},
+{
+"qid": "q0519_ef61b03b",
+"qtype": "which_object",
+"slots": {
+"options": [
+"하얀 수건",
+"회색 수건"
+]
+}
+},
+{
+"qid": "q0520_7ad4ac09",
+"qtype": "which_object",
+"slots": {
+"options": [
+"하얀 그릇",
+"파란 그릇"
+]
+}
+},
+{
+"qid": "q0521_73a89938",
+"qtype": "which_object",
+"slots": {
+"options": [
+"빨간 책",
+"파란 책"
+]
+}
+},
+{
+"qid": "q0522_0af3463a",
+"qtype": "which_place",
+"slots": {
+"obj": "수건",
+"options": [
+"서랍장",
+"수납장"
+]
+}
+},
+{
+"qid": "q0523_f844f17f",
+"qtype": "which_object",
+"slots": {
+"options": [
+"빨간 과자",
+"파란 과자"
+]
+}
+},
+{
+"qid": "q0524_a7e279ce",
+"qtype": "which_object",
+"slots": {
+"options": [
+"파란 책",
+"노란 책"
+]
+}
+},
+{
+"qid": "q0525_4997ef3b",
+"qtype": "which_object",
+"slots": {
+"options": [
+"하얀 그릇",
+"파란 그릇"
+]
+}
+},
+{
+"note": "robot asks the user to bring the mug (echo of request)",
+"qid": "q0526_093ef83f",
+"qtype": "free",
+"slots": {}
+},
+{
+"qid": "q0527_88de31fe",
+"qtype": "which_object",
+"slots": {
+"options": [
+"water",
+"milk",
+"tea",
+"coffee"
+]
+}
+},
+{
+"note": "English text in a KO episode",
+"qid": "q0528_671f4942",
+"qtype": "where_is",
+"slots": {
+"obj": "phone"
+}
+},
+{
+"note": "imperative 'give me the phone', no question",
+"qid": "q0529_ee309f12",
+"qtype": "free",
+"slots": {}
+},
+{
+"note": "English text in a KO episode",
+"qid": "q0530_9306a6bb",
+"qtype": "where_is",
+"slots": {
+"obj": "toothbrush"
+}
+},
+{
+"qid": "q0531_41e1395c",
+"qtype": "did_you_mean",
+"slots": {
+"word": "chicken"
+}
+},
+{
+"note": "also asks about 'my hard'",
+"qid": "q0532_3173f094",
+"qtype": "did_you_mean",
+"slots": {
+"word": "while you're in the kitchen"
+}
+}
+]
+}

@@ -1,0 +1,138 @@
+{
+ "accuracy": 0.758,
+ "accuracy_en": 0.7879,
+ "accuracy_ko": 0.7283,
+ "accuracy_qtype_only": 0.7637,
+ "by_path": {
+  "llm": {
+   "accuracy": 0.5397,
+   "correct": 34,
+   "en": 22,
+   "ko": 41,
+   "n": 63,
+   "share": 0.1191
+  },
+  "rules": {
+   "accuracy": 0.5035,
+   "correct": 72,
+   "en": 80,
+   "ko": 63,
+   "n": 143,
+   "share": 0.2703
+  },
+  "structured": {
+   "accuracy": 0.9133,
+   "correct": 295,
+   "en": 162,
+   "ko": 161,
+   "n": 323,
+   "share": 0.6106
+  }
+ },
+ "classifier": {
+  "kind": "llm",
+  "model": "qwen3-vl:8b-instruct",
+  "prompt_version": "ui1"
+ },
+ "code": {
+  "homeloop_bench": "5215e4c",
+  "homeloop_robot": "a3e97d7"
+ },
+ "confusions": [
+  {
+   "count": 14,
+   "gold": "repeat",
+   "path": "rules",
+   "sim": "which_place"
+  },
+  {
+   "count": 14,
+   "gold": "repeat",
+   "path": "structured",
+   "sim": "which_place"
+  },
+  {
+   "count": 8,
+   "gold": "where_is",
+   "path": "rules",
+   "sim": "which_place"
+  },
+  {
+   "count": 8,
+   "gold": "which_object",
+   "path": "rules",
+   "sim": "which_place"
+  },
+  {
+   "count": 7,
+   "gold": "repeat",
+   "path": "llm",
+   "sim": "which_place"
+  },
+  {
+   "count": 6,
+   "gold": "repeat",
+   "path": "rules",
+   "sim": "which_object"
+  },
+  {
+   "count": 5,
+   "gold": "free",
+   "path": "structured",
+   "sim": "which_place"
+  },
+  {
+   "count": 5,
+   "gold": "which_place",
+   "path": "llm",
+   "sim": "which_object"
+  },
+  {
+   "count": 4,
+   "gold": "confirm",
+   "path": "structured",
+   "sim": "which_place"
+  },
+  {
+   "count": 4,
+   "gold": "did_you_mean",
+   "path": "rules",
+   "sim": "which_object"
+  },
+  {
+   "count": 4,
+   "gold": "where_is",
+   "path": "rules",
+   "sim": "which_object"
+  },
+  {
+   "count": 3,
+   "gold": "confirm",
+   "path": "rules",
+   "sim": "which_place"
+  },
+  {
+   "count": 3,
+   "gold": "did_you_mean",
+   "path": "rules",
+   "sim": "which_place"
+  },
+  {
+   "count": 3,
+   "gold": "free",
+   "path": "rules",
+   "sim": "confirm"
+  },
+  {
+   "count": 3,
+   "gold": "repeat",
+   "path": "llm",
+   "sim": "what_to_say"
+  }
+ ],
+ "n": 529,
+ "n_disagree_excluded": 4,
+ "n_en": 264,
+ "n_ko": 265,
+ "note": "before the R2-7a audit fixes: the same audit set and scorer, rules of dialog.compose on the whole text, classifier prompt ui1, no Korean heard-text check"
+}

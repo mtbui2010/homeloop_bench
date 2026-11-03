@@ -1,0 +1,4362 @@
+{
+"judge": 1,
+"labels": [
+{
+"note": "robot checks whether 'chicken' was the user's 'kitchen'",
+"qid": "q0000_bb713a93",
+"qtype": "did_you_mean",
+"slots": {
+"word": "kitchen"
+}
+},
+{
+"note": "ASR fragments; asks what to do",
+"qid": "q0001_913de5bc",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0002_5073b3d1",
+"qtype": "did_you_mean",
+"slots": {
+"word": "kitchen"
+}
+},
+{
+"note": "'you mentioned me, what should I do there'; second part where-to-put with empty object",
+"qid": "q0003_76a7a76b",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0004_a7a82db5",
+"qtype": "which_place",
+"slots": {
+"obj": "towel"
+}
+},
+{
+"qid": "q0005_c2655066",
+"qtype": "where_are_you",
+"slots": {}
+},
+{
+"qid": "q0006_9e07d3a6",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the sofa you mentioned is not in my plan). I will put the apple in the fridge in the kitchen, then put the towel from the drying_rack in the veranda on the person_user, then go to the dock in the living. Is that right?"
+}
+},
+{
+"note": "what to do with towel once found; 'who is he' part unanswerable",
+"qid": "q0007_e3a86e48",
+"qtype": "which_place",
+"slots": {
+"obj": "pink towel"
+}
+},
+{
+"qid": "q0008_56485634",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0009_17f602e5",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0010_736d68ea",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the me you mentioned is not in my plan; the the is not in my plan). I will go to the dresser in the bedroom, then put the pink towel from the dresser in the bedroom on the bath_cabinet in the bathroom. Is that right?"
+}
+},
+{
+"qid": "q0011_1d342021",
+"qtype": "which_place",
+"slots": {
+"obj": "green mug"
+}
+},
+{
+"qid": "q0012_1dc2861a",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (you did not say the person user). I will put the green mug from the counter in the kitchen on the person_user. Is that right?"
+}
+},
+{
+"note": "asks user to move the mug closer",
+"qid": "q0013_e90b887d",
+"qtype": "help",
+"slots": {}
+},
+{
+"qid": "q0014_413d55d9",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0015_7b3ecb84",
+"qtype": "which_place",
+"slots": {
+"obj": [
+"red mug",
+"water bottle"
+],
+"options": [
+"you at the armchair",
+"somewhere else"
+]
+}
+},
+{
+"note": "answer would restate the message task (what_to_say plausible)",
+"qid": "q0016_23713709",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0017_1a9eeaf0",
+"qtype": "confirm",
+"slots": {
+"goal": "say something to my husband"
+}
+},
+{
+"qid": "q0018_2f9bf01c",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the my husband you mentioned is not in my plan). I will say \"We are leaving in ten minutes.\" to partner_b. Is that right?"
+}
+},
+{
+"qid": "q0019_68956efb",
+"qtype": "confirm",
+"slots": {
+"goal": "say 'We are leaving in ten minutes.' to partner_b"
+}
+},
+{
+"qid": "q0020_9a6161ba",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0021_352d7283",
+"qtype": "which_object",
+"slots": {
+"obj": "the black one"
+}
+},
+{
+"qid": "q0022_aa573e27",
+"qtype": "which_object",
+"slots": {
+"obj": "the black one"
+}
+},
+{
+"note": "then also asks where are you / where to bring",
+"qid": "q0023_b37e0fa2",
+"qtype": "which_place",
+"slots": {
+"options": [
+"counter",
+"dining_table",
+"drawer",
+"floor",
+"fridge",
+"kimchi_fridge",
+"kitchen_sink",
+"microwave",
+"stove"
+]
+}
+},
+{
+"qid": "q0024_1ee22129",
+"qtype": "which_place",
+"slots": {
+"options": [
+"counter",
+"dining_table",
+"drawer",
+"floor",
+"fridge",
+"kimchi_fridge",
+"kitchen_sink",
+"microwave",
+"stove"
+]
+}
+},
+{
+"note": "second part: where to bring it",
+"qid": "q0025_312cb8c8",
+"qtype": "where_is",
+"slots": {
+"obj": "red book"
+}
+},
+{
+"qid": "q0026_43db4eb3",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0027_4bb52176",
+"qtype": "confirm",
+"slots": {
+"goal": "put the reading glasses and remote on the coffee table"
+}
+},
+{
+"qid": "q0028_889b56a8",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the neighbors is not in my plan). I will put the reading glasses from the desk in the study on the coffee_table in the living, then put the remote on the coffee_table in the living. Is that right?"
+}
+},
+{
+"qid": "q0029_4cdc4b7c",
+"qtype": "confirm",
+"slots": {
+"goal": "Sorry, I didn't hear you. I am not sure I understood (the neighbors is not in my plan). I will put the reading glasses from the desk in the study on the coffee_table in the living, then put the remote on the coffee_table in the living. Is that right?"
+}
+},
+{
+"qid": "q0030_f7ea18b0",
+"qtype": "where_is",
+"slots": {
+"obj": "remote"
+}
+},
+{
+"qid": "q0031_ae1fe727",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "also asks meaning of 'a please'",
+"qid": "q0032_ffd9ef57",
+"qtype": "which_place",
+"slots": {
+"obj": "cell phone",
+"options": [
+"bring to Grandpa",
+"give it to him directly"
+]
+}
+},
+{
+"qid": "q0033_b3addcdf",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the me you mentioned is not in my plan; you did not say the bookshelf; you did not say the shoe cabinet; the please is not in my plan). I will go to the bookshelf in the small, then put the grin book on the desk_chair in the small, then go to the shoe_cabinet in the living, then put the cell phone from the desk in the small on the grandpa, then go to the dock in the living. Is that right?"
+}
+},
+{
+"qid": "q0034_c9178f7b",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the me you mentioned is not in my plan; the desk chair you mentioned is not in my plan; you did not say the bookshelf; you did not say the shoe cabinet; the please is not in my plan). I will go to the bookshelf in the small, then put the grin book on the grandpa, then go to the shoe_cabinet in the living, then put the blue phone from the desk in the small on the grandpa, then go to the dock in the living. Is that right?"
+}
+},
+{
+"qid": "q0035_01041407",
+"qtype": "which_place",
+"slots": {
+"options": [
+"bed",
+"dresser",
+"floor",
+"nightstand",
+"wardrobe"
+]
+}
+},
+{
+"qid": "q0036_1d61c420",
+"qtype": "which_place",
+"slots": {
+"options": [
+"bedroom"
+]
+}
+},
+{
+"qid": "q0037_392536c2",
+"qtype": "which_place",
+"slots": {
+"options": [
+"bedroom"
+]
+}
+},
+{
+"qid": "q0038_2ac0f947",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0039_cfbb8e3b",
+"qtype": "confirm",
+"slots": {
+"goal": "I will put the keys from the bed in the bedroom on the dresser in the bedroom, then put the glass from the dresser in the bedroom on the bed in the bedroom, then go to the dock in the living. Is that right?"
+}
+},
+{
+"note": "object name missing",
+"qid": "q0040_4761e70f",
+"qtype": "which_place",
+"slots": {
+"obj": null
+}
+},
+{
+"qid": "q0041_36ae2c3b",
+"qtype": "which_place",
+"slots": {
+"obj": "red snack bag"
+}
+},
+{
+"qid": "q0042_4a746f9c",
+"qtype": "confirm",
+"slots": {
+"goal": "I will put the red snack bag from the desk in the main on the shelf in the main, then put the blue snack bag from the shelf in the main on the person_user. Is that right?"
+}
+},
+{
+"qid": "q0043_38d25d41",
+"qtype": "which_place",
+"slots": {
+"obj": "vitamins"
+}
+},
+{
+"qid": "q0044_d4f014d9",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the my son you mentioned is not in my plan; the me you mentioned is not in my plan; the charge you mentioned is not in my plan). I will put the vitamins from the dining_table in the kitchen on the bed in the master. Is that right?"
+}
+},
+{
+"qid": "q0045_2b10919e",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the me you mentioned is not in my plan; the charge you mentioned is not in my plan; the bed you mentioned is not in my plan; you did not say the dining table). I will say \"Wake up, kid! Time to get up.\" in the child, then go to the dining_table in the kitchen, then put the vitamins from the dining_table in the kitchen on the child. Is that right?"
+}
+},
+{
+"qid": "q0046_39d1dfc3",
+"qtype": "where_is",
+"slots": {
+"obj": "socks"
+}
+},
+{
+"qid": "q0047_676dd4da",
+"qtype": "confirm",
+"slots": {
+"goal": "I will go to the bath_cabinet in the bathroom, then put the socks from the bath_cabinet in the bathroom on the bed in the main, then close the bath_cabinet in the bathroom. Is that right?"
+}
+},
+{
+"qid": "q0048_dc9c8527",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the me you mentioned is not in my plan). I will put the book on the armchair in the living. Is that right?"
+}
+},
+{
+"qid": "q0049_a5829c17",
+"qtype": "where_is",
+"slots": {
+"obj": "book"
+}
+},
+{
+"qid": "q0050_919dbd87",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "asks which objects and where: restate the task",
+"qid": "q0051_975f34d0",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0052_ec5b9535",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "second part what_to_say husband",
+"qid": "q0053_df416875",
+"qtype": "which_place",
+"slots": {
+"obj": "milk",
+"options": [
+"fridge",
+"leave it on the table"
+]
+}
+},
+{
+"note": "second part what_to_say husband",
+"qid": "q0054_9c24b31a",
+"qtype": "which_place",
+"slots": {
+"obj": "milk",
+"options": [
+"fridge",
+"leave it on the table"
+]
+}
+},
+{
+"qid": "q0055_3b44b652",
+"qtype": "which_place",
+"slots": {
+"obj": "yellow book",
+"options": [
+"sofa",
+"reading chair"
+]
+}
+},
+{
+"qid": "q0056_ea907725",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (you did not say the drawer). I will put the yellow book from the tv_stand in the living on the sofa in the living, then say \"I'm fetching the blue book for you.\" in the partner_a, then go to the drawer in the kitchen, then put the blue book from the nightstand in the bedroom on the partner_a. Is that right?"
+}
+},
+{
+"qid": "q0057_b50b008c",
+"qtype": "confirm",
+"slots": {
+"goal": "Sorry, I didn't hear you. I am not sure I understood (you did not say the drawer). I will put the yellow book from the tv_stand in the living on the sofa in the living, then say \"I'm fetching the blue book for you.\" in the partner_a, then go to the drawer in the kitchen, then put the blue book from the nightstand in the bedroom on the partner_a. Is that right?"
+}
+},
+{
+"qid": "q0058_1a2c2711",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (you did not say the drawer). I will put the yellow book from the tv_stand in the living on the sofa in the living, then say \"I'm fetching the blue book for you.\" in the partner_a, then go to the drawer in the kitchen, then put the blue book from the nightstand in the bedroom on the sofa in the living. Is that right?"
+}
+},
+{
+"qid": "q0059_9a69db3f",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the me you mentioned is not in my plan). I will put the cell phone from the side_table in the living on the sofa in the living, then put the red mug from the counter in the kitchen on the sofa in the living, then go to the dock in the living. Is that right?"
+}
+},
+{
+"qid": "q0060_fef77b7b",
+"qtype": "which_place",
+"slots": {
+"obj": [
+"blue book",
+"reading glasses"
+],
+"options": [
+"bed",
+"hold them"
+]
+}
+},
+{
+"qid": "q0061_55200a38",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the me you mentioned is not in my plan). I will put the blue book from the nightstand in the bedroom on the bed in the bedroom, then put the reading glasses from the nightstand in the bedroom on the bed in the bedroom. Is that right?"
+}
+},
+{
+"qid": "q0062_470154ca",
+"qtype": "did_you_mean",
+"slots": {
+"word": "blue book"
+}
+},
+{
+"qid": "q0063_ed9bc4a7",
+"qtype": "where_is",
+"slots": {
+"obj": "red book"
+}
+},
+{
+"qid": "q0064_43d13ae5",
+"qtype": "where_is",
+"slots": {
+"obj": "aluminum foil"
+}
+},
+{
+"qid": "q0065_0ffb36fa",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the me you mentioned is not in my plan; you did not say the bed; the white bowl is not in my plan). I will say \"Grandpa, please drink some water.\" in the grandpa, then go to the bed in the master, then go to the desk_chair in the small. Is that right?"
+}
+},
+{
+"qid": "q0066_55b279c9",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "empty-object where-to-put plus 'what to do with the moment' in a message task",
+"qid": "q0067_2264e5e9",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "timing question (now or later); no qtype fits",
+"qid": "q0068_634c5ca7",
+"qtype": "free",
+"slots": {}
+},
+{
+"note": "timing question (now or later)",
+"qid": "q0069_b38a6a2d",
+"qtype": "free",
+"slots": {}
+},
+{
+"qid": "q0070_92cf421c",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the moment is not in my plan). I will say \"lunch is ready\" in the dad. Is that right?"
+}
+},
+{
+"qid": "q0071_273ad7f7",
+"qtype": "which_place",
+"slots": {
+"obj": "milk carton"
+}
+},
+{
+"qid": "q0072_0f9b03ba",
+"qtype": "confirm",
+"slots": {
+"goal": "I will put the milk carton from the fridge in the kitchen on the kimchi_fridge in the kitchen. Is that right?"
+}
+},
+{
+"qid": "q0073_aac91548",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the kimchi fridge you mentioned is not in my plan; you did not say the fridge). I will put the milk carton on the fridge in the kitchen. Is that right?"
+}
+},
+{
+"note": "second part: which desk",
+"qid": "q0074_53f41705",
+"qtype": "which_place",
+"slots": {
+"options": [
+"closet in room_a",
+"closet in room_c"
+]
+}
+},
+{
+"qid": "q0075_8b7f8f6b",
+"qtype": "which_place",
+"slots": {
+"options": [
+"closet in room_a",
+"closet in room_c"
+]
+}
+},
+{
+"qid": "q0076_2de8ef16",
+"qtype": "which_place",
+"slots": {
+"options": [
+"closet in room_a",
+"closet in room_c"
+]
+}
+},
+{
+"qid": "q0077_12cc94b3",
+"qtype": "which_place",
+"slots": {
+"options": [
+"desk in room_a",
+"desk in room_c",
+"desk_chair in room_a"
+]
+}
+},
+{
+"qid": "q0078_d32688c4",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0079_c60148b1",
+"qtype": "confirm",
+"slots": {
+"goal": "put them on the bed",
+"obj": [
+"green book",
+"glasses"
+]
+}
+},
+{
+"qid": "q0080_ae196bc4",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0081_a2b848fe",
+"qtype": "which_place",
+"slots": {
+"options": [
+"counter",
+"drawer",
+"floor",
+"fridge",
+"kitchen_sink",
+"microwave",
+"stove",
+"table",
+"upper_cabinet"
+]
+}
+},
+{
+"qid": "q0082_ffc18775",
+"qtype": "where_is",
+"slots": {
+"obj": "wallet"
+}
+},
+{
+"qid": "q0083_9d92eb17",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0084_04c3a448",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0085_375bee12",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the floor you mentioned is not in my plan; the sec is not in my plan). I will go to the bed in the bedroom. Is that right?"
+}
+},
+{
+"note": "second part where_is towel",
+"qid": "q0086_bb140953",
+"qtype": "which_place",
+"slots": {
+"obj": "glasses"
+}
+},
+{
+"qid": "q0087_5cbfa466",
+"qtype": "confirm",
+"slots": {
+"goal": "I will put the black glasses on the tv_stand in the living, then put the blue towel from the drying_rack in the veranda on the person_user. Is that right?"
+}
+},
+{
+"qid": "q0088_064db6b8",
+"qtype": "which_place",
+"slots": {
+"obj": "drink",
+"options": [
+"drawer in the kitchen",
+"me"
+]
+}
+},
+{
+"qid": "q0089_59d4ee61",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0090_53872739",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the me you mentioned is not in my plan; the back's killing is not in my plan; the drink is not in my plan). I will put the milk from the fridge in the kitchen on the bed in the bedroom, then put the reading glasses from the nightstand in the bedroom on the bed in the bedroom. Is that right?"
+}
+},
+{
+"note": "literally asks where to put the microwave",
+"qid": "q0091_8a87f2fb",
+"qtype": "which_place",
+"slots": {
+"obj": "전자레인지"
+}
+},
+{
+"qid": "q0092_be729e42",
+"qtype": "confirm",
+"slots": {
+"goal": "open the microwave door"
+}
+},
+{
+"qid": "q0093_fa9e88d5",
+"qtype": "confirm",
+"slots": {
+"goal": "open the microwave door"
+}
+},
+{
+"qid": "q0094_fb339c3b",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "contains Chinese 抽屉 (drawer); context makes it guessable",
+"qid": "q0095_cda8ebbc",
+"qtype": "confirm",
+"slots": {
+"goal": "아, 제가 잘 이해한 건지 모르겠어요. (당신이 말한 '나'는 제 계획에 없고, '충전'도 없어요.) 주방 抽屉를 열고, 그 안에 가위를 넣을 거예요. 맞죠?"
+}
+},
+{
+"note": "contains Chinese 抽屉",
+"qid": "q0096_d04b114d",
+"qtype": "confirm",
+"slots": {
+"goal": "아, 제가 잘 이해하지 못했을 수도 있어요. (당신이 말한 '나'는 제 계획에 없고, '충전'도 제 계획에 없어요.) 주방 抽屉를 열어볼게요. 맞죠?"
+}
+},
+{
+"note": "asks which object where: restate task",
+"qid": "q0097_46b58f3b",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "user never said kimchi fridge; literal meaning: where to put it",
+"qid": "q0098_2221e83b",
+"qtype": "which_place",
+"slots": {
+"obj": "김치냉장고"
+}
+},
+{
+"qid": "q0099_3b3787c8",
+"qtype": "which_place",
+"slots": {
+"obj": "김치냉장고"
+}
+},
+{
+"qid": "q0100_c35152ce",
+"qtype": "confirm",
+"slots": {
+"goal": "put things in the kimchi fridge"
+}
+},
+{
+"qid": "q0101_6f55a365",
+"qtype": "confirm",
+"slots": {
+"goal": "저는 이해했는지 확신이 안 돼요 (냉장고는 제가 계획에 없어요). 김치냉장고는 주방에 있는 kimchi_fridge에 넣을게요. 맞죠?"
+}
+},
+{
+"qid": "q0102_97ffba39",
+"qtype": "confirm",
+"slots": {
+"goal": "죄송해요, 잘 듣지 못했어요. 냉장고 말씀하신 거 제가 이해한 게 맞는지 확신이 안 돼요. 김치냉장고는 주방에 있는 kimchi_fridge에 넣을게요. 맞죠?"
+}
+},
+{
+"note": "second part: where to put gray shoes",
+"qid": "q0103_ee9e970c",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0104_26ea8480",
+"qtype": "confirm",
+"slots": {
+"goal": "화장실에 있는 샤워대에 회색 신발을 놓겠습니다. 맞죠?"
+}
+},
+{
+"qid": "q0105_66479eb4",
+"qtype": "confirm",
+"slots": {
+"goal": "옷장에서 회색 수건을 욕실 주니어 캐비닛에 두겠습니다. 맞죠?"
+}
+},
+{
+"qid": "q0106_74903836",
+"qtype": "which_place",
+"slots": {
+"obj": "흰색 머그잔"
+}
+},
+{
+"qid": "q0107_1d8a05f0",
+"qtype": "confirm",
+"slots": {
+"goal": "주방 냉장고에 사과를 넣고, 식탁에 있는 흰색 머그잔을 주방에 놓겠습니다. 맞죠?"
+}
+},
+{
+"qid": "q0108_9702aee0",
+"qtype": "confirm",
+"slots": {
+"goal": "식탁에 있는 사과를 부엌 냉장고에 두고, 식탁에 있는 흰색 머그잔을 부엌에 있는 사람에게 줄게요. 맞죠?"
+}
+},
+{
+"qid": "q0109_6fba29f0",
+"qtype": "which_place",
+"slots": {
+"obj": null
+}
+},
+{
+"note": "what to put in the fridge; second part where to put the towel",
+"qid": "q0110_29b17ead",
+"qtype": "which_object",
+"slots": {
+"obj": null
+}
+},
+{
+"qid": "q0111_3fd63e7a",
+"qtype": "confirm",
+"slots": {
+"goal": "주방에 있는 냉장고에 사과를 넣고, 건조대에서 수건을 꺼서 거실의 사람에게 줄게요. 그 후 거실의 부두로 갈게요. 맞죠?"
+}
+},
+{
+"note": "which drawer (Chinese word) ; second part which partner (partner_a/partner_b)",
+"qid": "q0112_868a28e3",
+"qtype": "which_place",
+"slots": {
+"options": [
+"抽屉"
+]
+}
+},
+{
+"note": "same; may not be understood by a KO user",
+"qid": "q0113_2d3d0f64",
+"qtype": "which_place",
+"slots": {
+"options": [
+"抽屉"
+]
+}
+},
+{
+"qid": "q0114_d6cb7fe5",
+"qtype": "which_place",
+"slots": {
+"obj": "파란 책",
+"options": [
+"안락의자",
+"TV 스탠드"
+]
+}
+},
+{
+"qid": "q0115_208d02cf",
+"qtype": "confirm",
+"slots": {
+"goal": "아, 제가 잘 이해한 건지 모르겠어요. 안락의자 같은 건 제가 계획에 없고, 바닥이나 선반 같은 건 말씀 안 하셨어요. 저녁탁자에 있는 파란 책을 거실의 TV 스탠드에 두고, 거실 바닥으로 가서, 주방 선반으로 가서, 주방 카운터에 있는 물병을 거실 TV 스탠드에 두는 거죠? 맞죠?"
+}
+},
+{
+"qid": "q0116_38105715",
+"qtype": "confirm",
+"slots": {
+"goal": "안락의자 얘기한 거 제가 잘 이해한 건지 확신이 안 돼요. 밤에 침대 옆에 있던 파란 책을 거실 텔레비전 쪽에 두고, 주방 카운터에 있던 물병을 할머니 옆에 두는 거 맞나요?"
+}
+},
+{
+"qid": "q0117_0af546d0",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0118_8b61e3a8",
+"qtype": "which_place",
+"slots": {
+"obj": "녹색 머그잔"
+}
+},
+{
+"qid": "q0119_5646ec49",
+"qtype": "confirm",
+"slots": {
+"goal": "카운터에 있는 녹색 머그잔을 주방에 놓겠습니다. 맞죠?"
+}
+},
+{
+"note": "'여기 있어요?' is a broken 'where are you'; heard meaning = where to bring it",
+"qid": "q0120_0656ea6b",
+"qtype": "which_place",
+"slots": {
+"obj": null
+}
+},
+{
+"note": "second part where_is red book",
+"qid": "q0121_6bcc9a2a",
+"qtype": "which_place",
+"slots": {
+"obj": "분홍색 컵"
+}
+},
+{
+"qid": "q0122_0c295d79",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0123_8179470e",
+"qtype": "confirm",
+"slots": {
+"goal": "조리대 얘기한 거 제가 계획에 없고, 저 얘기한 거도 없고, 아이도 언급 안 했어요. 책상 위 핑크 컵을 부엌 식탁에, 서가에 있는 빨간 책을 거실에 아이 옆에 두고, 거실로 가는 거 맞죠?"
+}
+},
+{
+"qid": "q0124_935223b7",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0125_adcbf284",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0126_2c5d14f3",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0127_3ca452ea",
+"qtype": "which_object",
+"slots": {
+"obj": "검은색 물건"
+}
+},
+{
+"qid": "q0128_7004d45c",
+"qtype": "which_object",
+"slots": {
+"obj": "검은 물건"
+}
+},
+{
+"qid": "q0129_e18d9559",
+"qtype": "which_object",
+"slots": {
+"obj": "검은 물건"
+}
+},
+{
+"qid": "q0130_64ea1641",
+"qtype": "which_object",
+"slots": {
+"obj": "검은 물건"
+}
+},
+{
+"qid": "q0131_0018f20f",
+"qtype": "which_place",
+"slots": {
+"options": [
+"카운터",
+"식탁",
+"서랍",
+"바닥",
+"냉장고",
+"김치냉장고",
+"싱크대",
+"마이크로웨이브",
+"스토브"
+]
+}
+},
+{
+"qid": "q0132_540effc1",
+"qtype": "which_place",
+"slots": {
+"options": [
+"카운터",
+"식탁",
+"서랍",
+"바닥",
+"냉장고",
+"김치냉장고",
+"싱크대",
+"마이크로웨이브",
+"스토브"
+]
+}
+},
+{
+"qid": "q0133_c46f31f5",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0134_cb9e9bc4",
+"qtype": "where_is",
+"slots": {
+"obj": "장난감 자동차"
+}
+},
+{
+"note": "second part where to bring",
+"qid": "q0135_cd229cf9",
+"qtype": "where_is",
+"slots": {
+"obj": [
+"초록색 책",
+"전화"
+]
+}
+},
+{
+"qid": "q0136_a2354fca",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0137_87b23008",
+"qtype": "which_place",
+"slots": {
+"options": [
+"침대",
+"화장대",
+"바닥",
+"밤탁자",
+"옷장"
+]
+}
+},
+{
+"qid": "q0138_0b15e43f",
+"qtype": "which_place",
+"slots": {
+"options": [
+"침대",
+"화장대",
+"바닥",
+"밤탁자",
+"옷장"
+]
+}
+},
+{
+"note": "garbled",
+"qid": "q0139_bc91e054",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "asks what the misheard 여쇠 (열쇠) means; second part asks about 구",
+"qid": "q0140_f4c198d1",
+"qtype": "did_you_mean",
+"slots": {
+"word": "여쇠"
+}
+},
+{
+"qid": "q0141_12010d4e",
+"qtype": "which_place",
+"slots": {
+"options": [
+"침대",
+"옷장",
+"바닥",
+"밤탁자",
+"서랍장"
+]
+}
+},
+{
+"qid": "q0142_85308435",
+"qtype": "which_place",
+"slots": {
+"obj": "유리잔"
+}
+},
+{
+"qid": "q0143_498191f3",
+"qtype": "which_place",
+"slots": {
+"obj": "파란색 사탕"
+}
+},
+{
+"qid": "q0144_0fd0d666",
+"qtype": "which_place",
+"slots": {
+"obj": "파란색 사탕"
+}
+},
+{
+"qid": "q0145_507553ab",
+"qtype": "which_place",
+"slots": {
+"obj": "파란색 사탕"
+}
+},
+{
+"note": "'which child' with place options: where the child is",
+"qid": "q0146_4b6ce4b2",
+"qtype": "where_is",
+"slots": {
+"obj": "아이",
+"options": [
+"바닥",
+"침대",
+"책상",
+"장난감 상자"
+]
+}
+},
+{
+"qid": "q0147_809c4ea1",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0148_71118708",
+"qtype": "confirm",
+"slots": {
+"goal": "아들 얘기한 거, 아이 얘기한 거, 나 얘기한 거 다 제가 계획에 없어요. 아이, 일어나야 할 시간이야. 라고 아이침에서 말하고, 비타민을 아이침에 놓고, 아이, 영양제 가져다 줬어. 라고 아이침에서 말한 뒤, 거실의 데크로 가는 거 맞죠?"
+}
+},
+{
+"qid": "q0149_36bb5dae",
+"qtype": "confirm",
+"slots": {
+"goal": "아들, 나, 아이, 저... 모두 제가 계획에 포함된 건 아니에요. 아이가 침대에 누워 있을 때 \"아이, 일어나야 할 시간이야\"라고 말하고, 비타민을 침대 위에 놓은 뒤 \"아이, 영양제를 가져다 줬어\"라고 말한 뒤, 거실의 데크로 가는 건 맞죠?"
+}
+},
+{
+"qid": "q0150_9a29a273",
+"qtype": "where_is",
+"slots": {
+"obj": "접시"
+}
+},
+{
+"qid": "q0151_26a59e3c",
+"qtype": "where_is",
+"slots": {
+"obj": "책"
+}
+},
+{
+"qid": "q0152_a81c1c2f",
+"qtype": "which_place",
+"slots": {
+"obj": "하얀 머그잔"
+}
+},
+{
+"qid": "q0153_8103ef40",
+"qtype": "confirm",
+"slots": {
+"goal": "주스는 메인 냉장고에, 흰색 머그잔은 메인 책상에, 파란색 과일은 메인 선반에 넣겠습니다. 맞죠?"
+}
+},
+{
+"qid": "q0154_ce6f70af",
+"qtype": "which_place",
+"slots": {
+"options": [
+"샤워케이스",
+"침대",
+"커피테이블",
+"카운터"
+]
+}
+},
+{
+"qid": "q0155_8b0e2613",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "what to put in the fridge; second part what_to_say husband",
+"qid": "q0156_8deb279b",
+"qtype": "which_object",
+"slots": {
+"obj": null
+}
+},
+{
+"qid": "q0157_0840dc85",
+"qtype": "which_place",
+"slots": {
+"options": [
+"침대",
+"옷장",
+"바닥",
+"밤탁자",
+"독서의자"
+]
+}
+},
+{
+"qid": "q0158_43e9398e",
+"qtype": "which_place",
+"slots": {
+"options": [
+"침대",
+"화장대",
+"바닥",
+"밤탁자",
+"독서의자"
+]
+}
+},
+{
+"note": "which book goes on the chair/sofa and which to bring",
+"qid": "q0159_a63f897c",
+"qtype": "which_object",
+"slots": {
+"obj": "책"
+}
+},
+{
+"qid": "q0160_8ec97de8",
+"qtype": "which_object",
+"slots": {
+"obj": "책"
+}
+},
+{
+"qid": "q0161_10d7da00",
+"qtype": "confirm",
+"slots": {
+"goal": "아, 제가 이해한 게 맞는지 확신이 안 돼요. (여기서 말한 '나'는 제가 계획에 넣지 않았어요.) 거실 소파에 측면 테이블에 있는 전화기를 놓고, 거실 소파 위에 붉은 잔을 놓은 뒤, 거실의 도크로 가는 거죠? 맞죠?"
+}
+},
+{
+"note": "incoherent: someone asked to put the TV stand on tv_stand, do it first or later",
+"qid": "q0162_2fc62947",
+"qtype": "free",
+"slots": {}
+},
+{
+"qid": "q0163_e65e1b31",
+"qtype": "confirm",
+"slots": {
+"goal": "나가 언급한 건 내 계획에 없어요. 부엌 세제는 부엌 냉장고에 넣을게요. 맞죠?"
+}
+},
+{
+"qid": "q0164_2f59977e",
+"qtype": "confirm",
+"slots": {
+"goal": "죄송해요, 제가 잘못 듣지 않았나요? (당신이 언급한 '나'는 제가 계획에 포함시키지 않았어요.) 주방 세제는 주방 냉장고에 넣을게요. 맞죠?"
+}
+},
+{
+"qid": "q0165_dedcee7b",
+"qtype": "which_place",
+"slots": {
+"options": [
+"카운터",
+"식탁",
+"抽屉",
+"바닥",
+"냉장고",
+"싱크대",
+"마이크로웨이브",
+"싱크대 캐비닛",
+"가스레인지"
+]
+}
+},
+{
+"qid": "q0166_50b2d26f",
+"qtype": "which_place",
+"slots": {
+"obj": [
+"파란 책",
+"안경"
+]
+}
+},
+{
+"qid": "q0167_48528cd1",
+"qtype": "confirm",
+"slots": {
+"goal": "야간탁자에 있는 파란 책과 안경을 각각 거실의 신발장에 옮기겠습니다. 맞죠?"
+}
+},
+{
+"qid": "q0168_65155ab5",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "second part where glasses go",
+"qid": "q0169_f4a1ab0a",
+"qtype": "which_place",
+"slots": {
+"obj": "파란 책",
+"options": [
+"저",
+"신발장"
+]
+}
+},
+{
+"qid": "q0170_08a0e33f",
+"qtype": "confirm",
+"slots": {
+"goal": "신발장 얘기 잘 이해했는지 확신이 안 돼요. 저녁탁자에 있는 파란 책을 침실의 파트너_a에, 그리고 저녁탁자에 있는 안경도 침실의 파트너_a에 두는 거 맞죠?"
+}
+},
+{
+"qid": "q0171_6d3dedad",
+"qtype": "which_place",
+"slots": {
+"obj": "책"
+}
+},
+{
+"qid": "q0172_7858047e",
+"qtype": "where_is",
+"slots": {
+"obj": "요리용 호일"
+}
+},
+{
+"qid": "q0173_ce227f6e",
+"qtype": "confirm",
+"slots": {
+"goal": "아버님 말씀하신 건 제가 계획에 없으시군요. 카운터에서 꺼낸 흰 그릇을 주방에 놓을 건가요? 맞죠?"
+}
+},
+{
+"note": "asks what '정리해' means: where the milk should go",
+"qid": "q0174_a2aabf14",
+"qtype": "which_place",
+"slots": {
+"obj": "우유"
+}
+},
+{
+"qid": "q0175_59cf5d15",
+"qtype": "confirm",
+"slots": {
+"goal": "차가운 우유를 부엌 김치냉장고에 넣을게요. 맞죠?"
+}
+},
+{
+"note": "second part which desk",
+"qid": "q0176_421ad569",
+"qtype": "which_place",
+"slots": {
+"options": [
+"방_a 옷장",
+"방_c 옷장"
+]
+}
+},
+{
+"qid": "q0177_ef75a876",
+"qtype": "which_place",
+"slots": {
+"options": [
+"방_a 옷장",
+"방_c 옷장"
+]
+}
+},
+{
+"qid": "q0178_959b0bc5",
+"qtype": "which_place",
+"slots": {
+"options": [
+"방_a 옷장",
+"방_c 옷장"
+]
+}
+},
+{
+"qid": "q0179_defa61d3",
+"qtype": "confirm",
+"slots": {
+"goal": "침실 바닥으로 갈 거예요"
+}
+},
+{
+"qid": "q0180_f02afdb9",
+"qtype": "did_you_mean",
+"slots": {
+"word": "저한텍"
+}
+},
+{
+"qid": "q0181_2dee5908",
+"qtype": "confirm",
+"slots": {
+"goal": "충전 얘기가 제 계획에 없어서 잘 이해한 건지 확신이 안 돼요. 책장에서 빨간 책을 책상 위 작은 곳에, 식탁에서 흰 머그잔을 주방에 놓는 거 맞나요?"
+}
+},
+{
+"note": "colour word in Thai script",
+"qid": "q0182_5a7b7287",
+"qtype": "where_is",
+"slots": {
+"obj": "녹색 머그잔"
+}
+},
+{
+"qid": "q0183_0aad1ea5",
+"qtype": "help",
+"slots": {}
+},
+{
+"qid": "q0184_df306eae",
+"qtype": "did_you_mean",
+"slots": {
+"word": "kitchen"
+}
+},
+{
+"qid": "q0185_bd4973c5",
+"qtype": "did_you_mean",
+"slots": {
+"word": "kitchen"
+}
+},
+{
+"qid": "q0186_ddad1931",
+"qtype": "which_place",
+"slots": {
+"obj": "towel"
+}
+},
+{
+"qid": "q0187_0c8707f5",
+"qtype": "confirm",
+"slots": {
+"goal": "I will put the apple from the dining_table in the kitchen on the fridge in the kitchen, then put the towel from the drying_rack in the veranda on the sofa in the living, then go to the dock in the living. Is that right?"
+}
+},
+{
+"qid": "q0188_8f17da61",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the the is not in my plan). I will go to the dresser in the bedroom, then put the pink towel from the dresser in the bedroom on the sofa in the living. Is that right?"
+}
+},
+{
+"qid": "q0189_e41eb434",
+"qtype": "which_place",
+"slots": {
+"obj": "blue book",
+"options": [
+"armchair",
+"TV stand"
+]
+}
+},
+{
+"qid": "q0190_86d2a63a",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (you did not say the dock). I will put the blue book from the nightstand in the bedroom on the tv_stand in the living, then go to the dock in the living, then put the water bottle from the counter in the kitchen on the armchair in the living. Is that right?"
+}
+},
+{
+"qid": "q0191_078bdc31",
+"qtype": "confirm",
+"slots": {
+"goal": "I will put the green mug from the counter in the kitchen on the sofa in the living. Is that right?"
+}
+},
+{
+"qid": "q0192_b67b1acd",
+"qtype": "confirm",
+"slots": {
+"goal": "I will put the red mug from the counter in the kitchen on the armchair in the living, then put the water bottle from the counter in the kitchen on the armchair in the living. Is that right?"
+}
+},
+{
+"qid": "q0193_6bd2f89b",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "also asks where",
+"qid": "q0194_ed3efe49",
+"qtype": "confirm",
+"slots": {
+"goal": "say 'we're leaving in ten minutes' to your husband"
+}
+},
+{
+"qid": "q0195_7892f87b",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0196_4a491dc5",
+"qtype": "which_place",
+"slots": {
+"options": [
+"counter",
+"dining_table",
+"drawer",
+"floor",
+"fridge",
+"kimchi_fridge",
+"kitchen_sink",
+"microwave",
+"stove"
+]
+}
+},
+{
+"note": "second part where to bring",
+"qid": "q0197_8317f05b",
+"qtype": "where_is",
+"slots": {
+"obj": "red book"
+}
+},
+{
+"qid": "q0198_a9f3a422",
+"qtype": "confirm",
+"slots": {
+"goal": "place the reading glasses and remote on the coffee table"
+}
+},
+{
+"qid": "q0199_aa197693",
+"qtype": "where_is",
+"slots": {
+"obj": [
+"reading glasses",
+"remote"
+]
+}
+},
+{
+"qid": "q0200_63540d44",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the neighbors is not in my plan; the remote is not in my plan). I will put the reading glasses from the desk in the study on the coffee_table in the living. Is that right?"
+}
+},
+{
+"qid": "q0201_5aa653b5",
+"qtype": "which_object",
+"slots": {
+"obj": "toy car"
+}
+},
+{
+"qid": "q0202_8af5b10f",
+"qtype": "which_object",
+"slots": {
+"obj": "toy car"
+}
+},
+{
+"qid": "q0203_1fd68ebb",
+"qtype": "which_place",
+"slots": {
+"obj": "red toy car"
+}
+},
+{
+"qid": "q0204_2915dc0f",
+"qtype": "which_place",
+"slots": {
+"obj": "red toy car"
+}
+},
+{
+"qid": "q0205_3eb481ee",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the son is not in my plan). I will put the red toy car from the toy_box in the kids on the coffee_table in the living. Is that right?"
+}
+},
+{
+"note": "then which grandpa with place options",
+"qid": "q0206_45eb5ebb",
+"qtype": "where_are_you",
+"slots": {}
+},
+{
+"qid": "q0207_a7811b03",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0208_69ef76d7",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (you did not say the bookshelf; you did not say the bed; the please is not in my plan). I will go to the bookshelf in the small, then put the grin book on the desk_chair in the small, then put the cell phone from the desk in the small on the bed in the master, then go to the dock in the living. Is that right?"
+}
+},
+{
+"qid": "q0209_29c30e71",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0210_d07516f7",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the minute is not in my plan). I will go to the bed in the bedroom. Is that right?"
+}
+},
+{
+"qid": "q0211_56b1e3e6",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (you did not say the coffee table). I will put the keys from the bed in the bedroom on the dresser in the bedroom, then put the glass from the bed in the bedroom on the coffee_table in the living, then go to the dock in the living. Is that right?"
+}
+},
+{
+"qid": "q0212_cdd5c642",
+"qtype": "confirm",
+"slots": {
+"goal": "I will put the red snack bag from the bed in the main on the shelf in the main, then put the blue snack bag from the shelf in the main on the bed in the main. Is that right?"
+}
+},
+{
+"note": "garbled",
+"qid": "q0213_5441f981",
+"qtype": "which_place",
+"slots": {
+"obj": "toy_box"
+}
+},
+{
+"qid": "q0214_d751c1cf",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the son is not in my plan). I will put the vitamins from the dining_table in the kitchen on the bed in the master, then go to the dock in the living. Is that right?"
+}
+},
+{
+"qid": "q0215_5b77fd20",
+"qtype": "which_place",
+"slots": {
+"obj": "vitamins",
+"options": [
+"bed in the master",
+"somewhere else"
+]
+}
+},
+{
+"qid": "q0216_be981150",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the charge you mentioned is not in my plan; the son is not in my plan). I will put the vitamins from the dining_table in the kitchen on the bed in the master. Is that right?"
+}
+},
+{
+"qid": "q0217_240ab839",
+"qtype": "where_is",
+"slots": {
+"obj": "socks"
+}
+},
+{
+"qid": "q0218_8b57f784",
+"qtype": "confirm",
+"slots": {
+"goal": "I will go to the bath_cabinet in the bathroom, then open the bath_cabinet in the bathroom, then put the socks from the bath_cabinet in the bathroom on the bed in the main. Is that right?"
+}
+},
+{
+"qid": "q0219_dceeb150",
+"qtype": "where_is",
+"slots": {
+"obj": "plate"
+}
+},
+{
+"note": "second part what_to_say husband",
+"qid": "q0220_8f3cea97",
+"qtype": "which_place",
+"slots": {
+"obj": "milk",
+"options": [
+"fridge",
+"leave it"
+]
+}
+},
+{
+"note": "second part what_to_say husband",
+"qid": "q0221_62d39fc3",
+"qtype": "which_place",
+"slots": {
+"obj": "milk",
+"options": [
+"fridge",
+"leave it"
+]
+}
+},
+{
+"note": "second part where_is blue book",
+"qid": "q0222_21449b28",
+"qtype": "which_place",
+"slots": {
+"obj": "yellow book",
+"options": [
+"sofa",
+"reading chair"
+]
+}
+},
+{
+"qid": "q0223_1c4ae3da",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (you did not say the dock; you did not say the dock; you did not say the bed). I will put the yellow book from the tv_stand in the living on the sofa in the living, then go to the dock in the living, then say \"I'm fetching the blue book for you.\" in the dock in the living, then go to the bed in the bedroom, then put the blue book from the nightstand in the bedroom on the reading_chair in the bedroom. Is that right?"
+}
+},
+{
+"qid": "q0224_b8d21c63",
+"qtype": "confirm",
+"slots": {
+"goal": "Sorry, I didn't hear you. I am not sure I understood (you did not say the dock; you did not say the dock; you did not say the bed). I will put the yellow book from the tv_stand in the living on the sofa in the living, then go to the dock in the living, then say \"I'm fetching the blue book for you.\" in the dock in the living, then go to the bed in the bedroom, then put the blue book from the nightstand in the bedroom on the reading_chair in the bedroom. Is that right?"
+}
+},
+{
+"qid": "q0225_ac9426c1",
+"qtype": "help",
+"slots": {}
+},
+{
+"qid": "q0226_a025fe56",
+"qtype": "which_place",
+"slots": {
+"obj": "red book"
+}
+},
+{
+"qid": "q0227_e52d45a9",
+"qtype": "confirm",
+"slots": {
+"goal": "I will put the red book from the bookshelf in the small on the bed in the master. Is that right?"
+}
+},
+{
+"qid": "q0228_8657a539",
+"qtype": "confirm",
+"slots": {
+"goal": "I will put the blue book from the nightstand in the bedroom on the bed in the bedroom, then put the reading glasses from the nightstand in the bedroom on the bed in the bedroom. Is that right?"
+}
+},
+{
+"qid": "q0229_33c7d170",
+"qtype": "where_is",
+"slots": {
+"obj": "reading glasses"
+}
+},
+{
+"qid": "q0230_cb6c8c0d",
+"qtype": "confirm",
+"slots": {
+"goal": "bring the red book if it's on the coffee table, else the blue book"
+}
+},
+{
+"note": "garbled; bowl implied",
+"qid": "q0231_456d6d69",
+"qtype": "which_place",
+"slots": {
+"obj": null
+}
+},
+{
+"note": "second part about Grandpa",
+"qid": "q0232_ef9fea71",
+"qtype": "which_place",
+"slots": {
+"obj": "white bowl"
+}
+},
+{
+"qid": "q0233_464f70be",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the desk chair you mentioned is not in my plan; you did not say the bed; you did not say the bed; the white bowl is not in my plan). I will say \"Grandpa, please drink some water.\" in the bed in the master, then go to the bed in the master, then go to the plant_shelf in the veranda. Is that right?"
+}
+},
+{
+"note": "garbled where-to-put in a message task",
+"qid": "q0234_822d7e12",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "asks who to tell and where they are",
+"qid": "q0235_f86acc7a",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0236_48778ae6",
+"qtype": "which_place",
+"slots": {
+"options": [
+"desk in room A",
+"desk in room C",
+"desk_chair in room A"
+]
+}
+},
+{
+"qid": "q0237_28853185",
+"qtype": "confirm",
+"slots": {
+"goal": "I will put the white towel from the bath_cabinet in the bathroom on the closet in the room_a, then put the snack bag from the side_table in the living on the desk in the room_c. Is that right?"
+}
+},
+{
+"qid": "q0238_d02f075d",
+"qtype": "which_place",
+"slots": {
+"obj": [
+"green book",
+"glasses"
+]
+}
+},
+{
+"qid": "q0239_c7f027ba",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0240_0e364fe2",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "second part where to tell husband to go",
+"qid": "q0241_8ad82828",
+"qtype": "confirm",
+"slots": {
+"goal": "move the wallet to the shoe cabinet if it's on the nightstand"
+}
+},
+{
+"qid": "q0242_70a60cea",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the shoe cabinet you mentioned is not in my plan; the husband is not in my plan; the sec is not in my plan). I will say \"Please come to the kitchen a sec.\" to kitchen, then go to the dock in the living. Is that right?"
+}
+},
+{
+"qid": "q0243_7be998d4",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the husband is not in my plan; the sec is not in my plan). I will put the brown wallet from the nightstand in the bedroom on the shoe_cabinet in the living, then say \"Please come to the kitchen a sec.\" to kitchen, then go to the dock in the living. Is that right?"
+}
+},
+{
+"qid": "q0244_5977f07d",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the sec is not in my plan). I will go to the floor in the bedroom. Is that right?"
+}
+},
+{
+"qid": "q0245_49695e2b",
+"qtype": "which_place",
+"slots": {
+"obj": "drink",
+"options": [
+"fridge in the kitchen",
+"dock in the living"
+]
+}
+},
+{
+"qid": "q0246_fd30cce3",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0247_223e1598",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the back's killing is not in my plan; the drink is not in my plan). I will put the milk from the fridge in the kitchen on the bed in the bedroom, then put the reading glasses from the nightstand in the bedroom on the bed in the bedroom. Is that right?"
+}
+},
+{
+"qid": "q0248_9dd5f71d",
+"qtype": "where_is",
+"slots": {
+"obj": "milk"
+}
+},
+{
+"qid": "q0249_56d396f6",
+"qtype": "where_is",
+"slots": {
+"obj": "green mug"
+}
+},
+{
+"note": "second part where_is keys",
+"qid": "q0250_59ac478c",
+"qtype": "which_object",
+"slots": {
+"obj": "keys"
+}
+},
+{
+"qid": "q0251_232b48c8",
+"qtype": "which_place",
+"slots": {
+"obj": "keys"
+}
+},
+{
+"qid": "q0252_bd680637",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (you did not say the dock; the keys is not in my plan). I will go to the dock in the living. Is that right?"
+}
+},
+{
+"qid": "q0253_3dba34a5",
+"qtype": "did_you_mean",
+"slots": {
+"word": "disk"
+}
+},
+{
+"qid": "q0254_6bec2486",
+"qtype": "did_you_mean",
+"slots": {
+"word": "disk"
+}
+},
+{
+"qid": "q0255_3e429b53",
+"qtype": "did_you_mean",
+"slots": {
+"word": "disk"
+}
+},
+{
+"qid": "q0256_b49a543e",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0257_446d775d",
+"qtype": "where_is",
+"slots": {
+"obj": "milk"
+}
+},
+{
+"qid": "q0258_fa48b983",
+"qtype": "where_is",
+"slots": {
+"obj": "milk"
+}
+},
+{
+"qid": "q0259_8bd0ed52",
+"qtype": "which_place",
+"slots": {
+"obj": [
+"green book",
+"cell phone"
+],
+"options": [
+"Grandpa",
+"somewhere specific"
+]
+}
+},
+{
+"qid": "q0260_e5d8458b",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0261_d0915a63",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the son know it's is not in my plan). I will put the green book from the kids_desk in the kids on the coffee_table in the living, then say \"It's time for bed.\" in the kids_bed in the kids. Is that right?"
+}
+},
+{
+"qid": "q0262_d7aa87f8",
+"qtype": "confirm",
+"slots": {
+"goal": "Sorry, I didn't hear you. I am not sure I understood (the son know it's is not in my plan). I will put the green book from the kids_desk in the kids on the coffee_table in the living, then say \"It's time for bed.\" in the kids_bed in the kids. Is that right?"
+}
+},
+{
+"note": "what object to put in the storage cabinet",
+"qid": "q0263_8ebb1729",
+"qtype": "which_object",
+"slots": {
+"obj": null
+}
+},
+{
+"qid": "q0264_7dcdf983",
+"qtype": "which_object",
+"slots": {
+"obj": null
+}
+},
+{
+"qid": "q0265_e6cad712",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "second part where to place for Grandpa",
+"qid": "q0266_58fc9f94",
+"qtype": "where_is",
+"slots": {
+"obj": [
+"glasses",
+"remote"
+]
+}
+},
+{
+"qid": "q0267_38b85ac3",
+"qtype": "where_is",
+"slots": {
+"obj": [
+"glasses",
+"remote"
+]
+}
+},
+{
+"note": "'which grandpa' with place options",
+"qid": "q0268_d8e2f040",
+"qtype": "where_is",
+"slots": {
+"obj": "Grandpa",
+"options": [
+"bed in the master",
+"bookshelf in the small",
+"coffee_table in the living",
+"counter in the kitchen"
+]
+}
+},
+{
+"qid": "q0269_2f1ecd35",
+"qtype": "confirm",
+"slots": {
+"goal": "I will put the black glasses from the tv_stand in the living on the sofa in the living, then put the black remote control from the sofa in the living on the bed in the master. Is that right?"
+}
+},
+{
+"qid": "q0270_0a6bd088",
+"qtype": "where_are_you",
+"slots": {}
+},
+{
+"qid": "q0271_f50e1e4f",
+"qtype": "confirm",
+"slots": {
+"goal": "I will put the pink towel from the dresser in the bedroom on the sofa in the living. Is that right?"
+}
+},
+{
+"qid": "q0272_8458b66a",
+"qtype": "where_is",
+"slots": {
+"obj": "mug"
+}
+},
+{
+"note": "second part where_is glasses",
+"qid": "q0273_fb6843c1",
+"qtype": "where_is",
+"slots": {
+"obj": "Grandpa"
+}
+},
+{
+"qid": "q0274_ea9e4149",
+"qtype": "confirm",
+"slots": {
+"goal": "hand the glasses to Grandpa after he sips water"
+}
+},
+{
+"qid": "q0275_ac770eb9",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the glasses is not in my plan). I will say \"Grandpa, please sip some water first.\" in the bed in the master, then go to the bed in the master, then say \"Grandpa, here are the glasses.\" in the bed in the master. Is that right?"
+}
+},
+{
+"qid": "q0276_2ef96952",
+"qtype": "where_is",
+"slots": {
+"obj": "towel"
+}
+},
+{
+"qid": "q0277_c3f1bcb8",
+"qtype": "which_place",
+"slots": {
+"obj": "towel"
+}
+},
+{
+"qid": "q0278_60cce651",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (you did not say the bed). I will put the towel on the drying_rack in the veranda, then go to the bed in the master. Is that right?"
+}
+},
+{
+"qid": "q0279_8c061d9d",
+"qtype": "confirm",
+"slots": {
+"goal": "I will put the juice from the fridge in the kitchen on the bed in the master, then put the phone from the desk in the study on the bed in the master, then go to the dock in the living. Is that right?"
+}
+},
+{
+"qid": "q0280_27058644",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0281_e8d5e4e5",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0282_33ad6397",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0283_b4a07556",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0284_748974de",
+"qtype": "did_you_mean",
+"slots": {
+"word": "head black to your look"
+}
+},
+{
+"note": "second item",
+"qid": "q0285_42e24836",
+"qtype": "which_object",
+"slots": {
+"obj": null
+}
+},
+{
+"qid": "q0286_8451bf7c",
+"qtype": "which_object",
+"slots": {
+"obj": null
+}
+},
+{
+"note": "interpretation choice",
+"qid": "q0287_b7c025f9",
+"qtype": "which_place",
+"slots": {
+"options": [
+"wait for a specific time",
+"wait somewhere"
+]
+}
+},
+{
+"qid": "q0288_94d0c55b",
+"qtype": "confirm",
+"slots": {
+"goal": "Sorry, I didn't hear you. I am not sure I understood (the minute is not in my plan). I will go to the bed in the bedroom. Is that right?"
+}
+},
+{
+"qid": "q0289_61f39171",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0290_e8d5a64d",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the dresser you mentioned is not in my plan). I will put the blue bowl on the dining_table in the kitchen, then go to the dock in the living. Is that right?"
+}
+},
+{
+"qid": "q0291_ce722fb4",
+"qtype": "which_object",
+"slots": {
+"obj": "the green one"
+}
+},
+{
+"qid": "q0292_1083ae57",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0293_220b51b5",
+"qtype": "which_place",
+"slots": {
+"obj": "shopping list"
+}
+},
+{
+"qid": "q0294_57d6c4de",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the shopping list is not in my plan). I will open the microwave in the kitchen. Is that right?"
+}
+},
+{
+"qid": "q0295_5c58fe40",
+"qtype": "where_is",
+"slots": {
+"obj": "keys"
+}
+},
+{
+"qid": "q0296_1ae6b74d",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the bed you mentioned is not in my plan; the blue mug is not in my plan). I will go to the dock in the living. Is that right?"
+}
+},
+{
+"qid": "q0297_196acfd1",
+"qtype": "confirm",
+"slots": {
+"goal": "Sorry, I didn't hear you. I am not sure I understood (the bed you mentioned is not in my plan; the blue mug is not in my plan). I will go to the dock in the living. Is that right?"
+}
+},
+{
+"qid": "q0298_335cd578",
+"qtype": "confirm",
+"slots": {
+"goal": "I will put the white medicine bottle in the drawer in the kitchen, then put the towel from the wardrobe in the bedroom on the armchair in the living, then go to the dock in the living. Is that right?"
+}
+},
+{
+"qid": "q0299_dad3e5b6",
+"qtype": "confirm",
+"slots": {
+"goal": "I will put the white medicine bottle from the nightstand in the bedroom on the drawer in the kitchen, then put the towel from the wardrobe in the bedroom on the armchair in the living, then go to the dock in the living. Is that right?"
+}
+},
+{
+"qid": "q0300_8feab2c9",
+"qtype": "which_place",
+"slots": {
+"options": [
+"counter",
+"drawer",
+"floor",
+"fridge",
+"kitchen_sink",
+"microwave",
+"stove",
+"table",
+"upper_cabinet"
+]
+}
+},
+{
+"qid": "q0301_ccfb7bc8",
+"qtype": "which_place",
+"slots": {
+"options": [
+"counter",
+"drawer",
+"floor",
+"fridge",
+"kitchen_sink",
+"microwave",
+"stove",
+"table",
+"upper_cabinet"
+]
+}
+},
+{
+"qid": "q0302_be89fdf4",
+"qtype": "where_is",
+"slots": {
+"obj": "wallet"
+}
+},
+{
+"qid": "q0303_e0ebe232",
+"qtype": "which_place",
+"slots": {
+"obj": "red mug",
+"options": [
+"fridge in the kitchen",
+"me"
+]
+}
+},
+{
+"qid": "q0304_12a85f54",
+"qtype": "where_is",
+"slots": {
+"obj": [
+"green book",
+"towel"
+]
+}
+},
+{
+"qid": "q0305_24fc0b27",
+"qtype": "where_is",
+"slots": {
+"obj": [
+"green book",
+"towel"
+]
+}
+},
+{
+"qid": "q0306_ad9e12f6",
+"qtype": "where_is",
+"slots": {
+"obj": [
+"green book",
+"towel"
+]
+}
+},
+{
+"qid": "q0307_614c86d6",
+"qtype": "where_is",
+"slots": {
+"obj": [
+"green book",
+"towel"
+]
+}
+},
+{
+"qid": "q0308_0f8c69ec",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0309_0aaf5f19",
+"qtype": "which_object",
+"slots": {
+"options": [
+"banana",
+"blue toy car"
+]
+}
+},
+{
+"qid": "q0310_316ad511",
+"qtype": "which_object",
+"slots": {
+"options": [
+"banana",
+"blue toy car"
+]
+}
+},
+{
+"qid": "q0311_4176885c",
+"qtype": "what_to_say",
+"slots": {
+"person": "husband"
+}
+},
+{
+"qid": "q0312_d1146adc",
+"qtype": "what_to_say",
+"slots": {
+"person": "husband"
+}
+},
+{
+"qid": "q0313_1f326714",
+"qtype": "which_place",
+"slots": {
+"obj": "drinking glass"
+}
+},
+{
+"qid": "q0314_ba9b1be5",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (you did not say the dock; the keys is not in my plan). I will put the drinking glass from the upper_cabinet in the kitchen on the coffee_table in the living, then go to the dock in the living. Is that right?"
+}
+},
+{
+"note": "garbled",
+"qid": "q0315_344d2c79",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "where to tell the husband; second part where_is drinking glass",
+"qid": "q0316_7285bec2",
+"qtype": "where_is",
+"slots": {
+"obj": "husband"
+}
+},
+{
+"qid": "q0317_ed532d0d",
+"qtype": "confirm",
+"slots": {
+"goal": "I am not sure I understood (the drinking glass is not in my plan). I will say \"the laundry's finished\" in the reading_chair in the bedroom, then go to the reading_chair in the bedroom, then go to the dock in the living. Is that right?"
+}
+},
+{
+"qid": "q0318_7237f597",
+"qtype": "which_place",
+"slots": {
+"obj": "bowl"
+}
+},
+{
+"qid": "q0319_ee2cf314",
+"qtype": "confirm",
+"slots": {
+"goal": "I will put the bowl from the stove in the kitchen on the kitchen_sink in the kitchen. Is that right?"
+}
+},
+{
+"qid": "q0320_8f2c9562",
+"qtype": "where_is",
+"slots": {
+"obj": "bowl"
+}
+},
+{
+"qid": "q0321_40da14ce",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0322_51eae855",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0323_7eabddd8",
+"qtype": "which_place",
+"slots": {
+"obj": "마이크로웨이브"
+}
+},
+{
+"qid": "q0324_fb122c3a",
+"qtype": "which_place",
+"slots": {
+"obj": "마이크로웨이브"
+}
+},
+{
+"qid": "q0325_73b1154e",
+"qtype": "which_place",
+"slots": {
+"obj": "마이크로웨이브"
+}
+},
+{
+"note": "check or open the microwave: which action; second part where to put it",
+"qid": "q0326_97eb1cf6",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0327_0c2938fc",
+"qtype": "confirm",
+"slots": {
+"goal": "김치냉장고를 부엌의 kimchi_fridge에 두겠습니다. 맞죠?"
+}
+},
+{
+"qid": "q0328_dbe6f254",
+"qtype": "confirm",
+"slots": {
+"goal": "죄송해요, 잘 안 들렸어요. 김치냉장고를 부엌의 kimchi_fridge에 두겠습니다. 맞죠?"
+}
+},
+{
+"qid": "q0329_920aa62f",
+"qtype": "confirm",
+"slots": {
+"goal": "put [kimchi fridge] in the kimchi fridge"
+}
+},
+{
+"qid": "q0330_bc747a3c",
+"qtype": "confirm",
+"slots": {
+"goal": "김치냉장고를 부엌의 kimchi_fridge에 넣을게요. 맞죠?"
+}
+},
+{
+"qid": "q0331_ab716ea9",
+"qtype": "confirm",
+"slots": {
+"goal": "죄송해요, 잘 안 들렸어요. 김치냉장고를 부엌의 kimchi_fridge에 넣을게요. 맞죠?"
+}
+},
+{
+"qid": "q0332_28f538c7",
+"qtype": "which_place",
+"slots": {
+"obj": "회색 신발"
+}
+},
+{
+"qid": "q0333_a8541ca8",
+"qtype": "which_place",
+"slots": {
+"obj": [
+"사과",
+"흰색 머그잔"
+]
+}
+},
+{
+"qid": "q0334_438652ac",
+"qtype": "which_place",
+"slots": {
+"obj": "수건"
+}
+},
+{
+"note": "which drawer (Chinese word), where is it, where to bring",
+"qid": "q0335_828e11cd",
+"qtype": "which_place",
+"slots": {
+"options": [
+"抽屉"
+]
+}
+},
+{
+"note": "garbled",
+"qid": "q0336_acf19bb1",
+"qtype": "which_place",
+"slots": {
+"obj": null
+}
+},
+{
+"qid": "q0337_4bdbf2c0",
+"qtype": "confirm",
+"slots": {
+"goal": "아, 제가 이해했는지 확신이 안 돼요. 분명히 선반에 핑크 수건을 놓고, 욕실 선반을 닫은 뒤 거실의 선반으로 가는 거죠? 맞죠?"
+}
+},
+{
+"qid": "q0338_06834e96",
+"qtype": "which_place",
+"slots": {
+"obj": "파란 책",
+"options": [
+"안락의자",
+"TV대"
+]
+}
+},
+{
+"qid": "q0339_0c289ac2",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0340_ca7bb5fa",
+"qtype": "confirm",
+"slots": {
+"goal": "안락의자 얘기한 거는 제가 계획에 없고, 바닥 얘기 안 했어요. 밤에 밤 탁자에 있는 파란 책을 거실의 TV 스탠드에 두고, 거실 바닥으로 가서, 카운터에 있는 물병을 거실 TV 스탠드에 두는 거죠? 맞아요?"
+}
+},
+{
+"note": "colour in Thai script; second part where to put coffee",
+"qid": "q0341_3515ec25",
+"qtype": "where_is",
+"slots": {
+"obj": "녹색 머그잔"
+}
+},
+{
+"note": "garbled echo of the request, worded as a request to the user; no question",
+"qid": "q0342_ce662315",
+"qtype": "free",
+"slots": {}
+},
+{
+"note": "asks to explain the (garbled) request",
+"qid": "q0343_f52ddbb2",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "who to tell or which object to move",
+"qid": "q0344_a49851ca",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0345_8ea12636",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0346_b34c9041",
+"qtype": "which_object",
+"slots": {
+"obj": "검은 물건"
+}
+},
+{
+"qid": "q0347_a7c5de64",
+"qtype": "which_object",
+"slots": {
+"obj": "검은 물건"
+}
+},
+{
+"qid": "q0348_3177db3c",
+"qtype": "which_object",
+"slots": {
+"obj": "검은 물건"
+}
+},
+{
+"qid": "q0349_dc04fae7",
+"qtype": "which_object",
+"slots": {
+"obj": "검은 물체"
+}
+},
+{
+"note": "second part where to put",
+"qid": "q0350_3a1d0470",
+"qtype": "confirm",
+"slots": {
+"goal": "아버지께 주방으로 와 보시라고 전해 드리기"
+}
+},
+{
+"qid": "q0351_a6d36a14",
+"qtype": "confirm",
+"slots": {
+"goal": "아버지께 주방으로 와 보시라고 전해 드리기"
+}
+},
+{
+"qid": "q0352_0aafeb4a",
+"qtype": "confirm",
+"slots": {
+"goal": "아직 잘 이해하지 못했어요. (침대, 서재, 옷장이 아니었군요.) 제가 이렇게 말할게요: \"아버지, 주벙으로 와서 브시라고 전해 드립니다.\" 침대에서부터 시작해서, 작은 방의 서재로 가서, 작은 방 서재에 있는 붉은 책을 큰 방의 옷장에 올립니다. 맞죠?"
+}
+},
+{
+"qid": "q0353_99553910",
+"qtype": "which_place",
+"slots": {
+"obj": "장난감 자동차"
+}
+},
+{
+"qid": "q0354_3a5395ba",
+"qtype": "which_place",
+"slots": {
+"obj": "장난감 자동차"
+}
+},
+{
+"qid": "q0355_18a25eb7",
+"qtype": "confirm",
+"slots": {
+"goal": "아, 제가 이해했는지 확신이 안 돼요. 장난감 상자에 있는 자동차를 아이们的 침대에 놓을게요. 맞죠?"
+}
+},
+{
+"qid": "q0356_5aebcf1a",
+"qtype": "where_is",
+"slots": {
+"obj": [
+"초록 책",
+"전화기",
+"아버지"
+]
+}
+},
+{
+"note": "'which father' with place options",
+"qid": "q0357_a9044dd1",
+"qtype": "where_is",
+"slots": {
+"obj": "아버지",
+"options": [
+"침대",
+"서재",
+"커피 테이블",
+"카운터"
+]
+}
+},
+{
+"qid": "q0358_b4a5db4a",
+"qtype": "which_place",
+"slots": {
+"options": [
+"침대",
+"서재",
+"커피 테이블",
+"카운터"
+]
+}
+},
+{
+"qid": "q0359_b28be1ef",
+"qtype": "which_place",
+"slots": {
+"options": [
+"침대",
+"화장대",
+"바닥",
+"밤탁자",
+"옷장"
+]
+}
+},
+{
+"qid": "q0360_de97f5bc",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0361_a433dede",
+"qtype": "did_you_mean",
+"slots": {
+"word": "여쇠"
+}
+},
+{
+"note": "second part where to put blue mug",
+"qid": "q0362_f63a6bfc",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0363_c2f06b0b",
+"qtype": "confirm",
+"slots": {
+"goal": "저는 밤에 침대 옆 탁자에 있던 파란색 머그잔을 거실의 커피 테이블에 두겠습니다. 맞죠?"
+}
+},
+{
+"qid": "q0364_12d15139",
+"qtype": "which_place",
+"slots": {
+"obj": "빨간 사탕"
+}
+},
+{
+"qid": "q0365_2a5a7553",
+"qtype": "which_place",
+"slots": {
+"obj": "빨간 사탕"
+}
+},
+{
+"qid": "q0366_7aa2de61",
+"qtype": "which_place",
+"slots": {
+"obj": "빨간 사탕"
+}
+},
+{
+"note": "a statement addressed to the child, not a question",
+"qid": "q0367_c2b19ef0",
+"qtype": "free",
+"slots": {}
+},
+{
+"qid": "q0368_74fd667f",
+"qtype": "which_place",
+"slots": {
+"obj": "영양제"
+}
+},
+{
+"qid": "q0369_2949c555",
+"qtype": "confirm",
+"slots": {
+"goal": "아, 제가 잘 이해한 건지 모르겠어요. 제가 아이가 일어나야 할 시간이야, 영양제 가져다 줄게. 라고 kids_bed에서 말하고, dining_table에서 영양제를 kitchen의 kids_bed에 두고, living의 dock로 가는 거 맞죠?"
+}
+},
+{
+"qid": "q0370_15570170",
+"qtype": "which_place",
+"slots": {
+"obj": "마이크로웨이브"
+}
+},
+{
+"qid": "q0371_0d2e1901",
+"qtype": "confirm",
+"slots": {
+"goal": "주스는 주방 냉장고에, 흰색 머그잔은 책상에, 파란색 과일은 선반에 각각 놓겠습니다. 맞죠?"
+}
+},
+{
+"note": "second sentence is the message to the husband",
+"qid": "q0372_8ae2f8d1",
+"qtype": "which_place",
+"slots": {
+"obj": "우유팩"
+}
+},
+{
+"qid": "q0373_e45b7e38",
+"qtype": "confirm",
+"slots": {
+"goal": "아, 제가 이해했는지 확신이 안 돼요. 침실 침대에서 “남편님, 점심 준비 끝났어요.”라고 말할 거예요. 맞죠?"
+}
+},
+{
+"qid": "q0374_a55ca9db",
+"qtype": "confirm",
+"slots": {
+"goal": "아, 제가 이해했는지 확신이 안 돼요. 부엌 냉장고에 우팩을 놓고, 남편님께 “점심 준비 끝났어요”라고 말할게요. 맞죠?"
+}
+},
+{
+"note": "what to put on the reading chair; which blue book",
+"qid": "q0375_d04ed48e",
+"qtype": "which_object",
+"slots": {
+"obj": null
+}
+},
+{
+"qid": "q0376_13703886",
+"qtype": "which_object",
+"slots": {
+"obj": null
+}
+},
+{
+"qid": "q0377_a28fed4e",
+"qtype": "which_object",
+"slots": {
+"obj": null
+}
+},
+{
+"note": "second part where to put red mug",
+"qid": "q0378_7ceb01d3",
+"qtype": "where_is",
+"slots": {
+"obj": "전화"
+}
+},
+{
+"note": "second part where to put red mug",
+"qid": "q0379_0e0cd996",
+"qtype": "where_is",
+"slots": {
+"obj": "전화"
+}
+},
+{
+"qid": "q0380_77959ac8",
+"qtype": "which_place",
+"slots": {
+"obj": [
+"파란 책",
+"안경"
+]
+}
+},
+{
+"note": "English text in a KO episode",
+"qid": "q0381_c69a9c49",
+"qtype": "where_is",
+"slots": {
+"obj": "cooking pot"
+}
+},
+{
+"note": "robot echoes the request as a request to the user",
+"qid": "q0382_75cae5ec",
+"qtype": "free",
+"slots": {}
+},
+{
+"qid": "q0383_c71944c5",
+"qtype": "confirm",
+"slots": {
+"goal": "아, 제가 이해했는지 확신이 안 돼요. 거실에 있는 부두로 가는 거죠? 맞죠?"
+}
+},
+{
+"note": "addressed to Dad",
+"qid": "q0384_543bc299",
+"qtype": "which_place",
+"slots": {
+"obj": "점심"
+}
+},
+{
+"note": "mostly Chinese, ends with Korean quote and 맞아요",
+"qid": "q0385_089ad4c7",
+"qtype": "confirm",
+"slots": {
+"goal": "书房里的书桌椅子上，我会说“아빠, 점심 준비됐어요.” 맞아요?"
+}
+},
+{
+"qid": "q0386_135a8153",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0387_21cb93bd",
+"qtype": "confirm",
+"slots": {
+"goal": "책상 의자 얘기가 제 계획에 없었는지 확신이 안 돼요. “점심 준비됐어요, 아빠.”라고 말할게요. 맞죠?"
+}
+},
+{
+"qid": "q0388_fc8b9f87",
+"qtype": "which_place",
+"slots": {
+"obj": "우유"
+}
+},
+{
+"note": "second part which desk",
+"qid": "q0389_5e5417e2",
+"qtype": "which_place",
+"slots": {
+"options": [
+"A번 방 옷장",
+"C번 방 옷장"
+]
+}
+},
+{
+"qid": "q0390_dd3bf1ad",
+"qtype": "help",
+"slots": {}
+},
+{
+"note": "go to a place or follow you",
+"qid": "q0391_31206f6a",
+"qtype": "which_place",
+"slots": {
+"options": [
+"특정 장소",
+"당신을 따라가기"
+]
+}
+},
+{
+"qid": "q0392_778dc4e3",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "'경' is a fragment of 안경",
+"qid": "q0393_dca57eb4",
+"qtype": "where_is",
+"slots": {
+"obj": [
+"안경",
+"수건"
+]
+}
+},
+{
+"qid": "q0394_93c64613",
+"qtype": "confirm",
+"slots": {
+"goal": "bring it to the user"
+}
+},
+{
+"note": "second part which cup",
+"qid": "q0395_8e1f85f4",
+"qtype": "which_place",
+"slots": {
+"options": [
+"서가",
+"책상"
+]
+}
+},
+{
+"note": "'지금 어디에 있나요?' with no subject; then where to bring",
+"qid": "q0396_0fc60a8a",
+"qtype": "where_are_you",
+"slots": {}
+},
+{
+"note": "which key, and where it is",
+"qid": "q0397_b5374aa8",
+"qtype": "which_object",
+"slots": {
+"obj": "키"
+}
+},
+{
+"qid": "q0398_f1d90f84",
+"qtype": "where_is",
+"slots": {
+"obj": "노란 키"
+}
+},
+{
+"note": "which desk; second part which glasses",
+"qid": "q0399_62ca855a",
+"qtype": "which_place",
+"slots": {
+"obj": "안경"
+}
+},
+{
+"note": "which desk",
+"qid": "q0400_edbcfd33",
+"qtype": "which_place",
+"slots": {
+"obj": "유리잔"
+}
+},
+{
+"qid": "q0401_c6401e7d",
+"qtype": "which_place",
+"slots": {
+"obj": "유리잔"
+}
+},
+{
+"note": "colour word corrupted; also who receives",
+"qid": "q0402_4cd222c4",
+"qtype": "where_is",
+"slots": {
+"obj": [
+"책",
+"전화"
+]
+}
+},
+{
+"qid": "q0403_d84f742f",
+"qtype": "where_is",
+"slots": {
+"obj": [
+"책",
+"전화"
+]
+}
+},
+{
+"qid": "q0404_62c48191",
+"qtype": "which_place",
+"slots": {
+"obj": "세제"
+}
+},
+{
+"note": "second part where to put green book",
+"qid": "q0405_6ea8fcf6",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0406_30c068f7",
+"qtype": "confirm",
+"slots": {
+"goal": "책상 얘기가 제 계획에 없고, 아이침대가 아니었군요. 거실의 커피테이블에 아이책상의 녹색 책을 놓고, 아이침대에서 \"자, 아빠\"라고 말할 거예요. 맞죠?"
+}
+},
+{
+"qid": "q0407_51d3f842",
+"qtype": "confirm",
+"slots": {
+"goal": "죄송해요, 잘 듣지 못했어요. 책상이 제가 계획에 없고, 아이 침대를 말씀하신 건 아니었나요? 거실의 커피 테이블에 아이 책상의 녹색 책을 놓고, 아이 침대에서 '이제 잠자기 시간이야, 아들아.'라고 말할 거예요. 맞죠?"
+}
+},
+{
+"qid": "q0408_a279cffb",
+"qtype": "confirm",
+"slots": {
+"goal": "put the towel in the storage cabinet"
+}
+},
+{
+"qid": "q0409_73a091ad",
+"qtype": "confirm",
+"slots": {
+"goal": "건조대에 걸린 수건을 유틸리티의 베란다에 있는 보관장에 두겠습니다. 맞죠?"
+}
+},
+{
+"qid": "q0410_460222dd",
+"qtype": "confirm",
+"slots": {
+"goal": "청색 수건을 건조대에서 가져와 유틸리티의 베란다에 보관장에 두겠습니다. 맞죠?"
+}
+},
+{
+"qid": "q0411_194b20fd",
+"qtype": "which_place",
+"slots": {
+"obj": "흰 머그잔",
+"options": [
+"카운터",
+"침대"
+]
+}
+},
+{
+"note": "also '리컨 갖단 드'",
+"qid": "q0412_20435bd5",
+"qtype": "did_you_mean",
+"slots": {
+"word": "언경"
+}
+},
+{
+"qid": "q0413_bc811079",
+"qtype": "did_you_mean",
+"slots": {
+"word": "언경"
+}
+},
+{
+"qid": "q0414_58952336",
+"qtype": "did_you_mean",
+"slots": {
+"word": "언경"
+}
+},
+{
+"qid": "q0415_75a47541",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0416_eebbaece",
+"qtype": "confirm",
+"slots": {
+"goal": "아, 제가 이해했는지 확신이 안 돼요. 욕실에 있는 욕조 캐비닛으로 가는 거 맞죠?"
+}
+},
+{
+"qid": "q0417_8a6ab533",
+"qtype": "confirm",
+"slots": {
+"goal": "아, 제가 이해했는지 확신이 안 돼요. 침실의 침대에 가서 “분홍색 수건을 가져왔어요”라고 말할 거예요. 맞죠?"
+}
+},
+{
+"qid": "q0418_14673f2e",
+"qtype": "where_is",
+"slots": {
+"obj": "머그잔"
+}
+},
+{
+"note": "where to tell: the person's place (person implied)",
+"qid": "q0419_2532354e",
+"qtype": "where_is",
+"slots": {
+"obj": "아버님"
+}
+},
+{
+"qid": "q0420_d45b244a",
+"qtype": "which_place",
+"slots": {
+"options": [
+"특정 장소",
+"직접 전하기"
+]
+}
+},
+{
+"qid": "q0421_040c7d3d",
+"qtype": "which_place",
+"slots": {
+"options": [
+"직접",
+"침대@마스터"
+]
+}
+},
+{
+"note": "a statement to Grandpa, not a question",
+"qid": "q0422_5c98f555",
+"qtype": "free",
+"slots": {}
+},
+{
+"qid": "q0423_838ff837",
+"qtype": "confirm",
+"slots": {
+"goal": "아직 잘 이해하지 못했어요. (침대에서 말씀드린 게 아니었군요.) 주인님 침대에서 \"할아버지, 수건을 드립니다.\"라고 말할게요. 맞죠?"
+}
+},
+{
+"qid": "q0424_22c8e396",
+"qtype": "which_place",
+"slots": {
+"obj": "물병",
+"options": [
+"냉장고",
+"소파"
+]
+}
+},
+{
+"qid": "q0425_0751c43f",
+"qtype": "which_place",
+"slots": {
+"options": [
+"냉장고",
+"소파"
+]
+}
+},
+{
+"qid": "q0426_85573b83",
+"qtype": "which_place",
+"slots": {
+"obj": "물병"
+}
+},
+{
+"note": "second part who receives",
+"qid": "q0427_2570a993",
+"qtype": "which_place",
+"slots": {
+"obj": "유리잔"
+}
+},
+{
+"qid": "q0428_9748a80e",
+"qtype": "where_is",
+"slots": {
+"obj": [
+"안경",
+"핸드폰"
+]
+}
+},
+{
+"note": "'어디에요?' then where to bring it",
+"qid": "q0429_3a4295c3",
+"qtype": "which_place",
+"slots": {
+"obj": null
+}
+},
+{
+"qid": "q0430_cf8e3981",
+"qtype": "confirm",
+"slots": {
+"goal": "요리할 때 우유팩을 주방 김치냉장고에 넣을게요. 맞죠?"
+}
+},
+{
+"qid": "q0431_25535658",
+"qtype": "confirm",
+"slots": {
+"goal": "차가운 우유 팩을 부엌 김치냉장고에 넣을게요. 맞죠?"
+}
+},
+{
+"qid": "q0432_6b3f74a0",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0433_12129053",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0434_e305dcdd",
+"qtype": "where_is",
+"slots": {
+"obj": "티셔츠"
+}
+},
+{
+"qid": "q0435_2da20f2f",
+"qtype": "which_place",
+"slots": {
+"obj": "파란 그릇"
+}
+},
+{
+"qid": "q0436_a4546951",
+"qtype": "confirm",
+"slots": {
+"goal": "아, 제가 잘 이해한 건지 모르겠어요. 서랍장은 제가 계획에 없고, TV 스탠드도, 도크도 말씀 안 하셨어요. 식탁에 있는 파란 그릇을 거실의 TV 스탠드에, 그리고 거실 도크로 가는 거 맞죠?"
+}
+},
+{
+"note": "also '초색 거'",
+"qid": "q0437_b05bc6e8",
+"qtype": "did_you_mean",
+"slots": {
+"word": "육리잔"
+}
+},
+{
+"qid": "q0438_1c7fd071",
+"qtype": "did_you_mean",
+"slots": {
+"word": "육리잔"
+}
+},
+{
+"qid": "q0439_8dc2ec58",
+"qtype": "which_object",
+"slots": {
+"obj": "키"
+}
+},
+{
+"qid": "q0440_1b8bbfc9",
+"qtype": "which_place",
+"slots": {
+"obj": "파란색 머그잔"
+}
+},
+{
+"qid": "q0441_14a3dbef",
+"qtype": "which_place",
+"slots": {
+"obj": "파란색 머그잔"
+}
+},
+{
+"qid": "q0442_7822a686",
+"qtype": "confirm",
+"slots": {
+"goal": "카운터에 있는 파란색 머그잔을 주방의 TV 스탠드에 두겠습니다. 맞죠?"
+}
+},
+{
+"note": "second part where to put white towel",
+"qid": "q0443_b96c2694",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0444_b9dfa3ba",
+"qtype": "confirm",
+"slots": {
+"goal": "서랍장이 계획에 없었는지 확신이 안 돼요. 목욕시트를 거실 TV 스탠드에 두는 건 맞죠?"
+}
+},
+{
+"qid": "q0445_2757124b",
+"qtype": "confirm",
+"slots": {
+"goal": "TV 받침대 얘기가 제 계획에 없어서 잘 이해한 건지 확신이 안 돼요. 침실 서랍장에 흰 수건을 놓을게요. 맞죠?"
+}
+},
+{
+"qid": "q0446_7bd1ea97",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"note": "a statement to the husband, not a question",
+"qid": "q0447_8875b82f",
+"qtype": "free",
+"slots": {}
+},
+{
+"qid": "q0448_aca459cf",
+"qtype": "free",
+"slots": {}
+},
+{
+"qid": "q0449_e96d64e0",
+"qtype": "confirm",
+"slots": {
+"goal": "아, 제가 잘 이해한 건지 모르겠어요. 제가 \"남편님, 주방으로 와주세요\"라고 침대에서 말하고, 침대에서 빼서 부엌 냉장고로 가고, 부엌 싱크대로 가고, 다시 침대로 가고, 거실 데크로 가는 거 맞나요?"
+}
+},
+{
+"qid": "q0450_23277183",
+"qtype": "confirm",
+"slots": {
+"goal": "아, 제가 잘 이해한 건지 모르겠어요. 제가 \"남편님, 주방으로 와주세요\"라고 침실의 침대에서 말하고, 주방 냉장고 앞에서, 주방 싱크대 앞에서, 침실 침대 앞에서, 거실 데크 앞에서 이렇게 하면 되는 건가요?"
+}
+},
+{
+"note": "asks what a word the user never said means",
+"qid": "q0451_edcaaae1",
+"qtype": "did_you_mean",
+"slots": {
+"word": "브라우즈"
+}
+},
+{
+"qid": "q0452_cba11489",
+"qtype": "which_object",
+"slots": {
+"obj": "빨간 컵",
+"options": [
+"안락의자",
+"침대",
+"커피테이블",
+"카운터"
+]
+}
+},
+{
+"qid": "q0453_c29ba147",
+"qtype": "which_place",
+"slots": {
+"options": [
+"침대",
+"서가",
+"커피 테이블",
+"카운터"
+]
+}
+},
+{
+"note": "second part which father (place options)",
+"qid": "q0454_5e877680",
+"qtype": "where_is",
+"slots": {
+"obj": "초록 책"
+}
+},
+{
+"qid": "q0455_f3668a04",
+"qtype": "where_is",
+"slots": {
+"obj": "초록 책"
+}
+},
+{
+"note": "also asks about '노아주시고' / '장난검 상자'",
+"qid": "q0456_123c6400",
+"qtype": "repeat",
+"slots": {
+"about": "request"
+}
+},
+{
+"qid": "q0457_a5e74214",
+"qtype": "did_you_mean",
+"slots": {
+"word": "노아주시고"
+}
+},
+{
+"qid": "q0458_204eea8b",
+"qtype": "confirm",
+"slots": {
+"goal": "남편한테 가서 10분 후 출발한다고 말하기"
+}
+},
+{
+"qid": "q0459_829e404a",
+"qtype": "confirm",
+"slots": {
+"goal": "남편한테 가서 10분 후 출발한다고 말하기"
+}
+},
+{
+"qid": "q0460_d75d8223",
+"qtype": "what_to_say",
+"slots": {
+"person": "남편"
+}
+},
+{
+"qid": "q0461_8f68c968",
+"qtype": "confirm",
+"slots": {
+"goal": "아, 제가 이해했는지 확신이 안 돼요. 제가 \"남편한 가섬 10분 뒤에 출발한다고 말해 세욜.\"라고 침대에서 말할게요. 맞죠?"
+}
+},
+{
+"note": "second part 소금통",
+"qid": "q0462_768089a9",
+"qtype": "which_place",
+"slots": {
+"obj": "유리잔"
+}
+},
+{
+"qid": "q0463_430af0ac",
+"qtype": "confirm",
+"slots": {
+"goal": "위 선반에 있는 유리잔을 주방에서 거실의 커피 테이블에 두고, 소금통도 거실 커피 테이블에 놓겠습니다. 맞죠?"
+}
+},
+{
+"qid": "q0464_6a65b198",
+"qtype": "confirm",
+"slots": {
+"goal": "아, 제가 잘 이해한 건지 모르겠어요. 침대, 바닥 같은 걸 말씀하셨나요? 제가 침실 침대에서 “빨래 다 됐어요” 하고, 침실 침대에 가서, 화장실 싱크대에 윤리잔을 놓고, 다시 침실 침대에 가서 “윤리잔을 가져왔어요” 하고, 화장실 바닥에 가서 “총전하겠습니다” 하고 말씀드릴게요. 맞죠?"
+}
+},
+{
+"qid": "q0465_90259354",
+"qtype": "which_place",
+"slots": {
+"options": [
+"fridge",
+"kimchi fridge"
+]
+}
+},
+{
+"qid": "q0466_6871716a",
+"qtype": "which_object",
+"slots": {
+"options": [
+"white mug",
+"black mug"
+]
+}
+},
+{
+"qid": "q0467_0ac808f9",
+"qtype": "which_object",
+"slots": {
+"options": [
+"red toy car",
+"blue toy car"
+]
+}
+},
+{
+"qid": "q0468_be5017ef",
+"qtype": "which_object",
+"slots": {
+"options": [
+"white glass",
+"green glass"
+]
+}
+},
+{
+"qid": "q0469_91b24970",
+"qtype": "help",
+"slots": {}
+},
+{
+"qid": "q0470_cd169b50",
+"qtype": "which_object",
+"slots": {
+"options": [
+"red book",
+"blue book"
+]
+}
+},
+{
+"qid": "q0471_8c9dde63",
+"qtype": "which_place",
+"slots": {
+"options": [
+"fridge",
+"kimchi fridge"
+]
+}
+},
+{
+"qid": "q0472_ebf7c30f",
+"qtype": "which_object",
+"slots": {
+"options": [
+"milk",
+"water"
+]
+}
+},
+{
+"qid": "q0473_c161b3bc",
+"qtype": "which_object",
+"slots": {
+"options": [
+"gray keys",
+"yellow keys"
+]
+}
+},
+{
+"qid": "q0474_78ffc7e5",
+"qtype": "which_object",
+"slots": {
+"options": [
+"red mug",
+"blue mug"
+]
+}
+},
+{
+"qid": "q0475_a471c496",
+"qtype": "which_object",
+"slots": {
+"options": [
+"juice",
+"milk"
+]
+}
+},
+{
+"qid": "q0476_8e44273c",
+"qtype": "which_object",
+"slots": {
+"options": [
+"gray keys",
+"yellow keys"
+]
+}
+},
+{
+"qid": "q0477_fd1ffa73",
+"qtype": "which_object",
+"slots": {
+"options": [
+"white bowl",
+"blue bowl"
+]
+}
+},
+{
+"qid": "q0478_2d746d98",
+"qtype": "which_place",
+"slots": {
+"options": [
+"dresser",
+"storage cabinet"
+]
+}
+},
+{
+"qid": "q0479_0ea36882",
+"qtype": "which_object",
+"slots": {
+"options": [
+"red book",
+"green book"
+]
+}
+},
+{
+"qid": "q0480_6cf42949",
+"qtype": "which_object",
+"slots": {
+"options": [
+"white mug",
+"green mug"
+]
+}
+},
+{
+"qid": "q0481_34615923",
+"qtype": "which_object",
+"slots": {
+"options": [
+"red mug",
+"blue mug"
+]
+}
+},
+{
+"qid": "q0482_5d9f6226",
+"qtype": "which_object",
+"slots": {
+"options": [
+"red book",
+"green book"
+]
+}
+},
+{
+"qid": "q0483_4a751824",
+"qtype": "which_object",
+"slots": {
+"options": [
+"yellow cup",
+"pink cup"
+]
+}
+},
+{
+"qid": "q0484_fa68a9f5",
+"qtype": "which_object",
+"slots": {
+"options": [
+"yellow cup",
+"pink cup"
+]
+}
+},
+{
+"qid": "q0485_17c31da9",
+"qtype": "which_object",
+"slots": {
+"options": [
+"red snack bag",
+"blue snack bag"
+]
+}
+},
+{
+"qid": "q0486_3b337c0f",
+"qtype": "which_object",
+"slots": {
+"options": [
+"juice",
+"water"
+]
+}
+},
+{
+"qid": "q0487_4d22e67d",
+"qtype": "which_object",
+"slots": {
+"options": [
+"red book",
+"blue book"
+]
+}
+},
+{
+"qid": "q0488_8010410f",
+"qtype": "which_object",
+"slots": {
+"options": [
+"white towel",
+"gray towel"
+]
+}
+},
+{
+"qid": "q0489_ccd18a04",
+"qtype": "which_object",
+"slots": {
+"options": [
+"white mug",
+"black mug"
+]
+}
+},
+{
+"qid": "q0490_764a0c8c",
+"qtype": "which_object",
+"slots": {
+"options": [
+"white bowl",
+"blue bowl"
+]
+}
+},
+{
+"qid": "q0491_864454dc",
+"qtype": "which_place",
+"slots": {
+"options": [
+"dresser",
+"storage cabinet"
+]
+}
+},
+{
+"qid": "q0492_582d24fe",
+"qtype": "which_object",
+"slots": {
+"options": [
+"red snack bag",
+"blue snack bag"
+]
+}
+},
+{
+"qid": "q0493_664f8637",
+"qtype": "which_object",
+"slots": {
+"options": [
+"blue book",
+"yellow book"
+]
+}
+},
+{
+"qid": "q0494_57038e6b",
+"qtype": "which_object",
+"slots": {
+"options": [
+"white glass",
+"green glass"
+]
+}
+},
+{
+"qid": "q0495_b3b5e3bf",
+"qtype": "which_object",
+"slots": {
+"options": [
+"blue book",
+"yellow book"
+]
+}
+},
+{
+"qid": "q0496_1464725b",
+"qtype": "which_place",
+"slots": {
+"options": [
+"냉장고",
+"김치냉장고"
+]
+}
+},
+{
+"qid": "q0497_103cdc79",
+"qtype": "which_object",
+"slots": {
+"options": [
+"하얀 머그컵",
+"검은 머그컵"
+]
+}
+},
+{
+"qid": "q0498_fc4c11bf",
+"qtype": "which_object",
+"slots": {
+"options": [
+"빨간 장난감 자동차",
+"파란 장난감 자동차"
+]
+}
+},
+{
+"qid": "q0499_2e88dad4",
+"qtype": "which_object",
+"slots": {
+"options": [
+"하얀 유리잔",
+"초록색 유리잔"
+]
+}
+},
+{
+"qid": "q0500_50074b66",
+"qtype": "help",
+"slots": {}
+},
+{
+"qid": "q0501_f99a31a1",
+"qtype": "which_object",
+"slots": {
+"options": [
+"빨간 책",
+"파란 책"
+]
+}
+},
+{
+"qid": "q0502_f62c4f44",
+"qtype": "which_place",
+"slots": {
+"options": [
+"냉장고",
+"김치냉장고"
+]
+}
+},
+{
+"qid": "q0503_c20c294b",
+"qtype": "which_object",
+"slots": {
+"options": [
+"우유",
+"물"
+]
+}
+},
+{
+"qid": "q0504_5503c2f4",
+"qtype": "which_object",
+"slots": {
+"options": [
+"회색 열쇠",
+"노란 열쇠"
+]
+}
+},
+{
+"qid": "q0505_c38410e8",
+"qtype": "which_object",
+"slots": {
+"options": [
+"빨간 머그컵",
+"파란 머그컵"
+]
+}
+},
+{
+"qid": "q0506_d7747bc0",
+"qtype": "which_object",
+"slots": {
+"options": [
+"주스",
+"우유"
+]
+}
+},
+{
+"qid": "q0507_a816e90c",
+"qtype": "which_object",
+"slots": {
+"options": [
+"빨간 머그컵",
+"파란 머그컵"
+]
+}
+},
+{
+"qid": "q0508_e26273f9",
+"qtype": "which_object",
+"slots": {
+"options": [
+"하얀 그릇",
+"파란 그릇"
+]
+}
+},
+{
+"qid": "q0509_d9fba1c1",
+"qtype": "which_place",
+"slots": {
+"options": [
+"서랍장",
+"수납장"
+]
+}
+},
+{
+"qid": "q0510_02762980",
+"qtype": "which_object",
+"slots": {
+"options": [
+"빨간 책",
+"초록색 책"
+]
+}
+},
+{
+"qid": "q0511_ada2ff26",
+"qtype": "which_object",
+"slots": {
+"options": [
+"하얀 머그컵",
+"초록색 머그컵"
+]
+}
+},
+{
+"qid": "q0512_21729093",
+"qtype": "which_object",
+"slots": {
+"options": [
+"빨간 머그컵",
+"파란 머그컵"
+]
+}
+},
+{
+"qid": "q0513_80fe3c98",
+"qtype": "which_object",
+"slots": {
+"options": [
+"빨간 책",
+"초록색 책"
+]
+}
+},
+{
+"qid": "q0514_5af7a5dd",
+"qtype": "which_object",
+"slots": {
+"options": [
+"노란 컵",
+"분홍색 컵"
+]
+}
+},
+{
+"qid": "q0515_67343fb9",
+"qtype": "which_object",
+"slots": {
+"options": [
+"노란 컵",
+"분홍색 컵"
+]
+}
+},
+{
+"qid": "q0516_6b8a0922",
+"qtype": "which_object",
+"slots": {
+"options": [
+"빨간 책",
+"초록색 책"
+]
+}
+},
+{
+"qid": "q0517_801e8f07",
+"qtype": "which_object",
+"slots": {
+"options": [
+"빨간 과자",
+"파란 과자"
+]
+}
+},
+{
+"qid": "q0518_9212bed6",
+"qtype": "which_object",
+"slots": {
+"options": [
+"주스",
+"물"
+]
+}
+},
+{
+"qid": "q0519_ef61b03b",
+"qtype": "which_object",
+"slots": {
+"options": [
+"하얀 수건",
+"회색 수건"
+]
+}
+},
+{
+"qid": "q0520_7ad4ac09",
+"qtype": "which_object",
+"slots": {
+"options": [
+"하얀 그릇",
+"파란 그릇"
+]
+}
+},
+{
+"qid": "q0521_73a89938",
+"qtype": "which_object",
+"slots": {
+"options": [
+"빨간 책",
+"파란 책"
+]
+}
+},
+{
+"qid": "q0522_0af3463a",
+"qtype": "which_place",
+"slots": {
+"options": [
+"서랍장",
+"수납장"
+]
+}
+},
+{
+"qid": "q0523_f844f17f",
+"qtype": "which_object",
+"slots": {
+"options": [
+"빨간 과자",
+"파란 과자"
+]
+}
+},
+{
+"qid": "q0524_a7e279ce",
+"qtype": "which_object",
+"slots": {
+"options": [
+"파란 책",
+"노란 책"
+]
+}
+},
+{
+"qid": "q0525_4997ef3b",
+"qtype": "which_object",
+"slots": {
+"options": [
+"하얀 그릇",
+"파란 그릇"
+]
+}
+},
+{
+"note": "robot asks the user to bring the white mug (a request to the user, not a check)",
+"qid": "q0526_093ef83f",
+"qtype": "free",
+"slots": {}
+},
+{
+"qid": "q0527_88de31fe",
+"qtype": "which_object",
+"slots": {
+"options": [
+"water",
+"milk",
+"tea",
+"coffee"
+]
+}
+},
+{
+"note": "English text in a KO episode",
+"qid": "q0528_671f4942",
+"qtype": "where_is",
+"slots": {
+"obj": "phone"
+}
+},
+{
+"note": "'give me the phone': a request to the user",
+"qid": "q0529_ee309f12",
+"qtype": "free",
+"slots": {}
+},
+{
+"note": "English text in a KO episode; toothbrush not in the request",
+"qid": "q0530_9306a6bb",
+"qtype": "where_is",
+"slots": {
+"obj": "toothbrush"
+}
+},
+{
+"qid": "q0531_41e1395c",
+"qtype": "did_you_mean",
+"slots": {
+"word": "kitchen"
+}
+},
+{
+"note": "second part asks what 'my hard' means",
+"qid": "q0532_3173f094",
+"qtype": "did_you_mean",
+"slots": {
+"word": "kitchen"
+}
+}
+]
+}

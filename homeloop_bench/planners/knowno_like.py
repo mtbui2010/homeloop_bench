@@ -109,6 +109,18 @@ def _distinct_objects(opts: list) -> list:
     return out
 
 
+def meaning(opts: list, obs) -> dict:
+    """The structured form of :func:`question`: which object (or which place, when the options differ only in
+    a place), with the names the question says."""
+    ids = _distinct_objects(opts)
+    names = [_obj_phrase(o, obs)[obs.lang] for o in ids]
+    places = {p.id for p in obs.places}
+    qt = "which_place" if ids and all(o in places for o in ids) else "which_object"
+    if qt == "which_place":
+        names = [next((p.name.get(obs.lang) or p.id for p in obs.places if p.id == o), o) for o in ids]
+    return {"qtype": qt, "options": names}
+
+
 def question(opts: list, obs) -> str:
     objs = _distinct_objects(opts)
     names = [_obj_phrase(o, obs)[obs.lang] for o in objs]
@@ -137,6 +149,7 @@ class KnowNoLike(LLMStepPlanner):
     name = "knowno_like"
     mode = "knowno_exec"
     description = "conformal prediction set over interpretations; asks when the set has more than one (after KnowNo)"
+    qtypes = ("which_object", "which_place")      # its question's structured form (meaning=)
 
     def __init__(self, llm=None, calib: dict | None = None):
         super().__init__(llm)
@@ -170,7 +183,7 @@ class KnowNoLike(LLMStepPlanner):
             self.interpretation = cset[0]
         else:
             ask_opts = cset or opts
-            r = env.call("ask", question=question(ask_opts, obs), lang=env.lang)
+            r = env.call("ask", question=question(ask_opts, obs), lang=env.lang, meaning=meaning(ask_opts, obs))
             ans = (r.get("data") or {}).get("answer", "") if r["ok"] else ""
             self.interpretation = pick_by_answer(ask_opts, ans, obs)
         super().run(env)

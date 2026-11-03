@@ -48,6 +48,7 @@ class NaivePlanner:
     privileged = True
     needs_llm = False
     description = "privileged: the oracle's start-state plan, open loop, no recovery (ablation)"
+    qtypes = ()            # it never asks; an ask in its plan would carry the oracle's meaning
 
     def __init__(self, llm=None):
         pass

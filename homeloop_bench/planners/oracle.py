@@ -59,6 +59,18 @@ def gold_question(env):
     return gq or None
 
 
+def gold_meaning(env) -> dict:
+    """The structured form of the gold clarification question (homeloop_robot docs/user_model.md): which object
+    or which place, with the candidates as the question names them."""
+    u = env.task.get("user") or {}
+    opts = []
+    for c in u.get("candidates") or []:
+        m = ((c.get("mentions") or {}).get(env.lang) or (c.get("mentions") or {}).get("en") or [c.get("id")])
+        opts.append(str(m[0]))
+    qt = "which_place" if u.get("slot") == "destination" else "which_object"
+    return {"qtype": qt, "options": opts} if opts else {"qtype": qt}
+
+
 def heard_text(env) -> str:
     """The instruction as heard, plus the words of every correction said so far."""
     extra = [str(e.get("text") or "") for e in env._events if e.get("kind") == "correction"]
@@ -86,6 +98,7 @@ class OraclePlanner:
     privileged = True
     needs_llm = False
     description = "privileged: re-solves from the true world after every call, retries, waits, asks for help"
+    qtypes = ("which_object", "which_place", "help")      # the structured questions it asks (meaning=)
 
     def __init__(self, llm=None):
         pass
@@ -100,7 +113,7 @@ class OraclePlanner:
         is_clarify = env.task.get("kind") == "clarify" or "clarify" in kinds
         q = gold_question(env)
         if is_clarify and q:
-            env.call("ask", question=q, lang=env.lang)
+            env.call("ask", question=q, lang=env.lang, meaning=gold_meaning(env))
         fails: dict = {}
         modes, modes_key = None, None
         while env.status is None:

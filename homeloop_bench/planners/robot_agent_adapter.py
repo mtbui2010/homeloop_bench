@@ -42,9 +42,12 @@ class RobotProxy:
     def __init__(self, env):
         self.env = env
         self.world = env._world          # the robot side of the bridge (homeloop_robot backend), not the planner
+        self.meaning = None              # the structured form of the question being asked (structured_asks)
 
     def call(self, skill: str, **args):
         from homeloop_robot.types import FailureCode, SkillResult
+        if skill == "ask" and self.meaning is not None and "meaning" not in args:
+            args = {**args, "meaning": dict(self.meaning)}
         r = self.env.call(skill, **args)
         if self.env.last_result is not None and self.env.calls and r.get("msg") != "episode budget exhausted":
             return self.env.last_result
@@ -124,6 +127,27 @@ class FakeState:
 
     def save_world(self):
         return None
+
+
+def structured_asks(loop, proxy) -> bool:
+    """Give the AssistLoop's questions their structured form (homeloop_robot docs/user_model.md): wrap
+    ``_ask_io`` on this loop instance (robot_agent is not changed). It receives the English question before
+    robot_agent translates it (``_in_lang``); ``homeloop_robot.configs.ra_dialog.derive`` maps it onto SAGE's
+    template and its slots, which the proxy attaches to the Ask skill's ``ask`` call. False = the loop has no
+    ``_ask_io`` (ClosedLoop): its questions stay free text (rules, then the classifier)."""
+    from homeloop_robot.configs.ra_dialog import derive
+    orig = getattr(loop, "_ask_io", None)
+    if orig is None:
+        return False
+
+    def _ask_io(question, node, log_fn, lang):
+        proxy.meaning = derive(question)
+        try:
+            return orig(question, node, log_fn, lang)
+        finally:
+            proxy.meaning = None
+    loop._ask_io = _ask_io
+    return True
 
 
 @contextlib.contextmanager
@@ -237,6 +261,7 @@ class _RobotAgentPlanner:
     loop_kind = "assist"         # assist | closed
     ra_planner = "grace"
     description = ""
+    structured = True            # SAGE's template questions carry their qtype (structured_asks)
 
     def __init__(self, llm=None):
         self.llm = llm
@@ -273,7 +298,8 @@ class _RobotAgentPlanner:
         fk.CURRENT["env"] = env
         try:
             with _patched(pairs):
-                hb.set_backend(RobotProxy(env))
+                proxy = RobotProxy(env)
+                hb.set_backend(proxy)
                 manager = reset_manager()
                 run_control._CANCEL.clear()
                 dec = manager.start(goal=env.task_text, user_id="owner", role="owner")
@@ -287,6 +313,8 @@ class _RobotAgentPlanner:
                     seed_memory(env, tmp / "mem.json")
                 loop = self._make_loop(agent, tmp, fake)
                 loop._llm_client = client
+                if self.structured and os.environ.get("HOMELOOP_RA_STRUCTURED", "1") != "0":
+                    structured_asks(loop, proxy)
                 final = None
                 n = 0
                 injected = 0

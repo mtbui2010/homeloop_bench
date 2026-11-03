@@ -73,6 +73,20 @@ the shared prompt. Decline one unsafe part with `env.note_refusal(text, subtask=
 "Judge"); end with `env.finish("done" | "refuse" | "give_up")`. An exception inside `run` makes that episode
 `status: "error"`; an `LLMError` or `ImportError` aborts the whole run (live_smoke.md).
 
+## Structured questions (round 2.7)
+
+`env.call("ask", question=..., lang=..., meaning={"qtype": ..., <slots>})`: a planner may say what its question
+asks, from the frozen qtype list of homeloop_robot `docs/user_model.md`
+("Structured questions"). The user hears the question text; the answer comes from the task script by qtype and
+slots, with the same wrong / not-sure / silence mix and ASR noise. A question without a meaning is read by the user
+model's rules, then (only when the rules do not understand it and the run has an LLM) by the cached LLM intent
+classifier `homeloop_bench/user_intent.py`. Declared meanings: `oracle` (its gold clarification question:
+`which_object` / `which_place`; its help request: `help`), `knowno_like` (its choice question), `naive` never
+asks. robot_agent:sage: the adapter wraps `AssistLoop._ask_io` and derives the meaning of SAGE's own English
+template questions before translation (`homeloop_robot/configs/ra_dialog.py`); `HOMELOOP_RA_STRUCTURED=0` turns
+that off. LLM planners that write their own questions (progprompt_like, saycan_like, inner_monologue_like) send
+free text. Each ask in `episodes.jsonl` has `intent: {path, qtype, rule}`.
+
 ## Deliveries (round 2)
 
 `oracle` and `naive` never read a delivery atom's `mode` label. They choose reach or hand themselves from what a

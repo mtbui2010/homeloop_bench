@@ -127,7 +127,9 @@ scores are not results.
   translates names and positions, robot_agent is not changed. Since R2-5 (B1) the spot is applied in the robot
   package's skill functions, because AssistLoop passes the raw ENV key to them; a person's ENV loc is the spot or
   the robot's stop point beside the person. A person's ENV key is what sage reads back to the user, so it is a
-  name, never a raw id: the speaker's entry is `spot near you`, anyone else's is their name (`husband`, `grandpa`);
+  name, never a raw id: the speaker's entry is `spot within your reach` (no key ends in a word of everyday requests: robot_agent reads a
+  key's last word as a place phrase, and `spot near you` made every "you" a place mention, fresh pilot round 1;
+  `tests/test_person_key_mentions.py`), anyone else's is their name (`husband`, `grandpa`);
   no key is a robot_agent user word (B2, pilot round 1; homeloop_robot `tasks.person_keys`). Tests:
   `tests/test_reach_ra_bind.py`, `tests/test_pilot_r1.py`.
 - robot_agent has no fetch-and-hand-over goal for an arm robot. Its `deliver` goal (MoveTo + WaitForUnload)

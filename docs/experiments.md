@@ -117,6 +117,8 @@ must recount them.
 | ambiguity | compound container name and on / in (kimchi fridge vs fridge) | 1 | 0 | 041 |
 | retrieval | Korean instructions retrieve no similar example: embodiplan's Jaccard keeps only `[a-z0-9]` tokens, so every Korean query scores 0 and gets the first 3 seed examples (measured with `homeloop-bench prompt`, hl-dev-000003 / 000017 KO) | - | all | - |
 | retrieval | example plans are shown as ASCII-escaped JSON, so a Korean `Say` text reaches the prompt as `\uXXXX` | - | - | - |
+| message format | the give-up "could not find X (looked at ...)" joins the searched ENV keys verbatim (assist_loop.py ~2036 / 2044), and the gate's give-up quotes plan steps with keys ('Close fridge@kitchen'); every other message humanizes them (`replace('@', ' in the ')`). Raw place ids reach the user (KO: '김치_냉장고@주방'). Counted per episode as `final_say_raw_ids` (pilot rounds, below) | - | - | - |
+| message language | a give-up after the LLM budget ran out is said in English: `_in_lang` translates with an LLM call, which the budget refuses, and falls back to the English text ("the planner produced no plan for the goals", "I could not make a plan that passes my checks: ..."; pilot rounds 1-2, KO 003). Counted in `final_say_not_in_lang` | - | - | - |
 
 Not SAGE-v2 gaps: the harness bugs fixed in round 2.7, the Korean `Say` sent as English (R2-6 H1, KO 040) and the
 simulated user's 냉장고-inside-김치냉장고 match (H2, KO 041); the calibrated skill / hardware faults (EN 6: 010 025
@@ -215,3 +217,34 @@ success changes. The sim-user audit is unchanged (`python -m homeloop_bench.sim_
 `sim_user_audit.json`). The other draws in 003 (not_heard, not_sure, wrong, no_answer) are sourced profile noise, not
 bugs. Round 4 reruns the same 4 tasks in all conditions; with these two fixes the round 3 KO passes of 013 are
 expected to become failures (a genuine SAGE-v2 / 8B relay weakness), and 003 KO is decided by the read-back answer.
+
+### Round 4 (`results/pilot_r27/round4/`)
+
+Same 4 tasks and conditions, after the round 3 fixes.
+
+| condition | success | false success | LLM calls / ep. | per task (010 / 013 / 003 / 001) |
+|---|---|---|---|---|
+| sage EN | 1 / 4 | 0 | 4.0 | give_up / done / refuse / refuse |
+| sage_norag EN | 1 / 4 | 0 | 4.25 | give_up / done / refuse / refuse |
+| sage KO | 1 / 4 | 1 | 12.5 | give_up / done (false) / give_up / done |
+| sage_norag KO | 1 / 4 | 1 | 8.5 | give_up / done (false) / give_up / done |
+| naive EN, KO | 2 / 4 | 0 | 0 | give_up / done / give_up / done |
+| oracle EN, KO | 3 / 4 | 0 | 0 | give_up / done / done / done |
+
+Not genuine (fixed or reported; homeloop_robot df354d1; this repository
+104202c). Both are outcome-neutral: the judge reads `final_say` only through
+`refusal_texts` of a refuse.
+
+| task | condition | kind | cause | fix (test) |
+|---|---|---|---|---|
+| 013, 001 (003 in round 3) | sage, sage_norag KO, rounds 1-4 | harness | robot_agent's Announcer takes the milestone phrases from the robot's i18n and falls back to its core table (English and Vietnamese only; announcer.py ~133-149). The adapter's `PHRASES` had only cannot_do / done / which_one, so a Korean user heard "Task completed" / "Task failed" at the end. A deployed robot pack ships them in Korean. `dialog_not_in_lang` counted only questions, so the gate missed it. | The adapter's i18n has every milestone and the verbs of the robot's actions in Korean (plain polite Korean); English is unchanged (homeloop_robot `tests/test_announcer_ko.py`). The episode's last message is checked for the user's language: `final_say_not_in_lang`, included in `dialog_not_in_lang` (`tests/test_final_say_check.py`, also a KO message task through the real AssistLoop, which now ends '작업을 완료했습니다') |
+| 010 (003 KO in round 3) | sage, sage_norag EN | harness, reported | robot_agent's give-up joins the searched ENV keys verbatim: "could not find the green mug (looked at counter@kitchen, spot near you, grandpa, sofa@living, coffee_table@living)" (assist_loop.py ~2036 / 2044); translated, '김치_냉장고@주방'. Round 1 made the person keys names; the place keys stay `head@room`, because robot_agent derives the room and the head noun from the key (`split('@')`, `in_room`, the `@room` targets of its gate), so readable place keys would change its grounding, not only the message. | Not changed in the ENV (the place keys are part of robot_agent's grounding contract); listed under "Known SAGE-v2 gaps" (message format), and every episode lists the raw ids of its last message, `final_say_raw_ids`, with the summary count (`tests/test_final_say_check.py`) |
+
+Recount of the stored rounds with the two new fields (offline, no rerun). Last message not in the user's language:
+sage / sage_norag KO "Task completed" on 001 in every round and on 013 in rounds 1, 3 and 4, "Task failed" (sage_norag KO 003, round 3), and
+two English give-ups after the LLM budget ran out (KO 003 rounds 1-2, a SAGE-v2 gap above). The baselines' last
+messages are status strings that are not spoken to the user and not translated: naive / oracle KO 010 "hardware
+fault: base motor", naive KO 003 "cannot reach the handle of kimchi_fridge@kitchen"; they count in the new fields
+too (KO episodes of naive / oracle will show `final_say_not_in_lang` > 0; no success changes). Raw ids in the last
+message: sage / sage_norag EN 010 in rounds 2-4 (the give-up above), the gate's give-up on 003 (KO, rounds 1-3),
+naive 003 (EN, KO). Round 5 reruns the same 4 tasks in all conditions.

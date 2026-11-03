@@ -186,3 +186,32 @@ Not genuine (fixed; homeloop_robot 592ae2d, 787c256, 9ffb93e, ff7600c, ae27740; 
 The sim-user audit is unchanged by these fixes (`python -m homeloop_bench.sim_user_audit` from the committed cache
 gives the same `sim_user_audit.json`). The seed pool sha changes, so sage's next runs record the new pool. Round 3
 reruns the same 4 tasks in all conditions.
+
+### Round 3 (`results/pilot_r27/round3/`)
+
+Same 4 tasks and conditions, after the round 2 fixes.
+
+| condition | success | false success | LLM calls / ep. | per task (010 / 013 / 003 / 001) |
+|---|---|---|---|---|
+| sage EN | 1 / 4 | 0 | 4.0 | give_up / done / refuse / refuse |
+| sage_norag EN | 1 / 4 | 0 | 4.25 | give_up / done / refuse / refuse |
+| sage KO | 2 / 4 | 0 | 15.5 | give_up / done / give_up / done |
+| sage_norag KO | 2 / 4 | 0 | 12.0 | give_up / done / budget / done |
+| naive EN, KO | 2 / 4 | 0 | 0 | give_up / done / give_up / done |
+| oracle EN, KO | 3 / 4 | 0 | 0 | give_up / done / done / done |
+
+Not genuine (fixed; homeloop_robot 0c0f73a, df2795f, 7b2fb70):
+
+| task | condition | kind | cause | fix (test) |
+|---|---|---|---|---|
+| 003 | sage, sage_norag KO (outcome-deciding) | simulator | SAGE's "I am not sure I understood (the 김치냉장고 you mentioned is not in my plan). I will put the 우유 on the fridge in the kitchen. Is that right?" was translated as '김치냉장고 얘기가 제 계획에 없나요? 제가 우유를 주방 냉장고에 두겠습니다. 맞죠?'. The heard-text check read only the first question (`intent.first_question`, convention 2); `CONTEXT_RX` knows "…얘기하셨죠?" but not the remark turned into a question, so the answered text named only the kimchi fridge and the rules said yes (`yes_no_intended`), overriding the structured "no" (path `structured_mismatch`, reply '네, 맞아.'). The goal became fridge@kitchen; sage then rejected its own kimchi-fridge plan and gave up, sage_norag placed on the closed kimchi fridge (blocked) and hit the 30-call budget. A user who hears '…주방 냉장고에 두겠습니다. 맞죠?' corrects it. The same rule also said "no" to a right read-back behind such a remark. | A question sentence that is the robot's plan remark (`dialog.REMARK_RX`, the remark `strip_plan_remarks` already drops) is context when another question follows it; the read-back after it is answered (homeloop_robot `tests/test_dialog_pilot_r3.py`, structured and free text, wrong and right read-backs; docs/user_model.md convention 1) |
+| 013 | sage, sage_norag KO (passes counted by a lax check) | harness | SAGE said the user's whole ASR-corrupted request to the husband: '남편한테 갈서 10분 있다가 나간다고 맬해 주세요.' ("go to the husband and tell him we leave in 10 minutes, please"). `said_to` checked only the message keywords (`catalog.message_matches`), so the request relayed word for word counted as the message (gc 1.0, done). EN said "We are leaving in ten minutes." | `said_to` does not count an utterance that names the listener as the one to be told (`dialog.speech_role` = listener) and asks or announces the telling (a tell verb; in Korean a quoted clause "…다고 / 라고" with a verb after it): `goals.relayed_request`. A message that only names its listener ("남편한테 전화 왔어요.") still counts (homeloop_robot `tests/test_said_to_relay.py`; docs/world.md, Goals). R2-1: scoring stays strict. **For the user to decide:** the husband could still work out the content; if a word-for-word relay should count, revert df2795f. |
+
+Effect of the `said_to` rule on the stored runs (re-scored offline from the recorded Say calls, no rerun): besides
+the two round 3 sage KO passes of 013, it changes one stored episode, hl-dev-000040 in the zero-shot
+progprompt_like KO ablation ('아빠한테 가서 점심 준비됐다고 말해 줘요.', counted a success). The other matches
+(progprompt_like KO hl-dev-000087, 000135, 000208, 000293) failed already. No oracle, naive or exp_r2 progprompt_like
+success changes. The sim-user audit is unchanged (`python -m homeloop_bench.sim_user_audit` gives the same
+`sim_user_audit.json`). The other draws in 003 (not_heard, not_sure, wrong, no_answer) are sourced profile noise, not
+bugs. Round 4 reruns the same 4 tasks in all conditions; with these two fixes the round 3 KO passes of 013 are
+expected to become failures (a genuine SAGE-v2 / 8B relay weakness), and 003 KO is decided by the read-back answer.

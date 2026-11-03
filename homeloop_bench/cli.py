@@ -38,8 +38,16 @@ def cmd_run(a) -> int:
         return 2
     try:
         prof = f"{a.profile}+{a.set}" if getattr(a, "set", None) else a.profile
+        shard = None
+        if getattr(a, "shard", None):
+            try:
+                k, n = (int(x) for x in a.shard.split("/"))
+            except ValueError:
+                print(f"--shard {a.shard!r}: use K/N, e.g. 0/3", file=sys.stderr)
+                return 2
+            shard = (k, n)
         s = run_many(a.planner, a.split, a.limit, prof, a.seeds, a.lang, a.llm, a.out, model=a.model,
-                     workers=a.workers, tasks_file=a.tasks, budgets=_budgets(a), progress=True)
+                     workers=a.workers, tasks_file=a.tasks, budgets=_budgets(a), progress=True, shard=shard)
     except PlannerConfigError as e:
         print(str(e), file=sys.stderr)
         return 2
@@ -51,6 +59,37 @@ def cmd_run(a) -> int:
                                          "smoke")},
                      sort_keys=True))
     return error_rc(s)
+
+
+def cmd_merge(a) -> int:
+    from .runner import MergeError, merge_shards
+    try:
+        s = merge_shards(a.dir)
+    except MergeError as e:
+        print(f"merge failed: {e}", file=sys.stderr)
+        return 2
+    print(json.dumps({k: s[k] for k in ("n_episodes", "success", "success_ci95", "false_success", "n_error")},
+                     sort_keys=True))
+    return error_rc(s)
+
+
+def cmd_prompt(a) -> int:
+    """The first prompt SAGE builds for a task (robot_agent:sage / _norag), with --llm fake: shows its retrieval."""
+    if a.llm != "fake":
+        print("prompt builds the prompt without an LLM: use --llm fake", file=sys.stderr)
+        return 2
+    from .planners.robot_agent_adapter import built_prompt
+    from .env import task_dict
+    from .runner import load_tasks
+    ts = [t for t in load_tasks(a.split, None, a.tasks) if task_dict(t).get("id") == a.task_id]
+    if not ts:
+        print(f"no task {a.task_id} in {a.tasks or a.split}", file=sys.stderr)
+        return 1
+    r = built_prompt(ts[0], a.planner, a.lang, a.profile, a.seed)
+    if not a.full:
+        r = {k: v for k, v in r.items() if k != "prompt"} | {"prompt_head": (r.get("prompt") or "")[:1500]}
+    print(json.dumps(r, ensure_ascii=False, indent=1))
+    return 0
 
 
 def error_rc(s: dict) -> int:
@@ -181,6 +220,9 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--set", default=None, metavar="KEY=V[,KEY=V]",
                    help="override scalar profile parameters, e.g. asr.ko.app_cer=0.02 (sensitivity runs; the "
                         "summary's config.profile and profile_sha record it)")
+    r.add_argument("--shard", default=None, metavar="K/N",
+                   help="run only the tasks at index i %% N == K (same order, seeds, settings) -> OUT/shard<K>/; "
+                        "then `merge OUT`")
     r.add_argument("--max-calls", type=int, default=None)
     r.add_argument("--max-sim-time-s", type=float, default=None)
     r.add_argument("--max-llm-calls", type=int, default=None)
@@ -191,6 +233,22 @@ def build_parser() -> argparse.ArgumentParser:
     c.add_argument("dir_b")
     c.add_argument("--json", action="store_true")
     c.set_defaults(fn=cmd_compare)
+
+    mg = sub.add_parser("merge", help="merge DIR/shard<K>/ runs into DIR (episodes, summary, report, llm_cache)")
+    mg.add_argument("dir")
+    mg.set_defaults(fn=cmd_merge)
+
+    pr = sub.add_parser("prompt", help="the first prompt robot_agent:sage(_norag) builds for a task (--llm fake)")
+    pr.add_argument("task_id")
+    pr.add_argument("--planner", default="robot_agent:sage")
+    pr.add_argument("--split", default="dev")
+    pr.add_argument("--tasks", default=None)
+    pr.add_argument("--lang", default="en", choices=["en", "ko"])
+    pr.add_argument("--profile", default="real", choices=["ideal", "real", "stress"])
+    pr.add_argument("--seed", type=int, default=0)
+    pr.add_argument("--llm", default="fake")
+    pr.add_argument("--full", action="store_true", help="print the whole prompt")
+    pr.set_defaults(fn=cmd_prompt)
 
     rp = sub.add_parser("report", help="re-render DIR/report.md")
     rp.add_argument("dir")

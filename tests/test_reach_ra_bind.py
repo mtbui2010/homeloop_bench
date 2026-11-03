@@ -162,6 +162,21 @@ def test_no_env_key_is_a_robot_agent_user_word():
     assert seen_alias            # korean_apt_59 / studio_flat: person 'user'
 
 
+def test_reserved_aliases_only_on_the_speaker():
+    """An ENV alias that normalises to a robot_agent user word ('me', 'the user' -> 'user') is on the speaker's
+    own entry only: it names the speaker (the planner's place list shows "grandma (also: me, ...)"), and no
+    place or other person can be read as "the user"."""
+    import robot_agent.core.planning.assist_loop as AL
+    for h in HOUSES:
+        ep = make_episode(h, 0, "ideal", 0)
+        uid = ep.world.user_id()
+        for k, e in env_for(ep.world).items():
+            for a in e.get("aliases") or []:
+                w = AL.words(a)
+                if w in AL._USER_WORDS or AL._strip_article(w) in AL._USER_WORDS:
+                    assert e.get("person") == uid, (h, k, a)
+
+
 @pytest.mark.parametrize("house", ["korean_apt_59", "studio_flat"])
 def test_reserved_person_alias_maps_back(house, tmp_path):
     ep = make_episode(house, 0, "ideal", 0)

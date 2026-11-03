@@ -54,6 +54,34 @@ The planners do not get the same help for "bring it near the person":
 
 State this next to the sage vs progprompt_like comparison.
 
+### Why sage's delivery successes are near 0 (read next to the R2-5 rerun numbers)
+
+Measured after the R2-5 fixes (homeloop_robot 2b3c862, this repository 42c711c, robot_agent 895561b, no GPU):
+`homeloop-bench run --planner robot_agent:sage --llm fake --split dev --limit 80 --profile ideal --seeds 1
+--lang en`. `--llm fake` builds sage's understanding from the gold goals, so what fails here is sage's own
+grounding and plan check, not the language model. Delivery success: `reach` 0 / 21, `hand` 0 / 8 (no-delivery
+tasks 30 / 48). Of the 21 `reach` episodes:
+
+- 15 asked "Where are you? Which place should I bring it to?" (assist_loop `_ground_goals`, the `_USER_WORDS`
+  path for "me"), and the simulated user named their seat ("I'm at the sofa.", a realistic answer that the
+  harness must not change). In 14 of them sage then grounded the goal as `on(X -> <seat>)` and its own verifier
+  rejected the correct plan, for example "the pink towel must go to sofa@living, not side_table@living"
+  (hl-dev-000007; also hl-dev-000006, 000010, 000011, 000015, 000021 -> bed, 000036, 000039 -> desk_chair, 000047,
+  000051, 000059, 000061, 000069, 000070). The 15th (hl-dev-000046) stopped "still unclear after 3 questions";
+- 3 grounded "me" to a seat without that question (hl-dev-000032 -> reading_chair, 000033 -> sofa, 000008 ->
+  armchair), 2 to another surface than the one the plan used (hl-dev-000012, 000037), and 1 claimed "Task
+  completed" (hl-dev-000048). Most of these also asked "You mentioned the me. What should I do there?" (answer:
+  "I'm not sure what you mean.") and then read back "I will put X on the <seat>. Is that right?", which the
+  simulated user confirmed (`dialog.compose_from_goal`, rule `goal_confirm`: the seat is where the person is);
+- only 1 of the 21 reached a `place` call.
+
+So `person_spot` (the name translation of a person used as a place, above) almost never takes effect for sage:
+its speaker deliveries never name a person as the place. This is a property of sage's grounding (a seat is not a
+surface in a `reach` delivery, docs/metrics.md), not a harness bug, and the scoring is not tuned for it. The
+judge's reach rule does not leak into the adapter: `person_spot` uses only the support type, the room, free
+slots and the 1.2 m radius, and can pick a surface the person cannot reach (homeloop_robot
+`tests/test_reach.py::test_person_spot_may_be_out_of_reach_and_then_the_delivery_fails`).
+
 ## ASR sensitivity
 
 The per-token ASR model of the app channel gives an assumed upper bound on the share of corrupted

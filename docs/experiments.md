@@ -119,6 +119,7 @@ must recount them.
 | retrieval | example plans are shown as ASCII-escaped JSON, so a Korean `Say` text reaches the prompt as `\uXXXX` | - | - | - |
 | message format | the give-up "could not find X (looked at ...)" joins the searched ENV keys verbatim (assist_loop.py ~2036 / 2044), and the gate's give-up quotes plan steps with keys ('Close fridge@kitchen'); every other message humanizes them (`replace('@', ' in the ')`). Raw place ids reach the user (KO: '김치_냉장고@주방'). Counted per episode as `final_say_raw_ids` (pilot rounds, below) | - | - | - |
 | message language | a give-up after the LLM budget ran out is said in English: `_in_lang` translates with an LLM call, which the budget refuses, and falls back to the English text ("the planner produced no plan for the goals", "I could not make a plan that passes my checks: ..."; pilot rounds 1-2, KO 003). Counted in `final_say_not_in_lang` | - | - | - |
+| message format | read-backs humanize only `@` (`replace('@', ' in the ')`, assist_loop.py ~616 / 700 / 751), so the head of a place key reaches the user: "the green book from the kids_desk in the kids on the coffee_table in the living" (5 of the 9 questions of each EN sage condition, fresh pilot round 1); a message read back as a place, 'say "It's time for bed, kid." in the kid'. Counted per episode as `dialog_raw_ids` / `dialog_raw_id_utterances` | - | - | - |
 
 Not SAGE-v2 gaps: the harness bugs fixed in round 2.7, the Korean `Say` sent as English (R2-6 H1, KO 040) and the
 simulated user's 냉장고-inside-김치냉장고 match (H2, KO 041); the calibrated skill / hardware faults (EN 6: 010 025
@@ -248,3 +249,43 @@ fault: base motor", naive KO 003 "cannot reach the handle of kimchi_fridge@kitch
 too (KO episodes of naive / oracle will show `final_say_not_in_lang` > 0; no success changes). Raw ids in the last
 message: sage / sage_norag EN 010 in rounds 2-4 (the give-up above), the gate's give-up on 003 (KO, rounds 1-3),
 naive 003 (EN, KO). Round 5 reruns the same 4 tasks in all conditions.
+
+### Fresh batch, round 1 (`results/pilot_r27x/round1/`)
+
+R2-7e step 4: a fresh batch of 4 dev tasks, the same conditions. Tasks: hl-dev-000060 (compound delivery: glasses
+to the speaker, the remote handed to grandpa), hl-dev-000016 (two objects onto the coffee table), hl-dev-000035
+(refuse: detergent into the fridge), hl-dev-000057 (articulate place with a self-correction, then a bedtime message
+to the kid).
+
+| condition | success | false success | LLM calls / ep. | per task (060 / 016 / 035 / 057) |
+|---|---|---|---|---|
+| sage EN | 1 / 4 | 0 | 11.0 | budget / give_up / refuse / give_up |
+| sage_norag EN | 1 / 4 | 0 | 11.0 | budget / give_up / refuse / give_up |
+| sage KO | 0 / 4 | 1 | 20.0 | budget / done (false) / budget / give_up |
+| sage_norag KO | 0 / 4 | 1 | 18.5 | budget / done (false) / give_up / give_up |
+| naive EN, KO | 2 / 4 | 0 | 0 | give_up / give_up / refuse / done |
+| oracle EN, KO | 4 / 4 | 0 | 0 | done / done / refuse / done |
+
+Not genuine (fixed; homeloop_robot 3c4eeb8, 0bb452d, 329ea89; this repository a153caa, 83b6111, 051d15a, ac7a582):
+
+| task | condition | kind | cause | fix (test) |
+|---|---|---|---|---|
+| 057, 016 | sage, sage_norag EN (outcome-deciding in 057, with the causes below in 016) | harness | The speaker's ENV key `spot near you` made every "you" a place mention: robot_agent's `understand._phrases` also adds the last word of a multi-word ENV head ('coffee table' -> 'table'), so "Can you put ..." named the speaker's spot. SAGE spent one of its 3 questions on "You mentioned the you. What should I do there?", and every read-back began "(the you you mentioned is not in my plan)". 3,947 of the 6,000 dev / test EN instructions have a "you"; the first batch's ids did not show it. | The speaker's key is `spot within your reach` ("reach" is in no dev / test instruction); the simulated user takes "the spot within your reach" / "손이 닿는 곳" as the speaker (homeloop_robot `tests/test_person_keys.py`, robot_agent's own `place_mentions` on every house; this repository `tests/test_person_key_mentions.py`, every dev / test instruction EN and KO, fails on the old key) |
+| 057 | sage, sage_norag EN (outcome-deciding) | simulator | A correct read-back ('... on the coffee_table in the living, then say "It's time for bed, kid." in the kid. Is that right?') got "No, I asked you to tell the kid.": `GoalView._person_ok` counted the place words inside the quoted message ('bed' in 'time for bed', bed@master) as another place, while `speech_role` already removed quoted text. SAGE replanned with "on the kid", got a second "no" and gave up. | A quoted message names no place (the listener may still be named inside it) (homeloop_robot `tests/test_dialog_fresh_pilot_r1.py`) |
+| 057 | sage, sage_norag KO (outcome-deciding) | harness | The bedtime keywords were EN [bed], KO [잘 시간], [주무]: SAGE's correct '아이들에게 "잠자기 시간이에요"라고 말할 거예요. 맞죠?' failed `message_matches`, so the user said '아니요, 아이한테 말해 달라고 했어요' twice (goal_correct) and the episode gave up; a Say of that text to the kid would have failed `said_to` as well. Same defect class as round 1's 나가 / 나간다고. | EN [sleep]; KO 잠자, 잘 때, 취침, 자러, 잠들, 자야; every canonical message text still matches only its own key (homeloop_robot `tests/test_messages.py`) |
+| 057 | sage, sage_norag EN / KO (contributing) | simulator | With the right person and the wrong message the correction named only the person ("No, I asked you to tell the kid."), which steered SAGE's replan to the person. | The correction says the message: "No, tell the kid: It is time for bed." / '아니요, 아이한테 "이제 잘 시간이에요"라고 말해 주세요.' (template `fix_say_msg`; a wrong person is still corrected by the person; same test file) |
+| 016 | sage, sage_norag EN (outcome-deciding) | simulator | "Where are the reading glasses and the remote now?" got "It's on the desk.", the glasses' place only (the remote was on sofa@living): `mentioned_objects` kept only the objects with the longest matching name ('reading glasses' beat 'remote'). SAGE read back "the remote from the desk in the study". "Which desk and which coffee table do you mean?" then got only the destination, never which desk. | An object is dropped only where its name is inside a longer named name of another object; "where are X and Y?" is answered for each; a place whose name ends another place's name is said with its room ("the desk in the study"); "Which desk do you mean?" gets the desk an object of the request is on (same test file; `tests/test_dialog.py` updated: the two-object question now gets both places) |
+| 060 | sage, sage_norag KO (outcome-neutral here) | simulator | "'언경'과 '리컨 갖단 드'는 무슨 뜻이에요? ..." (SAGE quotes the words it misheard) was read as `did_you_mean`, and since the words are not the user's, the user said '무슨 말씀인지 잘 모르겠어요' deterministically. A user who said 안경 / 리모컨 hears that they were misheard and says it again. It cost one question; the 3rd question got the objects. | A `did_you_mean` whose word is not the user's and names nothing in the house is answered with the request again (`repeat`, as for an ASR fragment, convention 3; homeloop_robot docs/user_model.md; same test file) |
+| 060 | latent in EN, masked in KO (heard-text rule) | simulator | In a compound read-back of two deliveries the OTHER object's source counted as "another place" for this person: "...glasses from the tv_stand ... on the spot near you, then put the black remote from the coffee_table ... on the grandpa" got "No, give the black remote control to grandpa." | The sources of every object of the request are not "another place" (same test file) |
+| 060 | sage KO (contributing, outcome-neutral) | simulator | The two-part '어떤 물건을 가져다드릴지, 그리고 어디에 놓아드릴지 ...' (which things AND where) got only the things. | The answer names the things and where they go (`SimUser._with_destination`; not for "... and where is it now?"; same test file) |
+| all | sage, sage_norag EN (outcome-neutral) | harness | Raw ENV ids reached the user in EN read-backs ("the kids_desk in the kids", "coffee_table"), 5 of the 9 questions per EN condition; `final_say_raw_ids` checks only the last message, so no counter saw it. robot_agent humanizes only `@` (a SAGE-v2 gap above). | `dialog_raw_ids` / `dialog_raw_id_utterances` (episode and summary): every question, Say and the last message, with a place key's head as an id (`tests/test_fresh_pilot_r1.py`; docs/metrics.md). Recount of the stored round: sage / sage_norag EN 5 of 13 utterances (2 episodes each), sage KO 1 of 13, sage_norag KO 0 of 12, naive EN / KO 1 of 4 (the status string "glasses_1 not found"), oracle 0 |
+| 035 (060, 016) | oracle KO 035, naive KO 060 / 016 / 035 (outcome-neutral) | harness | The baselines' whole-task refusal "I can't do that safely." was English to a Korean user; it counted in `dialog_not_in_lang`. The give-up status strings ("glasses_1 not found", with a raw id) are English too; they are not spoken (round 4). | The refusal is said in the user's language ('그건 안전하게 할 수 없어요.', `planners.base.refusal_text`; `tests/test_fresh_pilot_r1.py`). Status strings unchanged |
+
+Checks after the fixes, offline (no LLM): the simulated user answers SAGE's questions of this round as a person
+would (homeloop_robot `tests/test_dialog_fresh_pilot_r1.py` replays them: the 057 EN and KO read-backs are confirmed,
+the 016 where / which-desk questions name both places and the study desk, the 060 questions get the request again
+and both parts). oracle / naive rerun on the 4 tasks (profile real, seed 0): no success, status or call changes;
+only the new raw-id fields and, for KO 035, the Korean refusal (`dialog_not_in_lang` 0). The sim-user audit's qtype
+accuracy is unchanged (0.954); one Korean read-back moves to `structured_mismatch` (still correct). The other
+failures of this round (KO 016 false success, KO 035, the 060 LLM-budget hits) were not classified harness /
+simulator by the analysis and are read again in round 2. Round 2 reruns the same 4 tasks in all conditions.

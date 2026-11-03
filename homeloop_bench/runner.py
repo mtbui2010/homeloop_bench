@@ -20,7 +20,8 @@ from homeloop_robot.rng import r6
 from homeloop_robot.types import _round_tree
 
 from .env import Budgets, EpisodeEnv, task_dict
-from .llm import BudgetExceeded, LLMError, llm_kind, make_llm
+from .llm import BudgetExceeded, FakeLLM, LLMError, llm_kind, make_llm
+from .user_intent import classifier_kind
 from .planners import make_planner, needs_llm, planner_available, planner_class
 
 ERROR_RATE_MAX = 0.05     # a run with more planner errors than this exits non-zero (cli)
@@ -217,6 +218,8 @@ def run_many(planner_name: str, split: Optional[str], limit: Optional[int], prof
     prof = load_profile(profile)
     config = {"planner": planner_name, "split": split, "limit": limit, "profile": profile, "seeds": int(seeds),
               "lang": lang, "llm": llm_kind(llm_spec), "model": (model if llm_spec and llm_spec != "fake" else None),
+              "user_classifier": classifier_kind(llm_spec if llm is None else ("given" if not isinstance(
+                  llm, FakeLLM) else "fake")),
               "profile_sha": prof.sha, "data_sha": data_sha(tasks), "n_tasks": len(tasks),
               "versions": _versions(planner_name), "model_digest": _digest(llm, llm_spec, model),
               "budgets": {"max_calls": budgets.max_calls, "max_sim_time_s": r6(budgets.max_sim_time_s),

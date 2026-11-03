@@ -246,6 +246,12 @@ class EpisodeEnv:
         self.planner_name = ""
         self._llm_inner = llm
         self._llm = CountingLLM(llm, budgets.max_llm_calls) if llm is not None else None
+        # the simulated user's intent classifier for free-text questions the rules do not understand
+        # (homeloop_bench.user_intent; None = rules only); its calls are the simulator's, not the planner's
+        from .user_intent import make_classifier
+        self.user_classifier = make_classifier(llm)
+        if self.user_classifier is not None and hasattr(self.user, "classifier"):
+            self.user.classifier = self.user_classifier
 
     # ── planner API ─────────────────────────────────────────────────────────────────────────────────
     @property
@@ -349,6 +355,8 @@ class EpisodeEnv:
         if skill == "ask":          # for the failure analysis only (docs/experiments.md); never shown to planners
             self.calls[-1]["answer"] = (res.data or {}).get("answer")
             self.calls[-1]["reply_kind"] = (res.truth or {}).get("reply_kind")
+            # how the simulated user read the question: path structured | rules | llm, qtype, rule
+            self.calls[-1]["intent"] = (res.truth or {}).get("intent")
         for e in self._world.semantic_violations[n_sem:]:
             self._sem_k.append((getattr(e, "code", str(e)), k))
         self._hist.append({"skill": skill, "args": rec["args"], "ok": res.ok, "code": rec["code"], "msg": res.msg,
@@ -562,9 +570,18 @@ class EpisodeEnv:
             "events": [dict(e) for e in self._events],
             "final_say": self.final_say,
         }
+        paths: dict = {}
+        for c in self.calls:
+            p = (c.get("intent") or {}).get("path")
+            if p:
+                paths[p] = paths.get(p, 0) + 1
+        rec["dialog_paths"] = dict(sorted(paths.items()))
         if self.error:
             rec["error"] = self.error
             rec["error_msg"] = self.error_msg
+        failed = getattr(self.user_classifier, "failed", None)
+        if failed is not None:              # the classifier's server failed: the episode is not a result
+            raise failed
         return rec
 
 

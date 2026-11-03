@@ -210,6 +210,16 @@ def reweighted(episodes: list, shares: dict, key: str = "kind") -> Optional[floa
     return r6(acc)
 
 
+def _path_shares(episodes: list) -> dict:
+    """{"n": answered questions, "structured" | "rules" | "llm": share} over the episodes' dialog_paths."""
+    tot: dict = {}
+    for e in episodes:
+        for k, v in (e.get("dialog_paths") or {}).items():
+            tot[k] = tot.get(k, 0) + int(v)
+    n = sum(tot.values())
+    return {"n": n, **{k: r6(v / n) for k, v in sorted(tot.items())}} if n else {"n": 0}
+
+
 def summarize(episodes: list, config: dict, split_shares: Optional[dict] = None) -> dict:
     """summary.json (docs/metrics.md has every definition). ``split_shares``: {"kind": {label: share}, ...}
     of the full split, given when the run used only a prefix (``--limit``): the summary then also holds the
@@ -270,6 +280,8 @@ def summarize(episodes: list, config: dict, split_shares: Optional[dict] = None)
         "min_separation_m": r6(min(seps)) if seps else None,
         "min_separation_p5_m": percentile(seps, 5),
         "llm_calls_mean": _mean(e["llm_calls"] for e in episodes) if n else 0.0,
+        # how the simulated user read the robot's questions (homeloop_robot docs/user_model.md): share per path
+        "dialog_paths": _path_shares(episodes),
         "time_mean_s": _mean(e["sim_time_s"] for e in episodes) if n else 0.0,
         "calls_mean": _mean(e["n_calls"] for e in episodes) if n else 0.0,
         "status_counts": {k: v for k, v in sorted(_count(e["status"] for e in episodes).items())},

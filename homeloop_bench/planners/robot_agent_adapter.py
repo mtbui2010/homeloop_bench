@@ -28,7 +28,7 @@ import tempfile
 import types
 from pathlib import Path
 
-from ..env import MOTION
+from ..env import MOTION, STOP_TEXT
 from ..llm import BudgetExceeded, CountingLLM, FakeLLM
 
 MAX_EVENTS = 2000
@@ -339,6 +339,12 @@ def _software_crash(final: dict | None) -> bool:
         and bool(f["evidence"].get("call"))
 
 
+def stopped_say(final: dict | None, lang: str) -> str:
+    """What a run stopped by the user says: the robot's own last words (in the user's language), else the stop
+    phrase of that language (never an English placeholder: it counted as a wrong-language final say in KO)."""
+    return str((final or {}).get("say") or "") or STOP_TEXT.get(lang, STOP_TEXT["en"])
+
+
 def _status(final: dict | None) -> str:
     st = (final or {}).get("status") or ""
     if st == "success":
@@ -474,7 +480,7 @@ class _RobotAgentPlanner:
                 shutil.rmtree(tmp, ignore_errors=True)     # run logs, live.jsonl, mem.json of this episode
         if env.status is None:
             if env.stop_k is not None:
-                env.finish("done", "stopped")
+                env.finish("done", stopped_say(final, env.lang))
             elif _software_crash(final) and not (env.llm_budget_hit and "budget" in str(final.get("msg")).lower()):
                 # robot_agent caught an exception of its own code in a planner / LLM call and ended the run "failed"
                 # (code software): a crash, status error, not a plain give-up (gate pilot round 1, hl-dev-000028 KO:

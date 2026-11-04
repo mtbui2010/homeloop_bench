@@ -586,4 +586,7 @@ tuning are optimistic; the paper reports the TEST split.
   (`planners/oracle.heard_text(true_words=True)`); the labels are still never read, and the LLM planners hear the ASR
   text as before. Test: `tests/test_oracle_true_words.py`. Rerun of oracle and naive on the m10 tasks: same outcomes
   as round 5, except that 005 EN now ends on the injected persistent `hw_fault` like KO.
+- Round 6 (same class): an essential question (Where are you?) no longer skips the repeat guard, and takes no
+  extra round past the clarify cap once the person's place is known. Test:
+  `test_an_essential_question_does_not_skip_the_repeat_guard` in the same file.
 Dev numbers after this tuning are optimistic; the paper reports the TEST split.

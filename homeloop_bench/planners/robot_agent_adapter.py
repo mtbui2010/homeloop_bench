@@ -380,7 +380,11 @@ class _RobotAgentPlanner:
                 "translate_model": mp.get("translate_model"), "llm_budget": mp.get("llm_budget"),
                 "translate_budget": mp.get("translate_budget"),
                 "hazard_rules": cls.loop_options.get("hazard_rules", "core") if cls.loop_kind == "assist" else None,
-                "gate_complete": int(cls.loop_options.get("gate_complete", 0)) if cls.loop_kind == "assist" else None}
+                "gate_complete": int(cls.loop_options.get("gate_complete", 0)) if cls.loop_kind == "assist" else None,
+                # the language layer (robot_agent core/planning/language.py): what a Korean user says reaches the
+                # understand prompt as the original (none), its English (translate) or both
+                "input_pivot": str(cls.loop_options.get("input_pivot", mp.get("input_pivot", "none"))
+                                   ) if cls.loop_kind == "assist" else None}
 
     def __init__(self, llm=None):
         self.llm = llm
@@ -535,6 +539,20 @@ class SageNoHazardPlanner(SagePlanner):
     """robot_agent:sage with the core safety rules off (``hazard_rules=off``: the model's own 'unsafe' only)."""
     name = "robot_agent:sage_nohazard"
     loop_options = {"hazard_rules": "off"}
+
+
+class SagePivotNonePlanner(SagePlanner):
+    """robot_agent:sage with ``input_pivot=none``: the Korean words go to the understand prompt as they are
+    (the language layer's IN side off; its OUT side, the one speak(), stays)."""
+    name = "robot_agent:sage_pivot_none"
+    loop_options = {"input_pivot": "none"}
+
+
+class SagePivotTranslatePlanner(SagePlanner):
+    """robot_agent:sage with ``input_pivot=translate``: the understand prompt gets the English translation of what
+    the user said (the original only as the source of each goal's ``said``)."""
+    name = "robot_agent:sage_pivot_translate"
+    loop_options = {"input_pivot": "translate"}
 
 
 class SageCompletePlanner(SagePlanner):

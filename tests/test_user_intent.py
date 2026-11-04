@@ -220,7 +220,9 @@ def test_sage_template_questions_are_structured(lang, monkeypatch):
                    for c in seen)
         # untranslated English templates in this run ("You mentioned the 남편. What should I do there?")
         untr = [c for c in seen if "meaning" in c["args"] and not intent.in_lang(c["args"]["question"], "ko")]
-        assert untr and all(c["intent"]["path"] == "structured_mismatch" for c in untr)
+        # (robot_agent's language layer no longer lets English reach a Korean user, so there may be none; any that
+        # does is still a mismatch)
+        assert all(c["intent"]["path"] == "structured_mismatch" for c in untr)
     # the adapter can be turned off: the same questions are then free text
     monkeypatch.setenv("HOMELOOP_RA_STRUCTURED", "0")
     e = run_episode(task_by_id("hl-dev-000003"), "robot_agent:sage", "real", 0, lang, "fake")

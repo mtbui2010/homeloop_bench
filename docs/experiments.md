@@ -514,3 +514,54 @@ Unrecoverable injected faults, with the oracle failing the same way (rule (b)):
   wardrobe (the ranking prompt shows the layout), ends on the same fault.
 
 Dev numbers after this tuning are optimistic; the paper reports the TEST split.
+
+### R3 language layer, 3-mode KO comparison
+
+SAGE-v2 now has one robot-agnostic module, `core/planning/language.py` (`LanguageAdapter`). The core works in English;
+a Korean user is an I/O layer. IN: each user utterance is translated once by `translate_model` (cached, in the
+translate budget), the original stays the task, `said` and the read-back; a translation is distrusted (ask to repeat)
+when the translator answers `UNCLEAR`, answers non-English, or loses an ENV place or person named by alias. OUT: every
+spoken text passes one `speak()`; the pack's phrases cost no call; failure gives the pack's plain Korean phrase, never
+English. Option `input_pivot` = `none | translate | both`; the manifest budget is now 22 planning + 8 translate
+calls (was 26 + 4), the 30-call episode cap is unchanged.
+
+Run: the 10 milestone-10 dev tasks, `robot_agent:sage` (people tracking on), profile real, seed 0, qwen3-vl:8b planner,
+qwen3-vl:30b-a3b translator; planners `robot_agent:sage_pivot_none`, `robot_agent:sage_pivot_translate`, and `robot_agent:sage`
+with the manifest set to `both`. Three of the ten tasks end in an injected, unrecoverable fault that the oracle shares
+(002, 005, 006), so 7 is the ceiling.
+
+| mode | KO success (of 10) | KO - EN gap | questions asked (10 tasks) | translate calls | not-in-language texts | false success |
+|---|---|---|---|---|---|---|
+| EN (reference) | 7 | - | 22 | 0 | 0 | 0 |
+| none | 7 | 0 | 24 | 54 | 0 | 0 |
+| translate | 6 | -1 | 20 | 58 | 0 | 0 |
+| both | 6 | -1 | 27 | 61 | 0 | 0 |
+
+Entity changes caused by translation: 1 of 10 tasks (000). The instruction was an ASR garble ("전자인지" for
+"전자레인지"); the translator turned it into a fluent, wrong English sentence ("the electronic door lock ... open the
+door"), the model then refused "cannot open room doors", and both `translate` and `both` failed a task that `none`
+solves (the understand model reads the garbled Hangul together with the ENV aliases). A translation that sounds
+fluent hides the garble, so the UNCLEAR signal did not fire. We found no task where translation helped. The sample is
+small (10 tasks, one seed): the difference between the modes is one task.
+
+Decision, by these numbers: default `input_pivot` = `none` (manifest and code). The IN side stays available as an
+option. The OUT side of the layer (one `speak()`, no English to a Korean user, `names`, pack-line trimming) is on in
+all modes. Re-test on the 50-task milestone before the 300 run.
+
+#### SAGE-v2 changes: m10 round 3 (failure classes, not tasks)
+
+- Wrong-language speech when the translator cannot be used (003 KO). The translate budget (4) was spent, so
+  `_in_lang` returned the English text; a second read-back came out half English. Fix: `speak()` never returns
+  English for a non-English user (pack phrase `q_unclear_task` / `say_untranslated`), an English slot in a pack phrase
+  is translated alone and cached, raw ENV keys are said as names, an English reason after a pack line is dropped,
+  translate budget 8.
+- Clarification hygiene (007 sage_ask EN). A question asked word for word before is replaced once by "say the task
+  in other words"; the delivery's "Where are you?" may take one round past `clarify_rounds`.
+- A refused put left its open-container goal (009 sage_ask KO). The hazard gate refused the put; the remaining
+  `open fridge` goal was read back three times and never converged. Fix: open/close goals that only served a refused
+  goal are refused with it (a full refusal when nothing else is left).
+- Found while rerunning (008 sage_ask KO, false success). A "Where are you?" that was built but replaced by another
+  question in the same round stayed marked as asked, so a later answer that named a place (the armchair the user
+  had corrected away) became the person's position. Fix: the mark is cleared when another question is asked.
+Each has a unit test without benchmark text (`tests/test_sage_v2_r3_language_layer.py`). Dev numbers after this
+tuning are optimistic; the paper reports the TEST split.

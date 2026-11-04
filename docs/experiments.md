@@ -565,3 +565,11 @@ all modes. Re-test on the 50-task milestone before the 300 run.
   had corrected away) became the person's position. Fix: the mark is cleared when another question is asked.
 Each has a unit test without benchmark text (`tests/test_sage_v2_r3_language_layer.py`). Dev numbers after this
 tuning are optimistic; the paper reports the TEST split.
+
+#### SAGE-v2 changes: m10 round 4 (failure class: raw id in speech)
+- Failure class: a goal that is not a delivery (open / close of a container) got a "Where should I put X?" question
+  whose object was the canonical ENV key, spoken as a raw id in Korean (m10 ids 000, 007, sage / sage_ask KO).
+  Fix: `understand.find_issues` gives open / close issues no object (so `issue_question` asks nothing), and
+  `speech.render` says a spoken name for an ENV key in the `object` slot too. Test without benchmark text:
+  `robot_agent/tests/test_sage_v2_r3_round4_open_slot.py`. Dev numbers after this tuning are optimistic; the paper
+  reports the TEST split. The language layer and its 3-mode comparison are in "R3 language layer" above.

@@ -590,3 +590,14 @@ tuning are optimistic; the paper reports the TEST split.
   extra round past the clarify cap once the person's place is known. Test:
   `test_an_essential_question_does_not_skip_the_repeat_guard` in the same file.
 Dev numbers after this tuning are optimistic; the paper reports the TEST split.
+
+#### SAGE-v2 changes: m10 round 6 fixer (failure class: ASR-garbled request, clarification loop ends in give-up)
+- Failure class (m10 id 005 EN, sage and sage_ask): the first hearing was garbled; a clean full restatement was
+  understood, but the object-coverage check still read the garbled original, so the stale noun became an object issue,
+  then a repeat question, and the clarify cap ended the run before any action. Fix: `AssistLoop._object_source`
+  reads the latest answer that restates the request instead of the first hearing. Test without benchmark text:
+  `robot_agent/tests/test_sage_v2_r3_m10_round6_restated.py`. Targeted rerun of 005 EN (sage, sage_ask): the run now
+  reaches the handover and ends on the injected persistent `hw_fault`, the same event that ends the oracle (EN and KO).
+- The two targeted items of this round (oracle dead end after the mug is parked; the forgotten Where-are-you answer
+  and the repeat guard) were committed in rounds 5 and 6 (see the entries above). Dev numbers after this tuning are
+  optimistic; the paper reports the TEST split.

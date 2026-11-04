@@ -10,7 +10,7 @@ intent. Refuse tasks: ``finish("refuse")``; mixed tasks: it declines the refuse 
 It finishes ``done`` only when the judge would score success, so its false-success rate is 0.
 
 Deliveries (docs/runner.md, "Delivery"): the oracle never reads an atom's ``mode`` label. It chooses reach or hand
-itself, once, from what a robot observes when it gets the request (:func:`observed_modes`: the heard instruction,
+itself, once, from what a robot observes when it gets the request (:func:`observed_modes`: the instruction as the user said it,
 the house profile and the furniture around the person at the start, ``homeloop_robot.oracle.delivery_modes``), and
 for a correction's new deliveries with the correction's words added. In reach mode the robot oracle puts the
 object on the nearest reachable support surface with room where the person is now, else hands it over.
@@ -74,15 +74,20 @@ def gold_meaning(env) -> dict:
     return {"qtype": qt, "options": opts} if opts else {"qtype": qt}
 
 
-def heard_text(env) -> str:
-    """The instruction as heard, plus the words of every correction said so far."""
+def heard_text(env, true_words: bool = False) -> str:
+    """The instruction as heard, plus the words of every correction said so far. ``true_words``: the privileged
+    planners (oracle, naive) read what the user SAID, not what the ASR made of it: a recogniser that drops "in my
+    hand" would otherwise make the reference park the object on a desk, and no later plan reaches the goal."""
     extra = [str(e.get("text") or "") for e in env._events if e.get("kind") == "correction"]
-    return " ".join([env.task_text] + extra).strip()
+    said = str(getattr(env.user, "request", "") or "") if true_words else ""
+    return " ".join([said or env.task_text] + extra).strip()
 
 
-def observed_modes(env, world, goal: dict, people_pos=None) -> dict:
-    """{(obj, person): reach | hand} chosen from the heard words and the scene (never the goal's labels)."""
-    return _oracle.delivery_modes(world, goal, text=heard_text(env), lang=env.lang, people_pos=people_pos)
+def observed_modes(env, world, goal: dict, people_pos=None, true_words: bool = False) -> dict:
+    """{(obj, person): reach | hand} chosen from the heard words and the scene (never the goal's labels).
+    ``true_words``: the words the user said (privileged planners), see :func:`heard_text`."""
+    return _oracle.delivery_modes(world, goal, text=heard_text(env, true_words), lang=env.lang,
+                                  people_pos=people_pos)
 
 
 def retreat_place(w):
@@ -135,7 +140,7 @@ class OraclePlanner:
             if modes is None or key != modes_key:
                 # once at the start, and again after a user event (a correction brings new words and goals);
                 # from the scene the robot saw when it got the request (the start), choices already made are kept
-                modes = {**observed_modes(env, env.world0, env.current_goal()), **(modes or {})}
+                modes = {**observed_modes(env, env.world0, env.current_goal(), true_words=True), **(modes or {})}
                 modes_key = key
             plan = _oracle.solve(w, target, lang=env.lang, people_pos=people, modes=modes) if target["all"] else []
             if not plan:

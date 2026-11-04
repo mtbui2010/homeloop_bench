@@ -19,7 +19,7 @@ from .base import give_up_text, refusal_text
 def start_plan(env) -> list | None:
     """The full oracle plan from the start state (None when unsolvable). Delivery modes: chosen from the heard
     instruction and the start scene (``observed_modes``), never from the goal's labels."""
-    modes = observed_modes(env, env.world0, env.current_goal())
+    modes = observed_modes(env, env.world0, env.current_goal(), true_words=True)
     if not env.order:
         tgt = solve_target(env)
         return _oracle.solve(env.world0, tgt, lang=env.lang, modes=modes) if tgt["all"] else []

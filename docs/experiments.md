@@ -573,3 +573,17 @@ tuning are optimistic; the paper reports the TEST split.
   `speech.render` says a spoken name for an ENV key in the `object` slot too. Test without benchmark text:
   `robot_agent/tests/test_sage_v2_r3_round4_open_slot.py`. Dev numbers after this tuning are optimistic; the paper
   reports the TEST split. The language layer and its 3-mode comparison are in "R3 language layer" above.
+
+#### SAGE-v2 changes: m10 round 5 (failure class: a forgotten answer) and a harness fix
+- Failure class (sage_ask KO, m10 id 007): the answer to "Where are you?" was read from the latest answer only, so a
+  later answer (to another question) lost the place and the robot asked again until the clarify cap ended the run
+  with nothing done. Fix: the place the person said is kept for the run, per person, and used only after the question
+  was asked (`AssistLoop._person_at`). Test without benchmark text:
+  `robot_agent/tests/test_sage_v2_r3_m10_round5_where_memory.py`.
+- Harness bug (oracle EN, m10 id 005): the oracle chose reach or hand from the ASR text. The recogniser had dropped
+  the words that ask for a hand-over, so the reference parked the object on a desk and then found no plan. Privileged
+  planners (oracle, naive) now choose the delivery mode from the words the user said plus the corrections
+  (`planners/oracle.heard_text(true_words=True)`); the labels are still never read, and the LLM planners hear the ASR
+  text as before. Test: `tests/test_oracle_true_words.py`. Rerun of oracle and naive on the m10 tasks: same outcomes
+  as round 5, except that 005 EN now ends on the injected persistent `hw_fault` like KO.
+Dev numbers after this tuning are optimistic; the paper reports the TEST split.

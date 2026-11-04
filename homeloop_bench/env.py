@@ -28,7 +28,7 @@ from homeloop_robot import goals as G
 from homeloop_robot import make_episode
 from homeloop_robot.intent import in_lang as _in_lang
 from homeloop_robot.rng import derive_seed, r6
-from homeloop_robot.types import UserEvent
+from homeloop_robot.types import FailureCode, UserEvent
 
 STATUSES = ("done", "refuse", "give_up", "error", "budget")
 FINISH_STATUSES = ("done", "refuse", "give_up")
@@ -680,12 +680,16 @@ _RAW_ID_RX = re.compile(r"[^\s,;:()\[\]\"'“”‘’]*\w@\w[^\s,;:()\[\]\"'“
 def raw_ids(text: str, world) -> list:
     """The raw world ids in a text the user hears: a place key ``head@room`` (also translated, '김치_냉장고@주방'),
     or an id of the world with an underscore ('partner_b', 'kimchi_fridge@kitchen') as a whole word. Readable
-    ENV person keys ('spot near you', 'husband') are names, not ids."""
+    ENV person keys ('spot near you', 'husband') are names, not ids. A failure code with an underscore
+    ('hw_fault', 'grasp_failed') counts as an id."""
     text = str(text or "")
     found = [m.group(0).rstrip(".!?") for m in _RAW_ID_RX.finditer(text)]
     ids = set(world.house.places) | set(world.objects) | set(world.people)
     # the head of a place key, which robot_agent says with its room: "the kids_desk in the kids" (fresh pilot round 1)
     ids |= {p.split("@")[0] for p in world.house.places}
+    # the robot's internal failure codes ("move failed (hw_fault)", milestone 5 round 1, EN hl-dev-000002): an id
+    # too, not words a person says (the codes that are plain words, 'timeout' / 'blocked', are not counted)
+    ids |= {c.value for c in FailureCode if "_" in c.value} | {"hw_fault_persistent"}
     for i in sorted(x for x in ids if "_" in x):
         if re.search(rf"(?<![\w@]){re.escape(i)}(?![\w@])", text):
             found.append(i)

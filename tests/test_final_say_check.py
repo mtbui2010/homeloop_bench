@@ -92,3 +92,15 @@ def test_robot_agent_ko_episode_ends_in_korean(monkeypatch):
     e = run_episode(t, "robot_agent:sage", "ideal", 0, "ko", "fake")
     assert e["status"] == "done" and e["final_say"] == "작업을 완료했습니다", e["final_say"]
     assert e["final_say_not_in_lang"] == 0 and e["final_say_raw_ids"] == []
+
+
+def test_failure_codes_are_raw_ids():
+    """Milestone 5 round 1 (EN hl-dev-000002): robot_agent said 'the robot is not healthy after move failed
+    (hw_fault)'; the internal code reached the user and no counter saw it. Codes that are plain English words
+    ('timeout', 'blocked') are not flagged."""
+    rec = _finish("en", "give_up", "the robot is not healthy after move failed (hw_fault): wheel motor fault")
+    assert rec["final_say_raw_ids"] == ["hw_fault"]
+    w = EpisodeEnv(task_by_id(DELIVERY), "ideal", 0, "en")._world
+    assert raw_ids("pick failed (grasp_failed), then hw_fault_persistent", w) == ["grasp_failed", "hw_fault_persistent"]
+    assert raw_ids("I have to stop: something is wrong with my hardware.", w) == []
+    assert raw_ids("The way is blocked and the call timed out (timeout).", w) == []

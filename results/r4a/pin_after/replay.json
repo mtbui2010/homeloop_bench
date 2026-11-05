@@ -1,0 +1,332 @@
+{
+ "en": [
+  {
+   "asked": 0,
+   "failures": [],
+   "false_success": false,
+   "final_say": "Task completed",
+   "gc": 1.0,
+   "llm_calls": 2,
+   "n_calls": 3,
+   "ok": true,
+   "refused": false,
+   "sim_time_s": 20.915706,
+   "status": "done",
+   "success": true,
+   "task_id": "hl-dev-000000"
+  },
+  {
+   "asked": 3,
+   "failures": [
+    {
+     "code": "timeout",
+     "injected": true,
+     "k": 0,
+     "recovered": false
+    },
+    {
+     "code": "grasp_failed",
+     "injected": true,
+     "k": 8,
+     "recovered": true
+    },
+    {
+     "code": "grasp_failed",
+     "injected": true,
+     "k": 11,
+     "recovered": true
+    }
+   ],
+   "false_success": false,
+   "final_say": "Task completed",
+   "gc": 1.0,
+   "llm_calls": 7,
+   "n_calls": 22,
+   "ok": true,
+   "refused": false,
+   "sim_time_s": 151.901162,
+   "status": "done",
+   "success": true,
+   "task_id": "hl-dev-000001"
+  },
+  {
+   "asked": 0,
+   "failures": [
+    {
+     "code": "hw_fault",
+     "injected": true,
+     "k": 15,
+     "recovered": false
+    }
+   ],
+   "false_success": false,
+   "final_say": "I have to stop: something is wrong with my hardware.",
+   "gc": 0.666667,
+   "llm_calls": 6,
+   "n_calls": 16,
+   "ok": true,
+   "refused": false,
+   "sim_time_s": 155.384812,
+   "status": "give_up",
+   "success": false,
+   "task_id": "hl-dev-000002"
+  },
+  {
+   "asked": 9,
+   "failures": [
+    {
+     "code": "timeout",
+     "injected": true,
+     "k": 1,
+     "recovered": false
+    },
+    {
+     "code": "timeout",
+     "injected": true,
+     "k": 4,
+     "recovered": false
+    },
+    {
+     "code": "unreachable",
+     "injected": true,
+     "k": 9,
+     "recovered": true
+    },
+    {
+     "code": "blocked",
+     "injected": true,
+     "k": 10,
+     "recovered": true
+    },
+    {
+     "code": "absent",
+     "injected": false,
+     "k": 15,
+     "recovered": true
+    },
+    {
+     "code": "absent",
+     "injected": false,
+     "k": 18,
+     "recovered": true
+    },
+    {
+     "code": "absent",
+     "injected": false,
+     "k": 22,
+     "recovered": true
+    },
+    {
+     "code": "absent",
+     "injected": false,
+     "k": 26,
+     "recovered": true
+    },
+    {
+     "code": "timeout",
+     "injected": true,
+     "k": 27,
+     "recovered": false
+    },
+    {
+     "code": "timeout",
+     "injected": true,
+     "k": 28,
+     "recovered": false
+    }
+   ],
+   "false_success": false,
+   "final_say": "Task completed",
+   "gc": 1.0,
+   "llm_calls": 12,
+   "n_calls": 43,
+   "ok": true,
+   "refused": false,
+   "sim_time_s": 290.286754,
+   "status": "done",
+   "success": true,
+   "task_id": "hl-dev-000003"
+  },
+  {
+   "asked": 0,
+   "failures": [
+    {
+     "code": "absent",
+     "injected": false,
+     "k": 5,
+     "recovered": true
+    }
+   ],
+   "false_success": false,
+   "final_say": "Task completed",
+   "gc": 1.0,
+   "llm_calls": 4,
+   "n_calls": 16,
+   "ok": true,
+   "refused": false,
+   "sim_time_s": 89.112695,
+   "status": "done",
+   "success": true,
+   "task_id": "hl-dev-000004"
+  }
+ ],
+ "ko": [
+  {
+   "asked": 4,
+   "failures": [
+    {
+     "code": "timeout",
+     "injected": true,
+     "k": 1,
+     "recovered": true
+    }
+   ],
+   "false_success": false,
+   "final_say": "작업을 완료했습니다",
+   "gc": 1.0,
+   "llm_calls": 4,
+   "n_calls": 7,
+   "ok": true,
+   "refused": false,
+   "sim_time_s": 60.096101,
+   "status": "done",
+   "success": true,
+   "task_id": "hl-dev-000000"
+  },
+  {
+   "asked": 0,
+   "failures": [],
+   "false_success": false,
+   "final_say": "작업을 완료했습니다",
+   "gc": 1.0,
+   "llm_calls": 9,
+   "n_calls": 14,
+   "ok": true,
+   "refused": false,
+   "sim_time_s": 67.266437,
+   "status": "done",
+   "success": true,
+   "task_id": "hl-dev-000001"
+  },
+  {
+   "asked": 0,
+   "failures": [
+    {
+     "code": "hw_fault",
+     "injected": true,
+     "k": 15,
+     "recovered": false
+    }
+   ],
+   "false_success": false,
+   "final_say": "나 지금 멈춰야 해요. 내 하드웨어에 뭔가 이상한 것 같아요.",
+   "gc": 0.666667,
+   "llm_calls": 11,
+   "n_calls": 16,
+   "ok": true,
+   "refused": false,
+   "sim_time_s": 155.384812,
+   "status": "give_up",
+   "success": false,
+   "task_id": "hl-dev-000002"
+  },
+  {
+   "asked": 9,
+   "failures": [
+    {
+     "code": "timeout",
+     "injected": true,
+     "k": 1,
+     "recovered": false
+    },
+    {
+     "code": "timeout",
+     "injected": true,
+     "k": 4,
+     "recovered": false
+    },
+    {
+     "code": "unreachable",
+     "injected": true,
+     "k": 8,
+     "recovered": true
+    },
+    {
+     "code": "blocked",
+     "injected": true,
+     "k": 9,
+     "recovered": true
+    },
+    {
+     "code": "absent",
+     "injected": false,
+     "k": 11,
+     "recovered": true
+    },
+    {
+     "code": "absent",
+     "injected": false,
+     "k": 15,
+     "recovered": true
+    },
+    {
+     "code": "absent",
+     "injected": false,
+     "k": 18,
+     "recovered": true
+    },
+    {
+     "code": "absent",
+     "injected": false,
+     "k": 22,
+     "recovered": true
+    },
+    {
+     "code": "timeout",
+     "injected": true,
+     "k": 24,
+     "recovered": false
+    },
+    {
+     "code": "timeout",
+     "injected": true,
+     "k": 25,
+     "recovered": false
+    }
+   ],
+   "false_success": false,
+   "final_say": "작업을 완료했습니다",
+   "gc": 1.0,
+   "llm_calls": 19,
+   "n_calls": 37,
+   "ok": true,
+   "refused": false,
+   "sim_time_s": 253.139433,
+   "status": "done",
+   "success": true,
+   "task_id": "hl-dev-000003"
+  },
+  {
+   "asked": 3,
+   "failures": [
+    {
+     "code": "absent",
+     "injected": false,
+     "k": 8,
+     "recovered": true
+    }
+   ],
+   "false_success": false,
+   "final_say": "작업을 완료했습니다",
+   "gc": 1.0,
+   "llm_calls": 14,
+   "n_calls": 19,
+   "ok": true,
+   "refused": false,
+   "sim_time_s": 126.776918,
+   "status": "done",
+   "success": true,
+   "task_id": "hl-dev-000004"
+  }
+ ]
+}

@@ -1,0 +1,101 @@
+{
+ "base": "pin_before",
+ "after": "pin_after",
+ "fake": {
+  "robot_agent_sage__en.episodes.jsonl": {
+   "identical": true,
+   "n_before": 12,
+   "n_after": 12,
+   "bytes_equal": true,
+   "differing_index": []
+  },
+  "robot_agent_sage__ko.episodes.jsonl": {
+   "identical": true,
+   "n_before": 12,
+   "n_after": 12,
+   "bytes_equal": true,
+   "differing_index": []
+  },
+  "robot_agent_sage_ask__en.episodes.jsonl": {
+   "identical": true,
+   "n_before": 12,
+   "n_after": 12,
+   "bytes_equal": true,
+   "differing_index": []
+  },
+  "robot_agent_sage_ask__ko.episodes.jsonl": {
+   "identical": true,
+   "n_before": 12,
+   "n_after": 12,
+   "bytes_equal": true,
+   "differing_index": []
+  },
+  "robot_agent_sage_norag__en.episodes.jsonl": {
+   "identical": true,
+   "n_before": 12,
+   "n_after": 12,
+   "bytes_equal": true,
+   "differing_index": []
+  },
+  "robot_agent_sage_norag__ko.episodes.jsonl": {
+   "identical": true,
+   "n_before": 12,
+   "n_after": 12,
+   "bytes_equal": true,
+   "differing_index": []
+  }
+ },
+ "replay": {
+  "en": {
+   "identical": true,
+   "outcomes": [
+    [
+     "hl-dev-000000",
+     true
+    ],
+    [
+     "hl-dev-000001",
+     true
+    ],
+    [
+     "hl-dev-000002",
+     false
+    ],
+    [
+     "hl-dev-000003",
+     true
+    ],
+    [
+     "hl-dev-000004",
+     true
+    ]
+   ]
+  },
+  "ko": {
+   "identical": true,
+   "outcomes": [
+    [
+     "hl-dev-000000",
+     true
+    ],
+    [
+     "hl-dev-000001",
+     true
+    ],
+    [
+     "hl-dev-000002",
+     false
+    ],
+    [
+     "hl-dev-000003",
+     true
+    ],
+    [
+     "hl-dev-000004",
+     true
+    ]
+   ]
+  }
+ },
+ "identical": true
+}

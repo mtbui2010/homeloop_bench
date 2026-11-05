@@ -37,7 +37,7 @@ case "$cmd" in
     MOUNT=$(models_mount)
     docker rm -f "$NAME" >/dev/null 2>&1
     # shellcheck disable=SC2086
-    docker run -d --name "$NAME" --gpus device="$GPU" -e OLLAMA_NUM_PARALLEL="$PARALLEL" -e OLLAMA_KEEP_ALIVE=30m \
+    docker run -d --name "$NAME" --gpus device="$GPU" -e OLLAMA_NUM_PARALLEL="$PARALLEL" -e OLLAMA_KEEP_ALIVE=${OLLAMA_KEEP_ALIVE:-3m} -e OLLAMA_MAX_LOADED_MODELS=${OLLAMA_MAX_LOADED_MODELS:-2} \
       -e OLLAMA_CONTEXT_LENGTH=${OLLAMA_CONTEXT_LENGTH:-8192} -p 127.0.0.1:$PORT:11434 $MOUNT "$IMAGE" >/dev/null || exit 3
     for _ in $(seq 1 90); do
       curl -sf "http://127.0.0.1:$PORT/api/tags" >/dev/null 2>&1 && { echo "up on :$PORT ($MOUNT, GPU $GPU)"; exit 0; }

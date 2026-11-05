@@ -630,3 +630,14 @@ Earlier milestone numbers (m5, m10) were measured with the old rate and must be 
 Open after this round (not fixed): KO relay messages (013, 044), clarify and read-back rounds that end in give-up under
 injected ask timeouts (011, 023, 030, 032, 042), conditional goals (037), "a drink" not grounded to the ENV objects (047),
 a relation word that names two people (017), plan-gate losses in KO (021, 024, 046).
+
+#### SAGE-v2 changes: m50 round 2 fixer (failure class: a goal set that only walks, for a non-English request; branch `sage-v2/homeloop`)
+Class: false success where the model read a request as "go to X" and dropped the object it names. The object check
+(`find_issues`) reads English only, so a Korean request with a go-only goal set passed it and the run ended with
+"task done" against its own goals (ids 025; the same dropped-goal family as 016 and 047, which are not covered by this
+change). Change: `understand.vacuous_goal_issues` reads the language layer's cached English translation of the request
+when every goal is `go`, and returns an `object` issue per object in object position (re-sample, then ask). It adds
+no translation call and is skipped when the translation is untrusted. Test: `robot_agent/tests/test_vacuous_goal_issues.py`
+(synthetic text). Not fixed here: dropped goals when some other goal does move an object (needs a per-goal match of the
+translation to the goals), read-back loops under injected ask timeouts, search and plan-gate classes listed above.
+The 50-task milestone has not been re-run for this change; it is only reported when it is. Dev numbers are optimistic.

@@ -1145,3 +1145,232 @@ Next step, as a new proposal and not as a continuation: the failures that remain
 Both are best checked offline on the cached traces of this round (no GPU) before another LLM run: (a) compile the deliver block as a fixed block too when the
 object, its source and the recipient are all known (the lab already compiles `go` and `say`), (b) an understanding-side rule that moves a named person from the say
 goal to the destination of the hand goal in the same request. Neither is started here.
+
+## Performance decomposition (R6 step 0)
+
+Date 2026-11-06. Code: robot_agent and embodiplan at the head of `sage-v2/homeloop`, homeloop_bench `a95fd4b`. Model `qwen3-vl:8b-instruct`, profile `real`
+(simulated speech recognition, injected failures), seed 0. Raw results: `results/perf1/` (`understand/{train,dev}`, `e2e/*`, driver `run.sh`). No run failed:
+all 12 shard logs, the 4 merges, the 2 understanding runs and the oracle and naive runs ended with EXIT=0, `n_error` is 0 in every summary. The exit-4
+condition of `understand-eval` (a run that ends before the understand step) was not examined separately. HTTP 500s from the LLM server were not checked
+for; nothing stalled. The analysis scripts are throw-away (python over `records.jsonl` and `episodes.jsonl`); every number below is a count from those files.
+
+### End-to-end table, dev tasks 0..99 (one run, 3 shards, seed 0)
+
+`sage_gold` is PRIVILEGED (gold goals, no understand step): a diagnostic ceiling, never a headline. LLM calls are the planner's calls per run; the KO
+numbers include the translation calls (sage 453, sage_gold 489).
+
+| lang | planner | success | 95% CI | false success | LLM calls (per episode) |
+|---|---|---|---|---|---|
+| EN | oracle (privileged) | 83 | 0.74-0.89 | 0 | 0 |
+| EN | naive (privileged) | 50 | 0.40-0.60 | 3 | 0 |
+| EN | sage | 50 | 0.40-0.60 | 7 | 619 (6.2) |
+| EN | sage_gold (privileged) | 56 | 0.46-0.65 | 6 | 391 (3.9) |
+| KO | oracle (privileged) | 83 | 0.74-0.89 | 0 | 0 |
+| KO | naive (privileged) | 50 | 0.40-0.60 | 3 | 0 |
+| KO | sage | 30 | 0.22-0.40 | 19 | 1055 (10.6) |
+| KO | sage_gold (privileged) | 56 | 0.46-0.65 | 6 | 876 (8.8) |
+
+oracle and naive read the task directly, so their numbers do not depend on the language. sage_gold is the same in EN and KO (56 and 56), as it should be:
+the gold goals do not depend on the text.
+
+### Decomposition
+
+| | EN | KO |
+|---|---|---|
+| loss from understanding = sage_gold - sage | 6 points (56 - 50) | 26 points (56 - 30) |
+| loss from execution and the world = oracle - sage_gold | 27 points (83 - 56) | 27 points (83 - 56) |
+| total, oracle - sage | 33 | 53 |
+
+Paired by task (same 100 tasks): EN sage_gold succeeds where sage fails on 12 tasks, the reverse on 6 (sign test p = 0.24: the EN understanding loss is
+**not** resolved at n = 100). KO: 31 against 5 (p = 1e-5: the KO understanding loss is real). Execution and the world: the oracle succeeds where sage_gold
+fails on 30 (EN) and 31 (KO) tasks, the reverse on 3 and 4.
+
+Reading the failures of sage (EN 50, KO 70) against the first reading of the understanding evaluation (same tasks, text after speech recognition):
+
+| first reading | EN failures | KO failures |
+|---|---|---|
+| exact (the goals were right, execution failed) | 25 (3 false successes) | 20 (8 false successes) |
+| empty (refused or no goal) | 14 | 17 |
+| goals missing and/or added | 11 (3 false successes) | 31 (8 false successes) |
+| task to refuse | 0 | 2 |
+
+Success rate of the tasks to act on, by the first reading: EN exact 26 of 48 (54%), not exact 13 of 33 (39%); KO exact 17 of 34 (50%), not exact 6 of 47
+(13%). The KO loss is the not-exact readings.
+
+### Understanding metrics (`understand-eval`, 300 tasks, split train and dev, both text conditions, 4 records per task)
+
+Headline = feasible tasks, no refused part (train n = 964, dev n = 972). Exact = the goal set equals the gold set.
+
+| split | exact | atom precision | atom recall | dropped | spurious | confident wrong (of confident) |
+|---|---|---|---|---|---|---|
+| train | 0.464 | 0.702 | 0.703 | 526 | 528 | 292 (0.407) |
+| dev | 0.534 | 0.757 | 0.741 | 464 | 426 | 258 (0.346) |
+
+By condition (exact / atom precision / atom recall / confident wrong):
+
+| condition | train | dev |
+|---|---|---|
+| EN clean | 0.568 / 0.759 / 0.819 / 67 | 0.638 / 0.803 / 0.848 / 62 |
+| EN asr | 0.456 / 0.723 / 0.677 / 67 | 0.547 / 0.800 / 0.734 / 49 |
+| KO clean | 0.465 / 0.694 / 0.716 / 74 | 0.535 / 0.724 / 0.748 / 74 |
+| KO asr | 0.365 / 0.627 / 0.600 / 84 | 0.416 / 0.698 / 0.634 / 73 |
+
+Speech recognition costs 9 to 12 exact points in both languages; KO is 9 to 13 points below EN in every condition. By structure (both languages, exact /
+confident wrong of confident):
+
+| structure | train | dev |
+|---|---|---|
+| single | 0.639 / 0.161 | 0.668 / 0.134 |
+| with_context | 0.679 / 0.245 | 0.808 / 0.128 |
+| conjunction | 0.421 / 0.404 | 0.600 / 0.267 |
+| correction | 0.417 / 0.255 | 0.398 / 0.429 |
+| shared_object | 0.321 / 0.624 | 0.517 / 0.450 |
+| sequence | 0.350 / 0.615 | 0.365 / 0.577 |
+| ordered | 0.231 / 0.747 | 0.410 / 0.480 |
+| conditional | 0.058 / 0.933 | 0.067 / 0.925 |
+
+On dev by language, exact: EN single 0.70, KO single 0.64; EN conjunction 0.83, KO conjunction 0.38; EN correction 0.52, KO correction 0.27 (KO recall 0.47);
+conditional 0.07 in both. Tasks to refuse: exact 0 of 56 (dev), 0 of 52 (train), and every one of them is a "confident wrong" reading. Tasks that should
+be asked about: exact 0.21 (dev), 0.35 (train).
+
+**Limits of this measure (read before using the numbers).** The evaluation judges the first reading only. The hazard gate, the which-one question and the
+read-back come later in the loop and are not run, so (a) the refuse and ask rows overstate the loss (end to end, sage refuses 5 of 5 EN and 3 of 5 KO
+refuse tasks), and (b) an extra `go(place)` atom is counted as spurious although it is usually harmless.
+
+#### Where the readings go wrong (dev and train, tasks to act on, mixed tasks left out; atoms counted)
+
+Each dropped gold atom is paired with a spurious atom of the same family; the unpaired rest is "dropped only" and "spurious only".
+
+| error | dev EN | dev KO | train EN | train KO |
+|---|---|---|---|---|
+| dropped only: `give` to a person (fetch, bring me) | 68 | 81 | 56 | 88 |
+| dropped only: `put_on` / `put_in` | 56 | 53 | 62 | 60 |
+| dropped only: `go(dock)` after the last step | 16 | 22 | 17 | 19 |
+| spurious `go` (mostly `go(place)`, "check the counter") | 92 | 60 | 74 | 46 |
+| spurious `open` / `close` / `say` / `put` / `give` | 43 | 83 | 78 | 129 |
+| wrong person (`give` / `say`) | 13 | 22 | 28 | 37 |
+| wrong object (a name that is no class, `?name`) | 2 | 28 | 7 | 32 |
+| wrong destination | 4 | 27 | 9 | 20 |
+| `give` read as `put_on` with no person | 17 | 26 | 22 | 25 |
+
+Readings with no goal at all on a task to act on (dev, 245 tasks per language and condition): EN clean 20, EN asr 50, KO clean 24, KO asr 46; the model
+says `ambiguous` (the larger part) or `infeasible`. End to end, sage succeeds on 5 of 17 such tasks in EN and 3 of 16 in KO; sage_gold on 8 of 17 and 6 of 16.
+
+#### Ten real readings per language (dev, from `results/perf1/understand/dev/records.jsonl`)
+
+Prompt line numbers are in `robot_agent/core/planning/assist_loop.py` (`UNDERSTAND_PROMPT`, lines 309-336) and `goals.py` of the same package.
+
+EN:
+
+1. 278 clean, "bring me that orange, and then bring my husband the white towel": no goal; status `infeasible`, "cannot find or retrieve an orange or a white
+   towel without knowing their locations". The prompt says unknown objects are fine and a missing place is handled separately (`assist_loop.py:322-324`);
+   the model ignores it.
+2. 281 clean, "go tell my husband dinner's ready and grab the yellow book for me ... right in my hand": `go(husband)`, `say`, then three `go(spot within your
+   reach)`. The bring-me part became `go` goals and the object was lost. The only way to name a person as destination is the word "me"
+   (`assist_loop.py:330-331`); the `go` kind line (`goals.py:38-39`) offers a goal without an object.
+3. 299 clean, "Hand that red book to Grandpa, then tell him dinner's ready": `give(red book, user)`, the book goes to the speaker. Same prompt line: a named recipient
+   other than "me" has no slot in the example (`assist_loop.py:330-331`). Confident.
+4. 087 asr, "first tell my husband to come to the kitchen, and then take the wallet to him": `give(wallet, partner_a)`, the speaker; "him" is the husband (partner_b).
+   Confident, plus a spurious `go(counter@kitchen)`.
+5. 286 clean, "if the bleach is there, it goes in the storage cabinet. If not, leave it. And fetch the towel": `go(utility_shelf)` before the fetch. The gold
+   (condition false) has no step for the bleach. The prompt has no rule for "if ... otherwise" (`assist_loop.py:320-333`) and `go` invites a "check" goal.
+6. 246 asr, "if the milk is still out on the kitchen table, put it in the fridge. If not, never mind. And let my husband know": `go(table@kitchen)` and `say`;
+   the put-in is dropped although the condition is true. Same missing rule.
+7. 008 clean, "put the blue book on the armchair, no, actually on the TV stand, and bring me the water bottle": `go(armchair)` plus the right `put_on` and `give`.
+   The corrected place is kept as a `go`. No correction rule in the prompt.
+8. 295 clean, "My pink towel has gone missing. Would you find it for me and bring it over": `open(bath_cabinet)` before `give`. An invented search step, confident.
+9. 009 asr, "stash the bleach in the kimchi fridge": `put_in(bleach, kimchi_fridge)` (gold: refuse, a chemical in a food fridge). `unsafe` in the prompt
+   lists throwing and fire only (`assist_loop.py:321`); the hazard gate is a later step.
+10. 062 clean, "Put the mug on the nightstand": `put_on(mug, nightstand)`, confident, no question. The gold expects a question (several mugs); the question
+    belongs to the later which-one step, which this evaluation does not run.
+
+KO:
+
+1. 259 clean, "주스랑 파란 과자 좀 갖다줄 수 있어요?": no goal, `infeasible` (cannot find items from unknown locations). Same rule as EN 1 (`assist_loop.py:322-324`).
+2. 169 clean, "빨간 머그컵 가져다 주실 수 있어요?": no goal, `ambiguous` ("does not specify where the red mug is"), although the prompt says a missing place is not
+   ambiguity (`assist_loop.py:323-324`).
+3. 063 clean, "아버님께 먼저 물 좀 드시라고 말씀해 주시고, 그 다음에 안경을 가져다주실 수 있을까요?": `give(glasses, user)`; the glasses are for the grandfather. Confident.
+   `assist_loop.py:330-331`.
+4. 232 asr, "우선 남편한테 가서 주방으로 잠깐 오래고 말해 주고, 그다에 하그얀 수건을 갖다주세요": `give(white towel, partner_a)`, gold partner_b. The model asked "What should I say?".
+5. 177 asr, "주병을 다시 냉장고에 넣은 다음에 아딜한테, 아 아니다, 빠한테 ... 전해 줄래요?": `put_in(?bottle)` and `say(child)` for dad. Two speech-recognition errors (a word for the juice, the
+   person) and the model keeps the first person of the correction.
+6. 215 clean, "먼저 과자 봉지를 싱크대 위에 올려주시고 ... 충전하러 돌아가셔도 돼요": `put_on(snack, kitchen_sink)` (gold counter) and no `go(dock)`. The dock goal is
+   dropped (the request words it permissively, "돌아가셔도 돼요"); this happens in 22 KO dev readings.
+7. 198 asr, "붐엌칼이 조린대엑 있으면 주방 서랍에 넣어 주시고, 없으면 그냥 두세요 ... 유리컵 좀": `put_in(knife, drawer)` unconditionally and `give(cup)` (gold: glass). Condition rule missing,
+   plus the class "cup" for 유리컵.
+8. 053 asr, "우율를 김치 냉장고에 낳고 문을 닫아 주실래요?": `put_in(?우율, kimchi_fridge)`: the misheard noun is kept as an object name that is no class and the reading is
+   confident and `clear`, so no question is asked at this step.
+9. 099 clean, "수납장이 가득 차 있네요. 락스를 김치 냉장고에 넣어 주실 수 있을까요?": `put_in(?liquid soap, kimchi_fridge)`, gold refuse. The model also
+   renames the bleach. Same hazard point as EN 9.
+10. 072 asr, "우유팩을 넣어 두세요": `put_on(milk, dining_table)`, the destination is invented and confident. The prompt tells the model that a missing place is handled separately
+    (`assist_loop.py:323-324`) and the model fills it in anyway.
+
+Data note (not a robot fault): for KO dev 0129 and 0158 and train 0048 the text and the gold of a **correction** disagree. In `data/tasks/dev.jsonl` task 158
+the gold `final_dest` is `upper_cabinet`, but both texts say "upper shelf, sorry, I meant the nightstand" (final nightstand). The paraphrase seems to swap
+first and final place in some correction tasks. How many tasks are affected is not measured; it lowers the correction rows of both languages and the
+KO correction recall in particular. To check before using correction results.
+
+### Where sage_gold still fails (dev 0..99, 44 failures per language, classes read from the episodes and the kept run logs)
+
+Rules: classes are exclusive and tested in the order of the table. "Oracle also fails" = the privileged oracle fails the same task (world, injected
+faults).
+
+| class | EN | KO | oracle also fails (EN/KO) |
+|---|---|---|---|
+| A. plan gate: the gold conversion emits a `deliver` goal (hand to a person who is not the speaker); the robot has no `WaitForUnload` and the gate refuses ("I could not make a plan that passes my checks") | 8 | 8 | 1 / 1 |
+| B. plan gate: `Handover ... to spot within your reach` judged not to achieve the goal | 2 | 1 | 0 / 0 |
+| C. plan gate: other (hand state, step order, `upper_cabinet` cannot be opened, say) | 2 | 4 | 0 / 0 |
+| D. false success: "Task completed", goal atom not met | 6 | 6 | 1 / 1 |
+| E. injected hardware fault, not recovered | 11 | 10 | 6 / 7 |
+| F. step or LLM budget | 1 | 0 | 0 / 0 |
+| G. search: object not found (`absent`, no source given) | 10 | 10 | 4 / 3 |
+| H. blocked, unreachable, perception, grasp or place fault not recovered | 3 | 5 | 2 / 1 |
+| I. other | 1 | 0 | 0 / 0 |
+| total | 44 | 44 | 14 / 13 |
+
+Class A is an artifact of the diagnostic. `homeloop_bench/gold_goals.py:71` converts a hand delivery to another person into the goal kind `deliver`, which robot_agent
+compiles to `MoveTo` + `WaitForUnload` (`goals.py:43`); the robot has no `WaitForUnload`, and the gate message is "the robot has no action WaitForUnload". The
+understanding of sage never writes a `deliver` goal (0 of 2400 readings; it writes `on` with the person as destination), so sage does not meet this. sage_gold is
+therefore pessimistic: the oracle succeeds on 7 of the 8 A tasks in each language. If they were solved at the oracle rate the ceiling would be about 63, not 56
+(estimate, not measured). The gate messages come from the kept run logs of the sage_gold window, matched to the tasks by the request text (199 of 200 task-language pairs matched).
+Class G is partly also a diagnostic effect: the gold goals have no source place, so the robot searches; sage gets the place from the words.
+
+sage itself ends with the gate text "passes my checks" in 6 EN and 2 KO episodes (final text only, so B and C are not separated); those are real robot_agent behaviour.
+
+### The three most valuable things to improve next (ranked)
+
+1. **Understanding of Korean and of speech-recognition text (the dominant loss in KO, 26 of 53 points; false success 19 against 6).** Evidence: KO exact 0.475
+   against EN 0.593 on dev; KO asr 0.416; paired sage_gold-sage 31 against 5; KO tasks with a not-exact first reading succeed 13% against 39% in EN; 28 `?name`
+   objects and 22 wrong persons in KO dev; 11 of the 19 KO false successes follow a first reading that is not exact. Three concrete targets, each general: (a) a fetch or bring request
+   without a place must give goals, not `infeasible` / `ambiguous` (dropped `give`: 68 EN, 81 KO; empty readings 20-50 per 245), (b) a recipient other than the speaker
+   (`assist_loop.py:330-331`), (c) an object name that is no class must not be a confident reading (match it to the known names, or ask). Fast inner loop:
+   `understand-eval` on train, `--lang ko --text asr` (and EN as the control), 300 tasks, one LLM call per task, cached; the metrics to move are exact, atom recall and confident wrong.
+   Confirmation: the dev 0..99 end-to-end run in KO (and EN, to see no regression), two runs, paired.
+2. **Make the ceiling honest, then work on the plan gate for hand delivery to a person (execution side).** First change `gold_goals.py:71` so a hand
+   delivery to another person is written like sage writes it (`on` with the person as destination) and rerun the 8 A tasks per language (sage_gold, about 17 minutes
+   for the whole slice, a few minutes for 8 tasks). This corrects the 27-point execution loss by up to 8 points per language (estimate). The real robot_agent part is
+   B and C in the table (sage_gold 4 EN / 5 KO, sage 6 EN / 2 KO gate refusals): the planner's `Handover` plan not accepted for the goal, hand state and order
+   findings. Inner loop: `sage_gold` on the task ids of the classes A, B, C (about 12 tasks, no understanding noise); confirmation: the full dev 0..99, two runs, EN and KO.
+3. **Fewer false goals: conditionals, corrections and invented steps.** Evidence: conditional exact 0.07 with 92% confident wrong (83 spurious atoms in dev, 90 in
+   train), spurious `go(place)` 92 (EN) / 60 (KO), spurious `open` / `say` / `put`, a correction kept as a `go`. The prompt has no rule for "if ... otherwise" or for a correction
+   (`assist_loop.py:320-333`). End to end the share is small on this slice (4 conditional tasks in 100; sage 2 of 4 EN, 1 of 4 KO, against 4 and 3 for sage_gold), so the expected
+   gain is about 2 tasks per language on 100, and it is the largest source of spurious atoms in the evaluation (83 of 426 on dev). Inner loop: `understand-eval` on train, structures conditional, correction,
+   ordered, sequence only (use `--tasks FILE` for a subset). Confirmation: end to end on a slice that is rich in these structures, not on dev 0..99. Before this, check
+   the paraphrase swap of the correction tasks (data note above), or the correction rows are measuring the data.
+
+Not ranked, but visible: injected hardware faults that the robot does not recover (E, 11 / 10 per 100, about half also fail the oracle), the false-success rate of the
+execution itself (D, 6 per 100 in sage_gold) and the search without a source (G, 10 per 100).
+
+### Measurement plan and noise caveat
+
+- **Fast inner loop for the understanding:** `homeloop-bench understand-eval` (one call per task, no motion, identical records for identical arguments, cached).
+  Measured cost today: 1200 records in 4547-5097 s while 12 other LLM clients shared the server (about 4 s per record); alone, less. Use train to tune, dev to validate, never test.
+  Use `--tasks FILE` and `--limit` to run a structure or language subset in minutes.
+- **Fast inner loop for the execution:** `robot_agent:sage_gold` on the task ids of one failure class (no understanding noise). It does not replace the confirmation.
+- **Confirmation:** the end-to-end dev 0..99 run (EN and KO, 3 shards each, at most 8 clients, container up only for the run and stopped after), two runs, paired by task.
+  Headline stays `robot_agent:sage`; `sage_gold` is a label-privileged diagnostic.
+- **Noise.** One run of 100 tasks has a 95% interval of about +-10 points (the summaries above). Run-to-run noise measured earlier is about 3 tasks in 50 (EN repeats were identical in round 1b; KO repeats
+  differ by up to 5 tasks). Here the EN understanding loss (6 points, 12 against 6 discordant tasks) is inside that noise and should not drive a decision; the KO loss (26 points) and the
+  27-point execution loss are far outside it. Offline estimates over-predicted before (the `person_goals` flag: predicted +3, got +1), so a gain in `understand-eval` is a reason to
+  run the confirmation, not a result. A change counts only when the paired end-to-end difference is at least 6 tasks of 100 in the same direction in two runs, or when the discordant
+  tasks (gain against loss) are clearly one-sided.

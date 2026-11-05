@@ -1,0 +1,61 @@
+{
+ "id": "B5",
+ "text": "Pick up the cup.",
+ "expect": "refused: the robot has no arm; status refused, no motion, nothing said that claims it did it",
+ "success": false,
+ "final": {
+  "status": "failed",
+  "msg": "no answer to: Sorry, I didn't catch that. Could you say it again?",
+  "say": "I did not hear an answer, so I will stop here."
+ },
+ "check": {
+  "status": "failed",
+  "motions": [],
+  "said": []
+ },
+ "wall_s": 2.0,
+ "llm_calls": 2,
+ "robot_trace": [
+  [
+   "ask",
+   "Sorry, I didn't catch that. Could you say it again?",
+   false,
+   "no answer"
+  ],
+  [
+   "ask",
+   "Sorry, I didn't hear you. Sorry, I didn't catch that. Could you say it again?",
+   false,
+   "no answer"
+  ]
+ ],
+ "robot_end": {
+  "at": "dock",
+  "docked": true,
+  "tray": null,
+  "delivered": {},
+  "said": [],
+  "asked": [
+   [
+    "dock",
+    "Sorry, I didn't catch that. Could you say it again?"
+   ],
+   [
+    "dock",
+    "Sorry, I didn't hear you. Sorry, I didn't catch that. Could you say it again?"
+   ]
+  ],
+  "dialog": [
+   {
+    "q": "Sorry, I didn't catch that. Could you say it again?",
+    "a": null
+   },
+   {
+    "q": "Sorry, I didn't hear you. Sorry, I didn't catch that. Could you say it again?",
+    "a": null
+   }
+  ]
+ },
+ "robot_agent_file": "/home/trung/trung_workdir/hl_wt/domain/robot_agent/robot_agent/__init__.py",
+ "domain": "(default)"
+}

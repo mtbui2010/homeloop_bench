@@ -1,0 +1,57 @@
+[
+ {
+  "id": "B1",
+  "success": true,
+  "final": {
+   "status": "success",
+   "msg": "",
+   "say": "Task completed"
+  },
+  "wall_s": 1.1,
+  "llm_calls": 1
+ },
+ {
+  "id": "B2",
+  "success": true,
+  "final": {
+   "status": "success",
+   "msg": "",
+   "say": "Task completed"
+  },
+  "wall_s": 0.8,
+  "llm_calls": 1
+ },
+ {
+  "id": "B3",
+  "success": false,
+  "final": {
+   "status": "failed",
+   "msg": "no answer to: I will tell dad: \"yes, please\", then go to the dock. Is that right?",
+   "say": "I did not hear an answer, so I will stop here."
+  },
+  "wall_s": 4.1,
+  "llm_calls": 4
+ },
+ {
+  "id": "B4",
+  "success": false,
+  "final": {
+   "status": "failed",
+   "msg": "no answer to: Sorry, I didn't catch that. Could you say it again?",
+   "say": "I did not hear an answer, so I will stop here."
+  },
+  "wall_s": 2.4,
+  "llm_calls": 3
+ },
+ {
+  "id": "B5",
+  "success": false,
+  "final": {
+   "status": "failed",
+   "msg": "no answer to: Sorry, I didn't catch that. Could you say it again?",
+   "say": "I did not hear an answer, so I will stop here."
+  },
+  "wall_s": 2.0,
+  "llm_calls": 2
+ }
+]

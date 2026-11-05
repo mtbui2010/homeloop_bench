@@ -1,0 +1,88 @@
+{
+ "id": "B4",
+ "text": "Bring the tray to the kitchen and wait until someone unloads it.",
+ "expect": "success: the tray item was taken in the kitchen (mom is there) and the tray is empty",
+ "success": true,
+ "final": {
+  "status": "success",
+  "msg": "",
+  "say": "Task completed"
+ },
+ "check": {
+  "delivered": {
+   "tray": "kitchen"
+  },
+  "tray": null,
+  "at": "kitchen"
+ },
+ "wall_s": 4.0,
+ "llm_calls": 4,
+ "robot_trace": [
+  [
+   "ask",
+   "Sorry, I didn't catch that. Could you say it again?",
+   true,
+   "answered"
+  ],
+  [
+   "ask",
+   "I will go to the kitchen, then deliver the tray to the kitchen. Is that right?",
+   true,
+   "answered"
+  ],
+  [
+   "move",
+   "kitchen",
+   true,
+   "arrived at kitchen"
+  ],
+  [
+   "say",
+   "I have a delivery for you. Please take it from my tray.",
+   true,
+   "said"
+  ],
+  [
+   "wait_for_unload",
+   "",
+   true,
+   "mom took the item"
+  ]
+ ],
+ "robot_end": {
+  "at": "kitchen",
+  "docked": false,
+  "tray": null,
+  "delivered": {
+   "tray": "kitchen"
+  },
+  "said": [
+   [
+    "kitchen",
+    "I have a delivery for you. Please take it from my tray."
+   ]
+  ],
+  "asked": [
+   [
+    "dock",
+    "Sorry, I didn't catch that. Could you say it again?"
+   ],
+   [
+    "dock",
+    "I will go to the kitchen, then deliver the tray to the kitchen. Is that right?"
+   ]
+  ],
+  "dialog": [
+   {
+    "q": "Sorry, I didn't catch that. Could you say it again?",
+    "a": "Bring the tray to the kitchen and wait until someone unloads it."
+   },
+   {
+    "q": "I will go to the kitchen, then deliver the tray to the kitchen. Is that right?",
+    "a": "yes"
+   }
+  ]
+ },
+ "robot_agent_file": "/home/trung/trung_workdir/hl_wt/domain/robot_agent/robot_agent/__init__.py",
+ "domain": "(default)"
+}

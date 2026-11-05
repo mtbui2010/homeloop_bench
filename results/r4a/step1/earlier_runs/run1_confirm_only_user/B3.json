@@ -1,0 +1,82 @@
+{
+ "id": "B3",
+ "text": "Ask dad if he wants tea, then dock.",
+ "expect": "success: the question about tea was asked where dad is (living room) and the robot ends docked",
+ "success": false,
+ "final": {
+  "status": "success",
+  "msg": "",
+  "say": "Task completed"
+ },
+ "check": {
+  "asked": [
+   [
+    "dock",
+    "Where should I put the dad, do you want tea??"
+   ],
+   [
+    "dock",
+    "I will tell dad: \"yes, please\", then go to the dock. Is that right?"
+   ]
+  ],
+  "asked_tea": true,
+  "asked_where_dad_is": false,
+  "ended_docked": true
+ },
+ "wall_s": 3.9,
+ "llm_calls": 4,
+ "robot_trace": [
+  [
+   "ask",
+   "Where should I put the dad, do you want tea??",
+   true,
+   "answered"
+  ],
+  [
+   "ask",
+   "I will tell dad: \"yes, please\", then go to the dock. Is that right?",
+   true,
+   "answered"
+  ],
+  [
+   "say",
+   "yes, please",
+   true,
+   "said"
+  ]
+ ],
+ "robot_end": {
+  "at": "dock",
+  "docked": true,
+  "tray": null,
+  "delivered": {},
+  "said": [
+   [
+    "dock",
+    "yes, please"
+   ]
+  ],
+  "asked": [
+   [
+    "dock",
+    "Where should I put the dad, do you want tea??"
+   ],
+   [
+    "dock",
+    "I will tell dad: \"yes, please\", then go to the dock. Is that right?"
+   ]
+  ],
+  "dialog": [
+   {
+    "q": "Where should I put the dad, do you want tea??",
+    "a": "yes, please"
+   },
+   {
+    "q": "I will tell dad: \"yes, please\", then go to the dock. Is that right?",
+    "a": "yes"
+   }
+  ]
+ },
+ "robot_agent_file": "/home/trung/trung_workdir/hl_wt/domain/robot_agent/robot_agent/__init__.py",
+ "domain": "(default)"
+}

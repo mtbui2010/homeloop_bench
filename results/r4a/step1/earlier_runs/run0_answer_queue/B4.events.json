@@ -1,0 +1,109 @@
+[
+ {
+  "event": "task_start",
+  "task": "Bring the tray to the kitchen and wait until someone unloads it.",
+  "run_id": "20261105-104200-613",
+  "say": "Starting the task"
+ },
+ {
+  "event": "reconcile",
+  "when": "start",
+  "changed": {
+   "arrived": [
+    null,
+    "dock"
+   ]
+  },
+  "sensors": {
+   "arrived": {
+    "pose": [
+     0.0,
+     0.0
+    ],
+    "age_s": -7.867813110351562e-06,
+    "detail": "0.00 m from dock",
+    "source": "adapter"
+   },
+   "containers": {},
+   "unconfirmed": []
+  },
+  "provenance": {
+   "arrived": {
+    "source": "sensor",
+    "ts": 1793842920.613358,
+    "detail": "0.00 m from dock"
+   },
+   "found": {
+    "source": "belief",
+    "ts": null
+   },
+   "holding": {
+    "source": "belief",
+    "ts": null
+   },
+   "opened": {
+    "source": "sensor",
+    "ts": 1793842920.6134474,
+    "containers": {},
+    "unconfirmed": []
+   },
+   "on": {
+    "source": "belief",
+    "ts": null
+   }
+  }
+ },
+ {
+  "event": "status",
+  "msg": "Understanding the task..."
+ },
+ {
+  "event": "understand",
+  "status": "clear",
+  "reason": "The robot can move to the kitchen and wait for someone to unload the tray.",
+  "goals": [
+   {
+    "type": "go",
+    "object": "",
+    "from": "",
+    "to": "kitchen"
+   }
+  ],
+  "question": null
+ },
+ {
+  "event": "understand_check",
+  "issues": [
+   "the tray is not in my plan"
+  ],
+  "samples": [
+   {
+    "goals": [
+     {
+      "type": "go",
+      "object": "",
+      "from": "",
+      "to": "kitchen"
+     }
+    ],
+    "issues": [
+     "the tray is not in my plan"
+    ]
+   }
+  ],
+  "agreed": false
+ },
+ {
+  "event": "clarify",
+  "question": "Sorry, I didn't catch that. Could you say it again?",
+  "round": 1
+ },
+ {
+  "event": "done",
+  "status": "failed",
+  "run_id": "20261105-104200-613",
+  "msg": "no answer to: Sorry, I didn't catch that. Could you say it again?",
+  "code": "unknown",
+  "say": "I did not hear an answer, so I will stop here."
+ }
+]

@@ -1,0 +1,75 @@
+{
+ "id": "B3",
+ "text": "Ask dad if he wants tea, then dock.",
+ "expect": "success: the question about tea was asked where dad is (living room) and the robot ends docked",
+ "success": false,
+ "final": {
+  "status": "failed",
+  "msg": "no answer to: I will tell dad: \"yes, please\", then go to the dock. Is that right?",
+  "say": "I did not hear an answer, so I will stop here."
+ },
+ "check": {
+  "asked": [
+   [
+    "dock",
+    "Where should I put the dad, do you want tea??"
+   ],
+   [
+    "dock",
+    "I will tell dad: \"yes, please\", then go to the dock. Is that right?"
+   ],
+   [
+    "dock",
+    "Sorry, I didn't hear you. I will tell dad: \"yes, please\", then go to the dock. Is that right?"
+   ]
+  ],
+  "asked_tea": true,
+  "asked_where_dad_is": false,
+  "ended_docked": true
+ },
+ "wall_s": 4.1,
+ "llm_calls": 4,
+ "robot_trace": [
+  [
+   "ask",
+   "Where should I put the dad, do you want tea??",
+   true,
+   "answered"
+  ],
+  [
+   "ask",
+   "I will tell dad: \"yes, please\", then go to the dock. Is that right?",
+   false,
+   "no answer"
+  ],
+  [
+   "ask",
+   "Sorry, I didn't hear you. I will tell dad: \"yes, please\", then go to the dock. Is that right?",
+   false,
+   "no answer"
+  ]
+ ],
+ "robot_end": {
+  "at": "dock",
+  "docked": true,
+  "tray": null,
+  "delivered": {},
+  "said": [],
+  "asked": [
+   [
+    "dock",
+    "Where should I put the dad, do you want tea??"
+   ],
+   [
+    "dock",
+    "I will tell dad: \"yes, please\", then go to the dock. Is that right?"
+   ],
+   [
+    "dock",
+    "Sorry, I didn't hear you. I will tell dad: \"yes, please\", then go to the dock. Is that right?"
+   ]
+  ]
+ },
+ "robot_agent_file": "/home/trung/trung_workdir/hl_wt/domain/robot_agent/robot_agent/__init__.py",
+ "domain": "(default)"
+}

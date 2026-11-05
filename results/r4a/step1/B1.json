@@ -1,0 +1,53 @@
+{
+ "id": "B1",
+ "text": "Go to the kitchen and tell mom that dinner is ready.",
+ "expect": "success: the robot stands in the kitchen and said something about dinner there",
+ "success": true,
+ "final": {
+  "status": "success",
+  "msg": "",
+  "say": "Task completed"
+ },
+ "check": {
+  "at_kitchen": true,
+  "said_dinner_in_kitchen": true,
+  "said": [
+   [
+    "kitchen",
+    "dinner is ready"
+   ]
+  ]
+ },
+ "wall_s": 1.3,
+ "llm_calls": 1,
+ "robot_trace": [
+  [
+   "move",
+   "kitchen",
+   true,
+   "arrived at kitchen"
+  ],
+  [
+   "say",
+   "dinner is ready",
+   true,
+   "said"
+  ]
+ ],
+ "robot_end": {
+  "at": "kitchen",
+  "docked": false,
+  "tray": null,
+  "delivered": {},
+  "said": [
+   [
+    "kitchen",
+    "dinner is ready"
+   ]
+  ],
+  "asked": [],
+  "dialog": []
+ },
+ "robot_agent_file": "/home/trung/trung_workdir/hl_wt/domain/robot_agent/robot_agent/__init__.py",
+ "domain": "(default)"
+}

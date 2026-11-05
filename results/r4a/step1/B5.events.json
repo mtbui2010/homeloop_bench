@@ -1,0 +1,132 @@
+[
+ {
+  "event": "task_start",
+  "task": "Pick up the cup.",
+  "run_id": "20261105-104312-833",
+  "say": "Starting the task"
+ },
+ {
+  "event": "reconcile",
+  "when": "start",
+  "changed": {
+   "arrived": [
+    null,
+    "dock"
+   ]
+  },
+  "sensors": {
+   "arrived": {
+    "pose": [
+     0.0,
+     0.0
+    ],
+    "age_s": -1.0251998901367188e-05,
+    "detail": "0.00 m from dock",
+    "source": "adapter"
+   },
+   "containers": {},
+   "unconfirmed": []
+  },
+  "provenance": {
+   "arrived": {
+    "source": "sensor",
+    "ts": 1793842992.8340645,
+    "detail": "0.00 m from dock"
+   },
+   "found": {
+    "source": "belief",
+    "ts": null
+   },
+   "holding": {
+    "source": "belief",
+    "ts": null
+   },
+   "opened": {
+    "source": "sensor",
+    "ts": 1793842992.834168,
+    "containers": {},
+    "unconfirmed": []
+   },
+   "on": {
+    "source": "belief",
+    "ts": null
+   }
+  }
+ },
+ {
+  "event": "status",
+  "msg": "Understanding the task..."
+ },
+ {
+  "event": "understand",
+  "status": "infeasible",
+  "reason": "The robot cannot pick up an object unless it is already carrying it or the object is specified to be moved.",
+  "goals": [
+   {
+    "type": "go",
+    "object": "",
+    "from": "",
+    "to": "kitchen"
+   }
+  ],
+  "question": "Do you want the robot to go to a place where the cup is located and carry it to you?"
+ },
+ {
+  "event": "understand_check",
+  "issues": [
+   "capability refusal overridden: The robot cannot pick up an object unless it is already carrying it or the object is specified to be moved."
+  ],
+  "override": true
+ },
+ {
+  "event": "understand_check",
+  "issues": [
+   "the cup is not in my plan"
+  ],
+  "override_completed": false,
+  "goals": [
+   {
+    "type": "go",
+    "object": "",
+    "from": "",
+    "to": "kitchen"
+   }
+  ]
+ },
+ {
+  "event": "clarify",
+  "question": "Sorry, I didn't catch that. Could you say it again?",
+  "round": 1
+ },
+ {
+  "event": "status",
+  "msg": "Understanding the task..."
+ },
+ {
+  "event": "understand",
+  "status": "clear",
+  "reason": "The robot can pick up an object and carry it.",
+  "goals": [
+   {
+    "type": "deliver",
+    "object": "cup",
+    "from": "",
+    "to": "me"
+   }
+  ],
+  "question": "Which place do you mean: dock or entrance or living room or kitchen?"
+ },
+ {
+  "event": "clarify",
+  "question": "Which place do you mean: dock or entrance or living room or kitchen?",
+  "round": 2
+ },
+ {
+  "event": "done",
+  "status": "failed",
+  "run_id": "20261105-104312-833",
+  "msg": "no answer to: Which place do you mean: dock or entrance or living room or kitchen?",
+  "code": "unknown",
+  "say": "I did not hear an answer, so I will stop here."
+ }
+]

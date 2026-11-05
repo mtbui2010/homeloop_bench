@@ -1,0 +1,261 @@
+[
+ {
+  "event": "task_start",
+  "task": "Go to the kitchen and tell mom that dinner is ready.",
+  "run_id": "20261105-104233-140",
+  "say": "Starting the task"
+ },
+ {
+  "event": "reconcile",
+  "when": "start",
+  "changed": {
+   "arrived": [
+    null,
+    "dock"
+   ]
+  },
+  "sensors": {
+   "arrived": {
+    "pose": [
+     0.0,
+     0.0
+    ],
+    "age_s": -8.821487426757812e-06,
+    "detail": "0.00 m from dock",
+    "source": "adapter"
+   },
+   "containers": {},
+   "unconfirmed": []
+  },
+  "provenance": {
+   "arrived": {
+    "source": "sensor",
+    "ts": 1793842953.1406956,
+    "detail": "0.00 m from dock"
+   },
+   "found": {
+    "source": "belief",
+    "ts": null
+   },
+   "holding": {
+    "source": "belief",
+    "ts": null
+   },
+   "opened": {
+    "source": "sensor",
+    "ts": 1793842953.1407712,
+    "containers": {},
+    "unconfirmed": []
+   },
+   "on": {
+    "source": "belief",
+    "ts": null
+   }
+  }
+ },
+ {
+  "event": "status",
+  "msg": "Understanding the task..."
+ },
+ {
+  "event": "understand",
+  "status": "clear",
+  "reason": "The robot can move to the kitchen and say something to mom.",
+  "goals": [
+   {
+    "type": "go",
+    "object": "",
+    "from": "",
+    "to": "kitchen"
+   },
+   {
+    "type": "say",
+    "object": "dinner is ready",
+    "from": "",
+    "to": "",
+    "person": "mom"
+   }
+  ],
+  "question": null
+ },
+ {
+  "event": "status",
+  "msg": "Generating task plan..."
+ },
+ {
+  "event": "gate",
+  "round": 0,
+  "problems": [],
+  "plan": [
+   "MoveTo kitchen",
+   "Say dinner is ready"
+  ]
+ },
+ {
+  "event": "plan",
+  "steps": [
+   {
+    "action": "MoveTo",
+    "object": "kitchen",
+    "grounded": true
+   },
+   {
+    "action": "Say",
+    "object": "dinner is ready"
+   }
+  ],
+  "plan_meta": {
+   "method": "compiled",
+   "plan_sec": 0.0,
+   "llm_plan": [
+    {
+     "action": "MoveTo",
+     "object": "kitchen",
+     "grounded": true
+    },
+    {
+     "action": "Say",
+     "object": "dinner is ready"
+    }
+   ],
+   "edits": [],
+   "certified": true,
+   "gate_findings": [],
+   "repaired_by_op": {},
+   "completed_by_gate": 0
+  },
+  "warnings": [],
+  "plan_text": "move::kitchen\nsay::dinner is ready",
+  "certified": true
+ },
+ {
+  "event": "step_start",
+  "index": 0,
+  "action": "MoveTo",
+  "object": "kitchen",
+  "skill": "move",
+  "say": "I will move to kitchen"
+ },
+ {
+  "event": "step_verify",
+  "index": 0,
+  "verifies": [
+   {
+    "layer": "isdone",
+    "ok": true,
+    "detail": "arrived at kitchen",
+    "confidence": null,
+    "latency_ms": 0.0,
+    "unknown": false
+   },
+   {
+    "layer": "symbolic",
+    "ok": true,
+    "detail": "",
+    "confidence": null,
+    "latency_ms": 0.0,
+    "unknown": false
+   },
+   {
+    "layer": "localization",
+    "ok": true,
+    "detail": "0.00 m from kitchen",
+    "confidence": null,
+    "latency_ms": 0.0,
+    "unknown": false
+   }
+  ]
+ },
+ {
+  "event": "step_done",
+  "index": 0,
+  "status": "success",
+  "result": {
+   "isdone": true,
+   "msg": "arrived at kitchen"
+  },
+  "say": "Done: move to kitchen"
+ },
+ {
+  "event": "step_start",
+  "index": 1,
+  "action": "Say",
+  "object": "dinner is ready",
+  "skill": "say",
+  "say": "I will say dinner is ready"
+ },
+ {
+  "event": "step_verify",
+  "index": 1,
+  "verifies": [
+   {
+    "layer": "isdone",
+    "ok": true,
+    "detail": "said",
+    "confidence": null,
+    "latency_ms": 0.0,
+    "unknown": false
+   },
+   {
+    "layer": "symbolic",
+    "ok": true,
+    "detail": "",
+    "confidence": null,
+    "latency_ms": 0.0,
+    "unknown": false
+   },
+   {
+    "layer": "sensor",
+    "ok": true,
+    "detail": "unknown: say declares no sensor that checks it",
+    "confidence": null,
+    "latency_ms": 0.0,
+    "unknown": true
+   }
+  ]
+ },
+ {
+  "event": "step_done",
+  "index": 1,
+  "status": "success",
+  "result": {
+   "isdone": true,
+   "msg": "said"
+  },
+  "say": "Done: say dinner is ready"
+ },
+ {
+  "event": "status",
+  "msg": "Checking the goals..."
+ },
+ {
+  "event": "goal_check",
+  "goal": {
+   "type": "go",
+   "object": "",
+   "from": "",
+   "to": "kitchen"
+  },
+  "ok": null,
+  "evidence": "go : no sensor declared for it (belief)"
+ },
+ {
+  "event": "goal_check",
+  "goal": {
+   "type": "say",
+   "object": "dinner is ready",
+   "from": "",
+   "to": "",
+   "person": "mom"
+  },
+  "ok": null,
+  "evidence": "say dinner is ready: no sensor declared for it (belief)"
+ },
+ {
+  "event": "done",
+  "status": "success",
+  "run_id": "20261105-104233-140",
+  "msg": "",
+  "say": "Task completed"
+ }
+]

@@ -1,0 +1,51 @@
+{
+ "id": "B4",
+ "text": "Bring the tray to the kitchen and wait until someone unloads it.",
+ "expect": "success: the tray item was taken in the kitchen (mom is there) and the tray is empty",
+ "success": false,
+ "final": {
+  "status": "failed",
+  "msg": "no answer to: Sorry, I didn't catch that. Could you say it again?",
+  "say": "I did not hear an answer, so I will stop here."
+ },
+ "check": {
+  "delivered": {},
+  "tray": "tray",
+  "at": "dock"
+ },
+ "wall_s": 2.4,
+ "llm_calls": 3,
+ "robot_trace": [
+  [
+   "ask",
+   "Sorry, I didn't catch that. Could you say it again?",
+   false,
+   "no answer"
+  ],
+  [
+   "ask",
+   "Sorry, I didn't hear you. Sorry, I didn't catch that. Could you say it again?",
+   false,
+   "no answer"
+  ]
+ ],
+ "robot_end": {
+  "at": "dock",
+  "docked": true,
+  "tray": "tray",
+  "delivered": {},
+  "said": [],
+  "asked": [
+   [
+    "dock",
+    "Sorry, I didn't catch that. Could you say it again?"
+   ],
+   [
+    "dock",
+    "Sorry, I didn't hear you. Sorry, I didn't catch that. Could you say it again?"
+   ]
+  ]
+ },
+ "robot_agent_file": "/home/trung/trung_workdir/hl_wt/domain/robot_agent/robot_agent/__init__.py",
+ "domain": "(default)"
+}

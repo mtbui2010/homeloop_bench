@@ -1,0 +1,56 @@
+{
+ "id": "B2",
+ "text": "Deliver this tray to the bedroom.",
+ "expect": "success: the tray item was taken in the bedroom (FakeBase.delivered == {tray: bedroom})",
+ "success": true,
+ "final": {
+  "status": "success",
+  "msg": "",
+  "say": "Task completed"
+ },
+ "check": {
+  "delivered": {
+   "tray": "bedroom"
+  },
+  "tray": null
+ },
+ "wall_s": 0.8,
+ "llm_calls": 1,
+ "robot_trace": [
+  [
+   "move",
+   "bedroom",
+   true,
+   "arrived at bedroom"
+  ],
+  [
+   "say",
+   "I have a delivery for you. Please take it from my tray.",
+   true,
+   "said"
+  ],
+  [
+   "wait_for_unload",
+   "",
+   true,
+   "grandma took the item"
+  ]
+ ],
+ "robot_end": {
+  "at": "bedroom",
+  "docked": false,
+  "tray": null,
+  "delivered": {
+   "tray": "bedroom"
+  },
+  "said": [
+   [
+    "bedroom",
+    "I have a delivery for you. Please take it from my tray."
+   ]
+  ],
+  "asked": []
+ },
+ "robot_agent_file": "/home/trung/trung_workdir/hl_wt/domain/robot_agent/robot_agent/__init__.py",
+ "domain": "(default)"
+}

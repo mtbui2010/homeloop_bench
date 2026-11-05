@@ -1,0 +1,57 @@
+[
+ {
+  "id": "B1",
+  "success": true,
+  "final": {
+   "status": "success",
+   "msg": "",
+   "say": "Task completed"
+  },
+  "wall_s": 1.3,
+  "llm_calls": 1
+ },
+ {
+  "id": "B2",
+  "success": true,
+  "final": {
+   "status": "success",
+   "msg": "",
+   "say": "Task completed"
+  },
+  "wall_s": 0.8,
+  "llm_calls": 1
+ },
+ {
+  "id": "B3",
+  "success": false,
+  "final": {
+   "status": "success",
+   "msg": "",
+   "say": "Task completed"
+  },
+  "wall_s": 4.1,
+  "llm_calls": 4
+ },
+ {
+  "id": "B4",
+  "success": true,
+  "final": {
+   "status": "success",
+   "msg": "",
+   "say": "Task completed"
+  },
+  "wall_s": 4.0,
+  "llm_calls": 4
+ },
+ {
+  "id": "B5",
+  "success": false,
+  "final": {
+   "status": "failed",
+   "msg": "no answer to: Which place do you mean: dock or entrance or living room or kitchen?",
+   "say": "I did not hear an answer, so I will stop here."
+  },
+  "wall_s": 3.2,
+  "llm_calls": 3
+ }
+]

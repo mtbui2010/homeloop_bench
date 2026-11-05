@@ -1,0 +1,75 @@
+{
+ "id": "B5",
+ "text": "Pick up the cup.",
+ "expect": "refused: the robot has no arm; status refused, no motion, nothing said that claims it did it",
+ "success": false,
+ "final": {
+  "status": "failed",
+  "msg": "no answer to: Which place do you mean: dock or entrance or living room or kitchen?",
+  "say": "I did not hear an answer, so I will stop here."
+ },
+ "check": {
+  "status": "failed",
+  "motions": [],
+  "said": []
+ },
+ "wall_s": 3.2,
+ "llm_calls": 3,
+ "robot_trace": [
+  [
+   "ask",
+   "Sorry, I didn't catch that. Could you say it again?",
+   true,
+   "answered"
+  ],
+  [
+   "ask",
+   "Which place do you mean: dock or entrance or living room or kitchen?",
+   false,
+   "no answer"
+  ],
+  [
+   "ask",
+   "Sorry, I didn't hear you. Which place do you mean: dock or entrance or living room or kitchen?",
+   false,
+   "no answer"
+  ]
+ ],
+ "robot_end": {
+  "at": "dock",
+  "docked": true,
+  "tray": null,
+  "delivered": {},
+  "said": [],
+  "asked": [
+   [
+    "dock",
+    "Sorry, I didn't catch that. Could you say it again?"
+   ],
+   [
+    "dock",
+    "Which place do you mean: dock or entrance or living room or kitchen?"
+   ],
+   [
+    "dock",
+    "Sorry, I didn't hear you. Which place do you mean: dock or entrance or living room or kitchen?"
+   ]
+  ],
+  "dialog": [
+   {
+    "q": "Sorry, I didn't catch that. Could you say it again?",
+    "a": "Pick up the cup."
+   },
+   {
+    "q": "Which place do you mean: dock or entrance or living room or kitchen?",
+    "a": null
+   },
+   {
+    "q": "Sorry, I didn't hear you. Which place do you mean: dock or entrance or living room or kitchen?",
+    "a": null
+   }
+  ]
+ },
+ "robot_agent_file": "/home/trung/trung_workdir/hl_wt/domain/robot_agent/robot_agent/__init__.py",
+ "domain": "(default)"
+}

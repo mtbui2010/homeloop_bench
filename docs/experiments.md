@@ -641,3 +641,25 @@ no translation call and is skipped when the translation is untrusted. Test: `rob
 (synthetic text). Not fixed here: dropped goals when some other goal does move an object (needs a per-goal match of the
 translation to the goals), read-back loops under injected ask timeouts, search and plan-gate classes listed above.
 The 50-task milestone has not been re-run for this change; it is only reported when it is. Dev numbers are optimistic.
+
+## SAGE-v2 improvements (R4b)
+
+Each change is measured on the fresh slice (dev tasks 51-100, never used for tuning). Keep rule: kept if sage EN+KO
+successes are not lower and false successes did not rise by more than 2. One seed and 50 tasks: noise is about plus or
+minus 3 tasks.
+
+### Step 1: `input_pivot` default (KO slice)
+
+Setup: KO, 50 tasks, real profile, seed 0, planner qwen3-vl:8b-instruct, 3 shards per mode, one mode at a time, merged,
+n_error 0 in all three modes.
+
+| mode (planner `robot_agent:...`) | successes /50 | false successes /50 |
+|---|---|---|
+| none (`sage_pivot_none`) | 19 | 6 |
+| translate (`sage_pivot_translate`) | 13 | 9 |
+| both (`sage`, current default) | 18 | 7 |
+
+Decision: BEST = none (the recorded decision is that the default stays none). `none` is not a clear win.
+`none` vs `both` is 19 vs 18, inside the noise. The earlier baseline run of `sage` KO in `results/r4b/base` gave 16 / 8,
+so the same `both` configuration moved by 2 tasks between runs. `translate` alone is a negative result: 6 fewer
+successes than `none` and 3 more false successes (5 fewer and 2 more than `both`).

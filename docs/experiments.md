@@ -741,3 +741,21 @@ Per task, 6 tasks gained a success and 5 lost one (EN +3 −2, KO +3 −3), so t
 Noise caveat: one seed and 50 tasks; the noise is about plus or minus 3 tasks. The same KO configuration gave 16, 18 and 19
 successes in Step 1, so the +1 EN success and the EN false-success drop (6 → 4) are within noise and do not prove the
 change helps. KO successes did not change (16 → 16); the KO false-success count stayed at 9.
+
+### Step 4: `gate_complete` (registered variant `robot_agent:sage_complete`) — measured on the slice: NOT KEPT, stays off
+
+Setup: same slice and settings as Step 3 (dev tasks 51-100, profile real, seed 0, qwen3-vl:8b-instruct planner, EN and KO,
+n_error 0 in both). Run `results/r4b/i4` (`sage_complete`, 3 shards per language, merged) against `results/r4b/i3`
+(`sage`, the Step 3 state, the reference for this step).
+
+| run | EN success | KO success | EN false success | KO false success | EN+KO false success |
+|---|---|---|---|---|---|
+| before (`results/r4b/i3`, `sage`, gate_complete off) | 25 / 50 | 16 / 50 | 4 | 9 | 13 |
+| after (`results/r4b/i4`, `sage_complete`, gate_complete on) | 23 / 50 | 15 / 50 | 4 | 11 | 15 |
+
+Decision: NOT KEPT, the default stays off. EN+KO successes fell 41 → 38, which fails the keep rule (not lower). False
+successes rose 13 → 15, within the allowed +2, but the success rule already rules the change out. The variant
+`sage_complete` stays registered as a negative result; the `gate_complete` default is unchanged. The change is not
+reverted in code because it was never made the default.
+Noise caveat: one seed and 50 tasks; the noise is about plus or minus 3 tasks, so the −3 EN+KO difference is at the
+edge of noise. It is recorded as worse, not as proven worse.

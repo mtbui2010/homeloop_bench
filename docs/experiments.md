@@ -1033,3 +1033,115 @@ only the move block reaches the LLM. Cache replay of task 59 EN with the flag on
 exact sentence, no `Announce`; flag off: unchanged (8 LLM calls, three `Announce`). Fake-LLM runs with the flag off are byte-identical to the code before the flag (EN and KO, 12 tasks).
 
 Lesson: a unit test with a stub hides a missing capability on a wrapper. Every flag needs a test through the real construction path, with the real wrapper around the real planner.
+
+## Solution lab round 1c (SAGE-v2, trigger tasks after the wiring fix, 2026-11-06)
+
+Question: with the fixed template sub-goals wired (round 1b, Finding 1 and its fix), does `person_goals` (`robot_agent:sage_lab`) turn failures of the
+trigger tasks into successes? Same 59 tasks per language, same conditions (profile `real` plus the sensitivity condition `asr_off`:
+`asr.en.app_wer=0, asr.ko.app_cer=0, asr.p_partial=0`; qwen3-vl:8b-instruct; one seed). Everything below is `asr_off`, never a headline.
+The new arm ran once per language (run 1) in `results/lab1/trigger_fixed/`; the baseline (run 1, 2) and the lab arm before the fix (run 1, 2) are the
+unchanged runs of round 1b in `results/lab1/trigger/`. All 6 shard-sets merged with EXIT=0; `n_error` is 0 in both new runs.
+
+### Result
+
+S = success, F* = false success. "old lab" = `sage_lab` before the fix (fixed blocks never ran), "fixed lab" = `sage_lab` after the fix.
+
+| configuration (59 tasks) | EN success | EN F* | EN trigger (49) | EN control (10) | KO success | KO F* | KO trigger (49) | KO control (10) |
+|---|---|---|---|---|---|---|---|---|
+| base run 1 / run 2 | 34 / 34 | 4 / 4 | 24 / 24 | 10 / 10 | 17 / 20 | 10 / 9 | 9 / 10 | 8 / 10 |
+| old lab run 1 / run 2 | 35 / 35 | 4 / 5 | 25 / 25 | 10 / 10 | 19 / 18 | 11 / 11 | 11 / 10 | 8 / 8 |
+| fixed lab (one run) | 35 | 5 | 25 | 10 | 20 | 9 | 11 | 9 |
+
+The five EN tasks of the kill criterion (outcomes in order: base r1, base r2 | old lab r1, r2 | fixed lab):
+
+| task | base | old lab | fixed lab | reading |
+|---|---|---|---|---|
+| 059 | f f | f f | S | gain, caused by the flag: three fixed blocks (exact `Say`, `MoveTo`) ran, plan passes the gate and succeeds |
+| 087 | F* F* | F* F* | F* | hand-over still goes to the speaker spot; the person is only in the say goal (round 1b group B) |
+| 095 | f f | S S | f | LOST against the old lab, see "Tasks where the flag acted" |
+| 015 | S S | S S | S | solved by the baseline, not the flag |
+| 018 | S S | S S | S | solved by the baseline, not the flag |
+
+Other changes against the baseline in the fixed-lab run: EN 023 f to S (a gain; the plan has a fixed `go` block, but the free `put` block was the same as
+before, so this may also be model-server variation; not credited), EN 094 S to f (loss, see below), EN 047 f to F* (new false success, see below),
+KO 038 F* to S, KO 054 f to F*, KO 064 f to F*, KO 089 S S (old lab) back to f (the baseline fails it too), KO 018 base f/S, fixed f.
+Controls: 10 of 10 EN (as before), KO 9 of 10 (base 8 / 10).
+
+### Did the flag act? (count from the kept run debug logs, `HOMELOOP_KEEP_RA_LOGS=1`, 118 episodes with 141 logs)
+
+| part of the flag | EN episodes (of 59) | KO episodes (of 59) |
+|---|---|---|
+| mixed request (template goal plus a move), so fixed blocks are possible | 33 | 26 |
+| fixed template blocks built (unrefined block with its own steps), episodes / blocks | 30 / 41 | 19 / 26 |
+| gate operator `unopenable` edited the plan | 3 (069, 094, 095) | 0 |
+| goal `dedupe` edited | 1 (089) | 1 (089) |
+| gate operator `recipient` edited | 0 | 0 |
+| flag acted in any way, episodes | 32 | 20 |
+| of these: success / false success / other failure | 17 / 4 / 11 | 6 / 4 / 10 |
+
+The fixed blocks are active now (round 1b: 0 episodes). The operator `recipient` never fired. The hand goals with a person as destination exist
+(EN 017, 018, 054, 060, 063, 064, 090; KO 017, 032, 054, 060), but the planner already wrote `Handover <person>` for them, so the operator had nothing
+to repair. The 9 EN and 17 KO hand goals whose destination is "spot within your reach" are the speaker, which is the right recipient. The idea behind
+`recipient` is therefore not refuted, it is simply not needed on these 59 tasks.
+
+### Verdict against the kill criterion of proposals.md: KILL
+
+- At least 2 of the 5 EN tasks succeed because of the flag: 1 of 5 (059). 095 passed in the old lab arm and fails now; 015 and 018 are baseline successes.
+  **This alone kills the candidate.**
+- A baseline-solved task lost: EN 094 (S S in base, S in both old lab runs, f now). It is not credited to the flag (below), so this point is not
+  what decides.
+- False successes: EN 4 / 4 to 5 (047, outside the flag), KO 10 / 9 to 9. No rise that comes from the flag.
+- `n_error`: 0.
+
+So the criterion is KILL on the first point; the other points are neutral. The net count is also small: EN 35 against 34 (1 task, 059), KO 20 against
+17 / 20 (inside the run-to-run noise of round 1b).
+
+### Tasks where the flag acted and the task still failed (EN 11 failures + 4 false successes, KO 10 + 4)
+
+Cause groups from the logs (task ids as slice numbers; file names are in `robot_agent/core/planning/` of branch `sage-v2/homeloop`).
+
+| group | tasks | cause | where |
+|---|---|---|---|
+| Hardware fault injected | EN 002, 005, 057, 079; KO 002, 005, 057, 078 | `hw_fault` ends the run ("the robot is not healthy after ...") | `assist_loop.py:2906` |
+| Search ends "absent" | EN 021, 053; KO 024, 047, 053, 080 | six places searched, object not found | `assist_loop.py:2965`, `2987`, `3090` |
+| Skill failure | EN 048 (drop), 086 (drawer only partly open), 021 (grasp collision); KO 090 (path blocked), 006 and EN 006 (cannot reach the wardrobe handle) | manipulation or navigation failure, not planning | `assist_loop.py:2867`, `3182` |
+| Gate gives up on a mixed set | EN 033, 066, 095; KO 033, 066 | after the gate's edits the finding count does not fall ("edits stopped"), the plan stays uncertified and never runs | `subgoal_repair.py:127`, `assist_loop.py:2012-2017` |
+| False success from the understanding | EN 054, 069, 071, 087; KO 054, 063, 075, 087 | the understood goals miss a goal or put the recipient on a spot; the plan achieves what was understood. Same in all runs of every arm | upstream of the flag |
+| Place instead of a hand-over, or dedupe side effect | KO 089 | after `dedupe` the plan ends `Place spot within your reach` while the robot is at the shelf ("the robot is not at ...") | `assist_loop.py:2867` |
+| Understanding variation | EN 094; KO 094 | see below | model server, before the flag |
+
+Cases that decided the verdict:
+
+- **EN 095 (the old gain, now lost).** Fixed blocks built three blocks (`go husband`, `say` with the exact sentence, `go to the dock`); the `put the glass` block
+  is still written by the LLM, and its first plan had no `Place`. The operator `unopenable` removed the `Open` / `Close` of the cabinet that cannot
+  be opened (gate log: "gate repair (unopenable): 2, then 1 critical finding(s) left"), but one finding ("does not achieve: Place the glass") remained, the count did not
+  fall, and the edits stopped (`subgoal_repair.py:127`). In round 2 the planner wrote `Open upper_cabinet` / `Close` again and the plan was
+  uncertified (`assist_loop.py:2014`). In the old lab arm the LLM block happened to contain the `Place`, so the same operator was enough. The cause
+  is an LLM block that varies, not the fixed blocks.
+- **EN 094 (baseline solved, now failed).** Not the flag. The first understanding call returned `infeasible` with the question "Where are the keys located?"
+  (cache of the fixed run); the same prompt returned `clear` in the baseline and in the old lab arm. The understanding prompt does not depend on the flag. After
+  two questions the run searched six places and ended "could not find the keys" (`assist_loop.py:2965`).
+- **EN 047 (new false success).** `nfix` is 0 for this task and only baseline gate operators (`hoist`, `unclose`) ran; the understanding changed its goal text
+  from "drink" to "white milk carton" between calls. Not the flag.
+- **EN 059 (the one real gain).** Blocks `[2, 1, 7, 1]`, `refined_blocks` `[False, False, True, False]`, the exact `Say`; the free `put` block is still LLM-written
+  and adds an `Announce`, but the gate accepts the plan and the run succeeds.
+
+### Noise
+
+EN repeats of the same code were identical in round 1b (0 of 59 tasks differ in success), so one run per arm is enough for EN, and the 059 gain is a
+real effect of the fixed blocks on this task. The loss of 095 shows the opposite: where the LLM-written block still decides the outcome, the same flag gives
+different results in different runs (here between the old and the fixed lab arm; the plans differ because the prompts differ). KO repeats differ by up to
+5 tasks, so one KO run cannot support any claim. One run of the fixed arm is a limit of this round; it is not enough to overturn a KILL on a criterion that needs 2 gains.
+
+### Verdict and next step
+
+**KILL** for `person_goals` as a candidate to promote: 1 of the 5 EN tasks gained because of the flag (059), 095 does not hold, the other two are baseline solved,
+and the 14 unsolved flag-acted failures are in groups the flag does not reach (injected faults, search, skill failures, understanding). The fixed
+sub-goal wiring is correct and is kept in the code behind the flag (default off), with its real-path test. Do not record the idea as refuted in general:
+the part that would matter, a gate that cannot give up on a mixed set, depends on the free `put` block.
+
+Next step, as a new proposal and not as a continuation: the failures that remain on the trigger tasks are (a) the free block after a fixed block (095, 033,
+066), where the LLM still decides whether `Place` / `Handover` is in the block, and (b) the understanding giving the person-recipient a spot (087, 054, 063, 075).
+Both are best checked offline on the cached traces of this round (no GPU) before another LLM run: (a) compile the deliver block as a fixed block too when the
+object, its source and the recipient are all known (the lab already compiles `go` and `say`), (b) an understanding-side rule that moves a named person from the say
+goal to the destination of the hand goal in the same request. Neither is started here.

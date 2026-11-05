@@ -36,6 +36,8 @@ REGISTRY = {
                                          "robot_agent:sage with input_pivot=translate: the understand prompt gets the English translation (language-layer ablation)", True),
     "robot_agent:sage_complete": ("robot_agent_adapter", "SageCompletePlanner",
                                   "robot_agent:sage with the gate's complete operator on (ablation)", True),
+    "robot_agent:sage_lab": ("robot_agent_adapter", "SageLabPlanner",
+                             "robot_agent:sage with the lab prototype person_goals on (go / say steps kept as fixed sub-goals, hand-over to the named person)", True),
     "robot_agent:grace": ("robot_agent_adapter", "GracePlanner",
                           "robot_agent ClosedLoop with planner grace through the homeloop robot package", True),
     "robot_agent:llm_direct": ("robot_agent_adapter", "LlmDirectPlanner",

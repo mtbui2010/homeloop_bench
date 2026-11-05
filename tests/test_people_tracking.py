@@ -71,6 +71,8 @@ def test_run_config_records_tracking_and_translate_model():
     assert planner_class("robot_agent:sage_nohazard").run_config()["hazard_rules"] == "off"
     assert planner_class("robot_agent:sage_complete").run_config()["gate_complete"] == 1
     assert planner_class("robot_agent:sage").run_config()["hazard_rules"] == "core"
+    assert planner_class("robot_agent:sage_lab").run_config()["person_goals"] == 1
+    assert "person_goals" not in planner_class("robot_agent:sage").run_config()      # other variants' summaries unchanged
 
 
 def test_translate_calls_counted():

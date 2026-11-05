@@ -381,6 +381,8 @@ class _RobotAgentPlanner:
                 "translate_budget": mp.get("translate_budget"),
                 "hazard_rules": cls.loop_options.get("hazard_rules", "core") if cls.loop_kind == "assist" else None,
                 "gate_complete": int(cls.loop_options.get("gate_complete", 0)) if cls.loop_kind == "assist" else None,
+                # recorded only where the flag is set, so the other variants' summary.json stay as they were
+                **({"person_goals": 1} if cls.loop_kind == "assist" and cls.loop_options.get("person_goals") else {}),
                 # the language layer (robot_agent core/planning/language.py): what a Korean user says reaches the
                 # understand prompt as the original (none), its English (translate) or both
                 "input_pivot": str(cls.loop_options.get("input_pivot", mp.get("input_pivot", "none"))
@@ -560,6 +562,15 @@ class SageCompletePlanner(SagePlanner):
     apart, ``completed_by_gate``)."""
     name = "robot_agent:sage_complete"
     loop_options = {"gate_complete": "1"}
+
+
+class SageLabPlanner(SagePlanner):
+    """robot_agent:sage with the solution-lab prototype ``person_goals`` on (SAGE-v2 branch sage-v2/homeloop):
+    a request that mixes go / say goals with moves keeps the go / say steps as the loop's own fixed sub-goals,
+    a hand-over goes to the person its goal names, a repeated goal is dropped, an Open of what cannot be opened is
+    removed. Default off for every other variant; this one differs from ``robot_agent:sage`` in that flag only."""
+    name = "robot_agent:sage_lab"
+    loop_options = {"person_goals": "1"}
 
 
 class GracePlanner(_RobotAgentPlanner):

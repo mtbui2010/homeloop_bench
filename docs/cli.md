@@ -9,6 +9,7 @@
 | `run ... --shard K/N --out DIR` | only the tasks at index `i % N == K` of the run's task list (same order, seeds, settings), written to DIR/shard<K>/ with its own llm_cache and a shard.json ([runner](runner.md#shards)) |
 | `merge DIR` | merge DIR/shard0..N-1 into DIR: episodes in the unsharded order, a recomputed summary, report.md, the merged llm_cache |
 | `prompt TASK_ID [--planner robot_agent:sage\|robot_agent:sage_norag] [--lang en\|ko] [--full] --llm fake` | the first prompt SAGE builds for the task, with what it retrieved from the seed pool ([robot_agent](robot_agent.md#seed-pool-sage-and-sage_norag)) |
+| `understand-eval [--planner robot_agent:sage] [--split train\|dev \| --tasks FILE] [--limit N] [--offset K] [--lang en\|ko\|en,ko] [--text clean\|asr\|both] [--profile real] [--seed 0] --llm URL\|fake [--model M] --out DIR` | only robot_agent's understand step on the tasks, compared with the gold goals: DIR/records.jsonl (one record per task, language and text condition), DIR/summary.json, DIR/report.md, DIR/llm_cache. The test split is refused. Exit 4 when more than 5 % of the probes ended before the understand step ([understanding evaluation](understand_eval.md)) |
 | `compare DIR_A DIR_B [--json]` | paired McNemar test on episodes with the same (task, seed) |
 | `report DIR` | re-render DIR/report.md from the run's files |
 | `show TASK_ID [--tasks FILE]` | print one task record |

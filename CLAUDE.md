@@ -21,6 +21,7 @@ HomeLoop-Bench: tasks, a seeded Monte Carlo runner, planners and metrics on the 
 - [Metrics](docs/metrics.md): summary.json keys, recovery, McNemar, Wilson
 - [Planners](docs/planners.md): baselines, prompts, KnowNo calibration, FakeLLM
 - [robot_agent planners](docs/robot_agent.md): adapter, hooks, fake mode, limitations
+- [Understanding evaluation](docs/understand_eval.md): `understand-eval`, the common form of goals, `robot_agent:sage_gold`
 - [CLI](docs/cli.md): every command
 - [Live smoke](docs/live_smoke.md): live LLM runs and their result folders
 - [Testing](docs/testing.md): test map and long checks

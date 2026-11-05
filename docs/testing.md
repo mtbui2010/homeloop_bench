@@ -20,6 +20,8 @@ compound, a conditional and a scripted correction.
 | `test_llm.py` | Ollama request body, cache, counting budget (no network) |
 | `test_cli.py` | listing (without importing robot_agent), run / compare / report / show, `--llm` check, live-smoke directory names |
 | `test_robot_agent_adapter.py` | robot_agent sage / grace / llm_direct with `--llm fake` (skipped without robot_agent): complete records, sage solves the feasible task and refuses the unsafe one, deterministic summary, backend restored |
+| `test_understand_eval.py` | the common form (rules R1 to R9, equal and unequal forms), the metrics on synthetic records, the probe through the real adapter and AssistLoop with a scripted language-model backend (one call per task, stops at the understand event, no motion), clean and asr text, the cache in the run dir, the CLI (skipped without robot_agent) |
+| `test_sage_gold.py` | `robot_agent:sage_gold`: registered and labelled privileged, the gold goals reach the loop without a source, no understand call, clarify not asked, a refusal understood as usual, a room goal in EN and KO (skipped without robot_agent) |
 
 Long checks are CLI commands, not tests (they need the full data): the oracle on 300 dev tasks x 2 seeds
 in `ideal` (success 1.0, false success 0, identical summary twice) and in `real` (naive < oracle < 1.0).

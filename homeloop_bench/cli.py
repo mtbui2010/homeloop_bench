@@ -92,6 +92,54 @@ def cmd_prompt(a) -> int:
     return 0
 
 
+def cmd_understand_eval(a) -> int:
+    """Only robot_agent's understand step on a split / task file, compared with the gold goals (docs/understand_eval.md)."""
+    from . import understand_eval as ue
+    from .planners import REGISTRY
+    from .runner import InfraError, PlannerConfigError, check_llm, check_planner, load_tasks
+    if a.planner not in REGISTRY:
+        print(f"unknown planner {a.planner!r}; see `homeloop-bench planners`", file=sys.stderr)
+        return 2
+    if a.split == "test" and not a.tasks:
+        print("understand-eval does not run on the test split (tune on train, validate on dev)", file=sys.stderr)
+        return 2
+    try:
+        check_llm(a.planner, a.llm)
+        check_planner(a.planner)
+        tasks = load_tasks(None if a.tasks else a.split, None, a.tasks)
+    except PlannerConfigError as e:
+        print(str(e), file=sys.stderr)
+        return 2
+    from .planners import planner_class
+    if getattr(planner_class(a.planner), "loop_kind", None) != "assist":
+        print(f"{a.planner}: understand-eval needs a SAGE planner (robot_agent:sage, ...)", file=sys.stderr)
+        return 2
+    if any(ue.task_dict(t).get("split") == "test" for t in tasks):
+        print("understand-eval does not run on test tasks (tune on train, validate on dev)", file=sys.stderr)
+        return 2
+    tasks = tasks[int(a.offset or 0):][: int(a.limit)] if a.limit is not None else tasks[int(a.offset or 0):]
+    langs = [x.strip() for x in a.lang.split(",") if x.strip()]
+    texts = ["clean", "asr"] if a.text == "both" else [a.text]
+    if not tasks or any(x not in ("en", "ko") for x in langs):
+        print("no tasks, or --lang is not en / ko / en,ko", file=sys.stderr)
+        return 2
+    try:
+        s = ue.run_eval(tasks, a.planner, a.profile, a.seed, langs, texts, a.llm, a.out, model=a.model, budgets=_budgets(a),
+                        progress=True, config={"split": a.split if not a.tasks else None, "tasks_file": a.tasks,
+                                               "offset": int(a.offset or 0), "limit": a.limit})
+    except InfraError as e:
+        print(f"understand-eval aborted, no summary written: {e}", file=sys.stderr)
+        return 3
+    print(json.dumps({"n_records": s["n_records"], "headline": {k: s["headline"][k] for k in (
+        "n", "exact_rate", "atom_precision", "atom_recall", "dropped_atoms", "spurious_atoms", "confident_wrong",
+        "confident_wrong_of_confident")}}, sort_keys=True))
+    if s["all"]["ended"] > 0.05 * max(1, s["n_records"]):
+        print(f"{s['all']['ended']} of {s['n_records']} probes ended before the understand step (an error, not a reading); "
+              f"see records.jsonl 'ended'", file=sys.stderr)
+        return 4
+    return 0
+
+
 def error_rc(s: dict) -> int:
     """Non-zero when more than ERROR_RATE_MAX of the episodes crashed (status "error")."""
     from .runner import ERROR_RATE_MAX
@@ -249,6 +297,26 @@ def build_parser() -> argparse.ArgumentParser:
     pr.add_argument("--llm", default="fake")
     pr.add_argument("--full", action="store_true", help="print the whole prompt")
     pr.set_defaults(fn=cmd_prompt)
+
+    ue = sub.add_parser("understand-eval", help="robot_agent's understand step only, compared with the gold goals "
+                                                "(records.jsonl, summary.json, report.md in --out)")
+    ue.add_argument("--planner", default="robot_agent:sage", help="a SAGE planner; its options, ENV and translate model are used")
+    ue.add_argument("--split", default="train", choices=["train", "dev", "test"], help="the test split is refused")
+    ue.add_argument("--tasks", default=None, help="a task JSONL file instead of the packaged split")
+    ue.add_argument("--limit", type=int, default=None)
+    ue.add_argument("--offset", type=int, default=0)
+    ue.add_argument("--lang", default="en", help="en, ko or en,ko")
+    ue.add_argument("--text", default="both", choices=["clean", "asr", "both"],
+                    help="clean: the task's own text; asr: the text after the profile's simulated speech recognition")
+    ue.add_argument("--profile", default="real", choices=["ideal", "real", "stress"], help="the speech-recognition profile")
+    ue.add_argument("--seed", type=int, default=0, help="the episode seed (the speech-recognition draw)")
+    ue.add_argument("--llm", default=None, help="Ollama URL (http://host:port) or 'fake' (tests only)")
+    ue.add_argument("--model", default=DEFAULT_MODEL)
+    ue.add_argument("--out", required=True)
+    ue.add_argument("--max-calls", type=int, default=None)
+    ue.add_argument("--max-sim-time-s", type=float, default=None)
+    ue.add_argument("--max-llm-calls", type=int, default=None)
+    ue.set_defaults(fn=cmd_understand_eval)
 
     rp = sub.add_parser("report", help="re-render DIR/report.md")
     rp.add_argument("dir")

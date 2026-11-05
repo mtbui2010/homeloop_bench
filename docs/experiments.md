@@ -666,7 +666,7 @@ Correction (orchestrator, after reading the adapter and the manifest): the mode 
 so the same `both` configuration moved by 2 tasks between runs. `translate` alone is a negative result: 6 fewer
 successes than `none` and 3 more false successes (5 fewer and 2 more than `both`).
 
-### Step 2: dialogue convergence (class C1) — code committed, NOT yet measured
+### Step 2: dialogue convergence (class C1) — measured on the slice: KEPT
 
 robot_agent worktree commit 7a8e019 (branch sage-v2/homeloop), option `dialog_converge` (default on, `0` = earlier loop).
 Root causes, read from the cached dialogues of the failing episodes of `results/r4b/base` (replayed from the llm cache,
@@ -686,4 +686,20 @@ goals before confirmation (needs a plan-phase split; the failing dialogues show 
 unconfirmed). Several of the slice's failures stay out of reach of this change: the simulated user answers "I don't
 know" or a garbled yes / no (EN 58, 71, 81, 94), and EN 93 / KO 68 are refused although the read-back is right.
 LLM calls per episode: a patched correction replaces one understand call; the extra rounds the caps allow can add
-calls only in dialogues that gave up before. The slice measurement (EN+KO sage, keep rule) is the next step.
+calls only in dialogues that gave up before.
+
+Slice measurement (dev tasks 51-100, profile real, seed 0, qwen3-vl:8b-instruct planner, `robot_agent:sage`, n_error 0 in all runs):
+
+| run | EN success | KO success | EN false success | KO false success | EN+KO false success |
+|---|---|---|---|---|---|
+| before (`results/r4b/base`, `dialog_converge` off) | 22 / 50 | 16 / 50 | 6 | 8 | 14 |
+| after (`results/r4b/i2`, `dialog_converge` on) | 24 / 50 | 16 / 50 | 6 | 9 | 15 |
+
+Decision: KEPT. EN+KO successes 38 → 40 (not lower) and false successes rose by 1 (not more than 2), so the keep rule holds.
+Mechanism of the gain: the give-up rate fell (EN 0.42 → 0.38, KO 0.52 → 0.50) and mean LLM calls per episode fell
+(EN 6.0 → 5.8, KO 10.2 → 9.9). KO successes did not change (16 → 16), so this run shows no KO gain on the targeted KO dialogues (54, 65–69).
+Noise caveat: one seed and 50 tasks; the noise is about plus or minus 3 tasks. The same KO configuration gave 16, 18 and 19
+successes in Step 1, so the +2 EN gain and the 0 KO change are within noise and do not prove the change helps.
+EN severe violation and min separation 0.27 m (protective stop) appear in both runs (before and after), so this change
+did not cause them. Tests: `tests/test_sage_v2_r4b_dialog_converge.py` with `tests/test_sage_v2_r3_m5_fixes.py` (52 passed,
+robot_agent worktree, commit 7a8e019; embodiplan on PYTHONPATH from the sage-v2/homeloop worktree).

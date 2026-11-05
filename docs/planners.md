@@ -1,8 +1,8 @@
 # Planners
 
 `homeloop-bench planners` lists them. Every planner implements `run(env)` (`planners/base.py`) and ends
-with `env.finish("done" | "refuse" | "give_up")`. Only `oracle` and `naive` are privileged (they read the
-true world and the hidden goal); every other planner sees only the [observation](runner.md#the-episode-environment-envpy).
+with `env.finish("done" | "refuse" | "give_up")`. Only `oracle`, `naive` and the diagnostic `robot_agent:sage_gold` are privileged (they read the
+true world or the hidden goal); every other planner sees only the [observation](runner.md#the-episode-environment-envpy).
 
 | name | loop | asks | recovery | notes |
 |---|---|---|---|---|
@@ -19,6 +19,7 @@ true world and the hidden goal); every other planner sees only the [observation]
 | `robot_agent:sage_pivot_none` / `robot_agent:sage_pivot_translate` | `robot_agent:sage` with the language layer's `input_pivot` = `none` (the Korean words as they are) / `translate` (the English translation; the original only as the source of `said`). `robot_agent:sage` itself uses the manifest's `input_pivot` (manifest `none`; the KO comparison chose it). KO-only ablations; for English users the layer does nothing | as sage | as sage | [experiments: R3 language layer](experiments.md#r3-language-layer-3-mode-ko-comparison) |
 | `robot_agent:sage_complete` | `robot_agent:sage` with the gate's `complete` operator on (the gate writes a missing goal's segment; `completed_by_gate`): ablation | as sage | as sage | as above |
 | `robot_agent:sage_lab` | `robot_agent:sage` with the solution-lab prototype `person_goals` on (robot_agent option, env `ROBOT_AGENT_PERSON_GOALS`, manifest `planner.person_goals`; default off): in a request that mixes go / say goals with moves, the go and say steps are the loop's own fixed sub-goals (the exact sentence, a MoveTo to the named person), the planner expands only the moves; a hand-over for a hand goal goes to the person the goal names; an exactly repeated goal is dropped; an Open of what cannot be opened is removed. A prototype under test, not a result | as sage | as sage | as above |
+| `robot_agent:sage_gold` | **DIAGNOSTIC, PRIVILEGED. Never a headline planner; label it privileged in every table.** `robot_agent:sage` that does not understand the request: the task's gold goals, converted to robot_agent goals (`homeloop_bench/gold_goals.py`: no source location, so the robot uses its memory and searches; the delivery mode as the robot would infer it from the words and the scene, never the label), are handed to `AssistLoop.run_blocking(goals=...)` with robot_agent's option `accept_goals` on, which skips the understand step (no LLM call for it, no question, no read-back). It measures the execution-only ceiling: plan, gate, search, recovery and the dialogue about what is still unknown. A task with no gold goal to give (a request to refuse) is understood as usual; a clarify task is not asked about (its goals are known), so help and question metrics are not comparable with `robot_agent:sage`. Loss from understanding = `sage_gold` minus `sage`; loss from execution and the world = `oracle` minus `sage_gold`. `summary.json` `config.planner_config` has `privileged: true` | none for the understand step, as sage afterwards | as sage | [understanding evaluation](understand_eval.md) |
 | `robot_agent:grace` | robot_agent's ClosedLoop with planner grace | no | robot_agent | [robot_agent planners](robot_agent.md) |
 | `robot_agent:llm_direct` | robot_agent's ClosedLoop with planner llm_direct (one `skill::input` program) | no | robot_agent's replan | [robot_agent planners](robot_agent.md) |
 

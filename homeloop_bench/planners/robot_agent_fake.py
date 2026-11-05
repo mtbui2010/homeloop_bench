@@ -19,7 +19,9 @@ import json
 import re
 
 from homeloop_robot import oracle as _oracle
-from homeloop_robot.catalog import CLASSES, COLORS, MESSAGE_TEXT
+from homeloop_robot.catalog import MESSAGE_TEXT
+
+from ..gold_goals import _modes, _obj_name, _person_key, gold_goals, understand_goals  # noqa: F401  (moved there)
 
 # the episode the fakes serve (set by robot_agent_adapter for the episode, cleared after)
 CURRENT: dict = {"env": None}
@@ -37,89 +39,11 @@ def _env():
     return env
 
 
-def _obj_name(world, oid: str, lang: str = "en") -> str:
-    o = world.objects.get(oid)
-    if o is None:
-        return oid
-    c = CLASSES.get(o.cls)
-    n = c.name.get(lang, o.cls) if c else o.cls
-    col = o.attrs.get("color")
-    return f"{COLORS[col][lang]} {n}" if col in COLORS else n
-
-
-def gold_goals(env) -> list:
-    """The task's gold goal atoms (current goal: a correction's new goal included), without unmoved."""
-    return [a for a in env.current_goal().get("all") or [] if a.get("pred") != "unmoved"]
-
-
-def understand_goals(env) -> list:
-    """Gold atoms as robot_agent understand goals {type, object, from, to}."""
-    w = env.world0
-    user = w.user_id() if hasattr(w, "user_id") else None
-    out = []
-
-    def src(oid):                       # where the object is now (the gate then plans the Open of a container)
-        o = w.objects.get(oid)
-        return o.at if o is not None and o.at in w.house.places else ""
-
-    def seat(pid):                      # robot_agent moves to ENV places only: a person's seat place
-        p = w.people.get(pid)
-        return p.seat if p is not None else pid
-    for a in gold_goals(env):
-        p, args = a["pred"], list(a.get("args") or [])
-        if p == "on":
-            out.append({"type": "on", "object": _obj_name(w, args[0]), "from": src(args[0]), "to": args[1]})
-        elif p == "in":
-            out.append({"type": "in", "object": _obj_name(w, args[0]), "from": src(args[0]), "to": args[1]})
-        elif p == "open":
-            out.append({"type": "open", "object": args[0], "from": "", "to": ""})
-        elif p == "closed":
-            out.append({"type": "close", "object": args[0], "from": "", "to": ""})
-        elif p in ("held_by", "delivered"):
-            # the mode a robot infers from the words and the scene (never the label)
-            mode = "hand" if p == "held_by" else _modes(env).get((args[0], args[1]), "hand")
-            if args[1] == user:
-                out.append({"type": "on", "object": _obj_name(w, args[0]), "from": src(args[0]), "to": "me"})
-            elif mode == "reach":
-                # "near the person": the robot package binds a person as a place to the surface they can reach
-                out.append({"type": "on", "object": _obj_name(w, args[0]), "from": src(args[0]), "to": args[1]})
-            else:
-                out.append({"type": "deliver", "object": _obj_name(w, args[0]), "from": src(args[0]),
-                            "to": seat(args[1])})
-        elif p == "said_to":
-            txt = (MESSAGE_TEXT.get(args[1]) or {}).get(env.lang) or args[1]
-            # the listener's ENV entry (robot_agent goes to a person entry: its last-seen spot, or the person)
-            out.append({"type": "say", "object": txt, "from": "", "to": _person_key(w, args[0])})
-        elif p == "robot_at":
-            out.append({"type": "go", "object": "", "from": "", "to": args[0]})
-        elif p == "docked":
-            out.append({"type": "go", "object": "", "from": "", "to": w.house.dock})
-    # the person's own words for each object (robot_agent understand ``said``): the house's name in the episode
-    # language, as a model would copy it from the request
-    for g in out:
-        if g["type"] in ("on", "in", "deliver") and env.lang != "en":
-            oid = next((o for o in w.objects if _obj_name(w, o) == g["object"]), None)
-            if oid is not None:
-                g["said"] = _obj_name(w, oid, env.lang)
-    return out
-
-
-def _person_key(world, pid: str) -> str:
-    from homeloop_robot.configs.tasks import person_key
-    return person_key(world, pid)
-
-
 def _gold_question(env) -> str:
     gq = (env.task.get("user") or {}).get("gold_question") or {}
     if isinstance(gq, dict):
         return gq.get(env.lang) or gq.get("en") or "Which one do you mean?"
     return str(gq or "Which one do you mean?")
-
-
-def _modes(env) -> dict:
-    """Delivery modes chosen like the oracle does: the heard words and the start scene, never the labels."""
-    from .oracle import observed_modes
-    return observed_modes(env, env.world0, env.current_goal())
 
 
 def oracle_calls(env, world=None) -> list:

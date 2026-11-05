@@ -393,6 +393,8 @@ class _RobotAgentPlanner:
         self.events: list = []
         self.generator = None        # None: SAGE (grace), or the fake GoalPlanner under --llm fake
         self.on_loop = None          # inspection hook (loop, env) -> True to stop before the run (built_prompt)
+        self.until = None            # event names: the run stops (the generator is closed) at the first of them
+        self.reached = None          # the event it stopped at (understand-eval reads the `understand` event)
 
     def run(self, env) -> None:
         import robot_agent.connect.llm as ra_llm
@@ -458,11 +460,16 @@ class _RobotAgentPlanner:
                 final = None
                 n = 0
                 injected = 0
-                for ev in loop.run_blocking(env.task_text, lang=env.lang):
+                events = loop.run_blocking(env.task_text, lang=env.lang, **self.run_kwargs(env))
+                for ev in events:
                     n += 1
                     e = {k: v for k, v in ev.items() if k not in ("world", "say_audio")}
                     if e.get("event") in ("done", "error"):
                         final = e
+                    if self.until and e.get("event") in self.until:
+                        self.reached = e         # a probe (understand-eval) wants the loop up to this event only
+                        events.close()
+                        break
                     # a user interruption (correction / stop) is said to the run, as a person would say it
                     while run is not None and injected < len(env._events):
                         uev = env._events[injected]
@@ -496,6 +503,10 @@ class _RobotAgentPlanner:
                               f"{ev.get('error') or final.get('msg') or ''}", str(final.get("say") or ""))
             else:
                 env.finish(_status(final), str((final or {}).get("say") or ""))
+
+    def run_kwargs(self, env) -> dict:
+        """Extra keyword arguments of ``run_blocking`` for this variant (none for the planners that understand the request)."""
+        return {}
 
     @staticmethod
     def _stop_after(env) -> bool:
@@ -571,6 +582,28 @@ class SageLabPlanner(SagePlanner):
     removed. Default off for every other variant; this one differs from ``robot_agent:sage`` in that flag only."""
     name = "robot_agent:sage_lab"
     loop_options = {"person_goals": "1"}
+
+
+class SageGoldPlanner(SagePlanner):
+    """DIAGNOSTIC, PRIVILEGED: ``robot_agent:sage`` that does not understand the request. The task's gold goals, converted
+    to robot_agent goals (``homeloop_bench.gold_goals``: no source location, the robot searches), are handed to
+    robot_agent, whose option ``accept_goals`` is on and which then skips its understand step. It measures what is left
+    after understanding: plan, gate, search, recovery and the dialogue about the unknowns that remain. Never a headline
+    planner; mark it privileged in every table. A task with no gold goal to give (a request to refuse) is understood as
+    usual. Clarify tasks are not asked about: the goals are known."""
+    name = "robot_agent:sage_gold"
+    privileged = True
+    loop_options = {"accept_goals": "1"}
+
+    @classmethod
+    def run_config(cls) -> dict:
+        return {**super().run_config(), "privileged": True, "accept_goals": 1,
+                "goals_from": "task gold goals (no source location)"}
+
+    def run_kwargs(self, env) -> dict:
+        from ..gold_goals import understand_goals
+        goals = understand_goals(env, with_source=False) if env.goal.get("all") else []
+        return {"goals": goals} if goals else {}
 
 
 class GracePlanner(_RobotAgentPlanner):

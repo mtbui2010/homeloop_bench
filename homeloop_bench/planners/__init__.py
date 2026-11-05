@@ -38,6 +38,8 @@ REGISTRY = {
                                   "robot_agent:sage with the gate's complete operator on (ablation)", True),
     "robot_agent:sage_lab": ("robot_agent_adapter", "SageLabPlanner",
                              "robot_agent:sage with the lab prototype person_goals on (go / say steps kept as fixed sub-goals, hand-over to the named person)", True),
+    "robot_agent:sage_gold": ("robot_agent_adapter", "SageGoldPlanner",
+                              "DIAGNOSTIC, PRIVILEGED: robot_agent:sage started from the task's gold goals (understand step skipped): the execution-only ceiling", True),
     "robot_agent:grace": ("robot_agent_adapter", "GracePlanner",
                           "robot_agent ClosedLoop with planner grace through the homeloop robot package", True),
     "robot_agent:llm_direct": ("robot_agent_adapter", "LlmDirectPlanner",

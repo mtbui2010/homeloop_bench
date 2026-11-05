@@ -1023,3 +1023,13 @@ succeeded).
 5. For KO use more than two runs, or fewer claims: with repeats that differ by up to 5 tasks, a paired total of 59 tasks cannot show a gain of 1 to 3 tasks. Report per-task changes.
 6. Do not start Proposals 2 and 3 on the strength of this round; groups D, E and F above are their territory and this round only shows they are the large part of the failures
    (in EN, 24 of the 49 trigger tasks are never solved by any run, and by the groups above most of them fail outside the flag's scope).
+
+### Fix of Finding 1 and a lesson (2026-11-06)
+
+`GraceBackend` now has a `fixed_subgoals` property that reads the wrapped planner (`robot_agent` branch `sage-v2/homeloop`, `pyplanner_grace.py`).
+Tests go through the real path (AssistLoop, GraceBackend, SAGEPlanner with a scripted backend): the capability is seen, also through the
+`RecordingPlanner` proxy, and a mixed request (a spoken message to a named person plus a move) gives a fixed block with the exact `Say` sentence while
+only the move block reaches the LLM. Cache replay of task 59 EN with the flag on: sub-goal blocks `[2, 1, 0, 1]` steps, `refined_blocks` all false, `Say` with the
+exact sentence, no `Announce`; flag off: unchanged (8 LLM calls, three `Announce`). Fake-LLM runs with the flag off are byte-identical to the code before the flag (EN and KO, 12 tasks).
+
+Lesson: a unit test with a stub hides a missing capability on a wrapper. Every flag needs a test through the real construction path, with the real wrapper around the real planner.

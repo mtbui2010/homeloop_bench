@@ -665,3 +665,25 @@ Correction (orchestrator, after reading the adapter and the manifest): the mode 
 `none` vs `both` is 19 vs 18, inside the noise. The earlier baseline run of `sage` KO in `results/r4b/base` gave 16 / 8,
 so the same `both` configuration moved by 2 tasks between runs. `translate` alone is a negative result: 6 fewer
 successes than `none` and 3 more false successes (5 fewer and 2 more than `both`).
+
+### Step 2: dialogue convergence (class C1) — code committed, NOT yet measured
+
+robot_agent worktree commit 7a8e019 (branch sage-v2/homeloop), option `dialog_converge` (default on, `0` = earlier loop).
+Root causes, read from the cached dialogues of the failing episodes of `results/r4b/base` (replayed from the llm cache,
+no GPU; EN 63, 69, 90, 93, 94, 58, 71, 81 and KO 54, 65, 66, 67, 68, 69 among them):
+
+1. A correction after a read-back "no" was applied to ALL move goals (`pin_to`), or the task was understood again and the
+   model moved the other object too (KO 65, 67, 69; EN 69, 90): one goal fixed, another broken, every read-back.
+2. The same reading was read back again after it was refused (EN 93, KO 68, EN/KO 90, 94): same sentence, same "no".
+3. The clarify cap and the read-back cap counted every question, also those that changed the goals (KO 54, 66).
+4. A question reworded only in politeness passed the word-for-word check (EN 71).
+5. The read-back said "from the you" for a source that is a person (EN 69).
+
+Changes: a correction edits the one goal it names (rules, no model call); a refused reading gets a choice question once
+instead of a second identical read-back; the caps give back a round for an answer that produced new goals (read-backs:
++2 at most, questions: +2 at most); near-duplicate questions are reworded once. Not done: executing the uncontradicted
+goals before confirmation (needs a plan-phase split; the failing dialogues show wrong goals, not right ones left
+unconfirmed). Several of the slice's failures stay out of reach of this change: the simulated user answers "I don't
+know" or a garbled yes / no (EN 58, 71, 81, 94), and EN 93 / KO 68 are refused although the read-back is right.
+LLM calls per episode: a patched correction replaces one understand call; the extra rounds the caps allow can add
+calls only in dialogues that gave up before. The slice measurement (EN+KO sage, keep rule) is the next step.

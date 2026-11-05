@@ -657,9 +657,11 @@ n_error 0 in all three modes.
 |---|---|---|
 | none (`sage_pivot_none`) | 19 | 6 |
 | translate (`sage_pivot_translate`) | 13 | 9 |
-| both (`sage`, current default) | 18 | 7 |
+| `sage` (its default is `none`: the SAME configuration as the first row, so this row only measures run-to-run noise; the baseline run of `sage` gave 16 / 8) | 18 | 7 |
 
 Decision: BEST = none (the recorded decision is that the default stays none). `none` is not a clear win.
+
+Correction (orchestrator, after reading the adapter and the manifest): the mode `both` was NOT run in this step. `robot_agent:sage` takes its mode from the manifest (`input_pivot: none`, `robot_agent_adapter.py:386`), so the three KO runs of the same configuration gave 16 (baseline), 18 and 19 successes: **identical settings differ by up to 3 tasks of 50 from run to run** (GPU batching makes temperature 0 not exactly repeatable). Only `translate` (13 / 9) is clearly worse. The hybrid `both` (original text plus the English translation in the understand prompt) still has to be measured, with repeated runs; see the follow-up.
 `none` vs `both` is 19 vs 18, inside the noise. The earlier baseline run of `sage` KO in `results/r4b/base` gave 16 / 8,
 so the same `both` configuration moved by 2 tasks between runs. `translate` alone is a negative result: 6 fewer
 successes than `none` and 3 more false successes (5 fewer and 2 more than `both`).

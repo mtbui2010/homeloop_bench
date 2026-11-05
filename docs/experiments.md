@@ -781,3 +781,124 @@ the dialogue, and the simulated user's answers, as in Step 2). The 8b planner st
 Noise caveat: one seed, 50 tasks per language, and the same configuration varied by up to 3 successes per run (Step 1).
 The 6-success total drop is at the edge of that noise, so the result is recorded as "no gain from 30b", not as "30b is
 proven worse". The false-success increase (13 → 21) is larger than the keep-rule margin of 2, so it is noted, not ignored.
+
+## Solution lab round 1 (SAGE-v2, 2026-11-06)
+
+Method: the solution-lab process (frame the problem from cached evidence, read prior art, ideate under several lenses, red-team
+the ideas, check the survivors offline on cached episodes, prototype the best one behind a flag, then measure on a few tasks,
+paired and repeated). Stages 1-5 used only cached episodes and needed no GPU. The lab notes are kept outside the repository.
+The user asked to switch off speech-recognition noise for the validation, so every validation table below is the sensitivity
+condition `asr_off`, never a headline.
+
+### Problem brief (summary)
+
+SAGE-v2 (`robot_agent:sage`, branch `sage-v2/homeloop`) scores about 44-50 % EN and 32 % KO on the fresh dev slice 51-100
+(naive 48 %, oracle 86 %). Fixing failures one by one had stopped paying: dialogue fixes (I2), belief search (I3), `gate_complete`,
+translate-first and the 30b planner all moved the total by less than the noise or lost. Three facts from the cached runs:
+
+- Across three code versions most tasks keep their outcome (EN: 21 tasks always succeed, 23 never, 6 move; KO: 11 / 29 / 10).
+  The run-to-run noise (about 3 tasks of 50) sits on 6 to 10 unstable tasks per language. Only per-task, paired comparisons mean anything.
+- Under a proxy for "no recognition error" (instruction heard correctly) the dialogue give-ups fall from 24 to 7 (EN) and 36 to 7 (KO)
+  task-runs, and false successes from 16 to 5 and 26 to 5. What stays is failure after a correct understanding.
+- A deterministic family sits under many failures: requests that mix a spoken message or a delivery to a named person with another
+  step. On the slice, EN mixed-message sets: 16 task-runs (7 tasks), 0 successes in all three code versions; oracle 7 of 7.
+  The causes seen in the kept debug logs: the free planner paraphrases the sentence, puts a go goal on "the spot within reach", swaps
+  recipients, hands over to the speaker instead of the named person (a false success), or invents a source container that cannot be opened.
+
+### Ideas that survived (after the offline check)
+
+- Person-destination and template goals compiled into the robot's own steps, with a recipient receipt (ranked first; offline bound
+  +3 EN and +3 KO tasks per 50 on the design slice, +2 EN on tasks the rules were not read from; removes the wrong-recipient false success).
+- Commit the stable reading at the dialogue cap (rule R2). Survives only in a reduced form: +0 to +2 tasks per 50 with ASR on, about
+  +1 or less with ASR off, and half of the KO commits are wrong. Ranked second, checked offline only.
+- Act on skill-result events, starting with a partial open (about +1 task per 50, deterministic, small). Not built.
+- Search prior from the robot's own find history: parked (1 to 2 tasks on fresh data, clean-room risk for any seed table).
+
+### Ideas refuted or dropped (one line each)
+
+- Goal-hypothesis ledger, entropy questions, clause-wise understanding, extra LLM views: red team found the pool is the oracle-ensemble
+  pool, the second view is the same 8B model, and translate-first already lost (i1); about 400 lines for no measured pool.
+- Case memory and glossary built from the benchmark TRAIN split (M1, M2, M3, M5): clean-room violation, or trains on the simulated user;
+  object-name headroom is about 6 points and not specific to Korean.
+- Act first, ask later: cannot be tested offline (the cache has no Find candidates), and the "which one?" question already works from candidates.
+- Do not ask where an object is, search instead: asking is not a measured loss (same success as other runs); 28 of 34 such answers carry no goals; bound +0.7 EN.
+- Completion audit by word cues: flags 1 of 42 false successes, 0 of 107 successes, so no recall. Only the recipient receipt is kept (merged into the first idea).
+
+### Prototype
+
+Flag `person_goals` (default off), registered variant `robot_agent:sage_lab` (SAGE with the flag on). Commits: robot_agent worktree
+42b731d and 93e3edc; homeloop_bench 9d9146c (variant registration). Changes when the flag is on: a request that mixes template goals
+(go, say, deliver) with moves gets the template goals as fixed sub-goals compiled from the robot's own steps (the planner expands only
+the moves and never paraphrases a sentence); a goal whose destination is a person gets a typed recipient resolved through the robot's
+person entries, and an unknown place is not driven to; two new gate repair operators (recipient mismatch, container that cannot be
+opened); repeated goals are de-duplicated. No extra LLM call. Unit tests: `tests/test_sage_lab_person_goals.py`. With the flag off the
+old behaviour is unchanged: a fake-LLM comparison on 12 dev tasks per language gave identical successes for the old code, the new code
+with the flag off, and `sage_lab` (EN 6 of 12 each; KO 6 of 12 each; the same task ids).
+
+### Pilot results
+
+Setup: dev tasks 50-59 (the first ten of the fresh slice), profile `real` with `asr_off`
+(`asr.en.app_wer=0, asr.ko.app_cer=0, asr.p_partial=0`; wrong or unsure answers, silence, interruptions and device faults stay), qwen3-vl:8b-instruct,
+two runs per configuration. S = success, F* = false success (said done, goals not met), f = other failure. Results are in `results/lab1/`.
+The first five tasks were the pilot gate (same outcome pattern as the first five rows below).
+
+| task | sage EN r1 | sage EN r2 | lab EN r1 | lab EN r2 | sage KO r1 | sage KO r2 | lab KO r1 | lab KO r2 |
+|---|---|---|---|---|---|---|---|---|
+| 050 | S | S | S | S | S | S | S | S |
+| 051 | S | S | S | S | S | S | S | S |
+| 052 | f | f | f | f | f | f | f | f |
+| 053 | f | f | f | f | f | f | f | f |
+| 054 | F* | F* | F* | F* | f | f | f | f |
+| 055 | S | S | S | S | S | S | S | S |
+| 056 | S | S | S | S | F* | F* | F* | F* |
+| 057 | f | f | f | f | f | f | f | f |
+| 058 | F* | f | f | f | F* | F* | F* | F* |
+| 059 | f | f | f | f | f | f | f | f |
+
+| configuration (asr_off, 10 tasks) | success | false successes |
+|---|---|---|
+| sage EN, run 1 / run 2 | 4 / 4 | 2 / 1 |
+| sage_lab EN, run 1 / run 2 | 4 / 4 | 1 / 1 |
+| sage KO, run 1 / run 2 | 3 / 3 | 2 / 2 |
+| sage_lab KO, run 1 / run 2 | 3 / 3 | 2 / 2 |
+
+One extra run of `sage_lab` under the unchanged `real` profile (ASR errors on, single run, no baseline pair, so it is not a comparison):
+EN 5 of 10 (1 false success), KO 2 of 10 (1 false success).
+
+Per-task reading:
+- The only paired difference is 058 EN run 1: the baseline reported done without meeting the goals, the lab variant gave up after
+  three questions; in run 2 both failed. It turns one false success into a give-up and no success. It could be this mechanism or run-to-run
+  variation; it was not traced to a line and is not claimed.
+- 059 is the one validation task in the target family (a spoken message plus a delivery to a named person). It still ends in the plan-gate
+  give-up ("I could not make a plan that passes my checks", `assist_loop.py` near line 2014, under the lab flag), with the recipient
+  goal `delivered(...)` not met. The lab flag did not turn it into a success. The gate findings are not stored in the episode, so
+  the remaining cause (which finding blocks the plan after the new operators) is not yet established. 054, 056 and 058 in KO and 052, 053,
+  057 are outside the family (hardware stops, search, read-back); their identical outcomes are the expected no-change result.
+- The tasks 87, 95 (EN and KO) and 15, 18 (EN), which the offline check named as the family's best triggers, were not part of this
+  10-task run, so the main claim of the offline estimate (+1 to +2 tasks per language on those) has not been tested online yet.
+
+### Verdict
+
+Not proven, not refuted. The prototype is safe on this sample (no task lost in either language, fake-LLM regression identical, no error
+runs), but it also gained nothing on the ten tasks: successes 4 vs 4 (EN) and 3 vs 3 (KO) in both runs. The one validation task in the target
+family (059) was not fixed. So the flag stays off by default and `robot_agent:sage_lab` stays registered as a candidate. It is not
+promoted to the default and it is not recorded as a negative result either, because the ten tasks hold almost no trigger (as the offline
+check predicted: tasks 50-59 have one task in the family).
+
+### Noise caveat
+
+Ten tasks, two runs, one seed per run. The earlier work measured about plus or minus 3 tasks of 50 between runs, and the outcomes of
+single tasks are mostly fixed, so identical totals here mean "nothing moved", not "no effect on other tasks". The `asr_off` condition
+removes recognition noise only; answers can still be wrong or unsure, and the user can be silent or interrupt. The proxy used offline
+for `asr_off` (instruction heard correctly) is an upper bound, so the offline pools are overestimates of what remains. Do not quote
+any number of this section as a headline.
+
+### Next proposals
+
+1. Trace 059 first: replay the plan-gate findings for the lab variant on the cached plans (CPU only), and fix the finding that still
+   blocks it. Store the gate findings in the episode record so the cause is visible without the debug logs.
+2. Test the prototype where it can fire: tasks 87 and 95 (EN and KO) from the design slice and 15 and 18 (EN) from the earlier 50, labelled as
+   extras, two runs each, `asr_off`. Keep rule: at least 2 of the 5 EN tasks succeed with the flag on, nothing the baseline solves is lost, no error runs.
+3. If it passes, run the whole fresh slice (50 tasks, EN and KO) once, paired with the baseline, and only then consider making it default.
+4. Build the skill-event rule (partial open) as a separate flag, with a fake-skill replay of the failing call sequence before any LLM run.
+5. Rule R2 (commit at the cap) only after the KO read-back path is more precise: half of its KO commits are wrong today. Check it offline and with a scripted user, not by a total.

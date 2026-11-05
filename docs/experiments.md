@@ -703,3 +703,41 @@ successes in Step 1, so the +2 EN gain and the 0 KO change are within noise and 
 EN severe violation and min separation 0.27 m (protective stop) appear in both runs (before and after), so this change
 did not cause them. Tests: `tests/test_sage_v2_r4b_dialog_converge.py` with `tests/test_sage_v2_r3_m5_fixes.py` (52 passed,
 robot_agent worktree, commit 7a8e019; embodiplan on PYTHONPATH from the sage-v2/homeloop worktree).
+
+### Step 3: perception and search (C4, C5, C6, C7) — measured on the slice: KEPT
+
+Three robot_agent commits on sage-v2/homeloop, measured together as one change (run `results/r4b/i3`, started after the
+third commit):
+
+- **Miss is not absence (C4, C5), commit cba8d0a.** A detector miss is a false negative with rate `detector_miss_rate`
+  (the robot pack's own manifest value, default 0.1, never a benchmark profile). Each place keeps `rate ** misses` of its
+  prior weight, so a strong earlier sighting is re-checked before the unlikely places. The second-look budget follows the
+  rate (0 for a perfect detector, 2 at the default). Misses survive unsearch and save/load. Code: `core/planning/search.py`.
+- **Phantom pick is a search miss (C6), commit 994d6c0.** A Pick that fails with "absent" right after a Find that saw the
+  object is a false positive, not a grasp failure. The robot does one look in place, restores the search state from before
+  the Find, and records a miss. Only with `search_legs`; other packs keep the old Pick recovery. Code:
+  `core/planning/assist_loop.py`.
+- **Two equal objects are asked about (C7), commit 929049c.** When a Find returns `candidates` and the words the person used
+  leave more than one, the robot asks "which one?" once and then searches for the chosen description. Packs without
+  `candidates` are unchanged. Code: `core/planning/which_one.py`, `assist_loop.py`, `speech.py`.
+
+Targets: failure classes C4 and C5 (search), C6 (phantom pick), C7 (duplicate objects not asked). The R4b brief lists no
+task ids for these classes, so none are claimed here. Tasks whose outcome changed on the slice (before → after):
+EN 50 F→S, 83 F→S, 94 F→S, 52 S→F, 90 S→F; KO 68 F→S, 83 F→S, 93 F→S, 59 S→F, 96 S→F, 97 S→F. Among the per-task false-success flips: EN 83 and KO 93 lost a false success; KO 59 and 96 gained one.
+
+Tests (robot_agent worktree, run for this step): `tests/test_sage_v2_r4b_relook.py`, `tests/test_sage_v2_r4b_phantom.py`,
+`tests/test_sage_v2_r4b_which_one.py` with `tests/test_sage_v2_r3_m5_fixes.py` and `tests/test_sage_v2_r4b_dialog_converge.py`
+(all pass, exit 0).
+
+Slice measurement (dev tasks 51-100, profile real, seed 0, qwen3-vl:8b-instruct planner, `robot_agent:sage`, one seed, n_error 0):
+
+| run | EN success | KO success | EN false success | KO false success | EN+KO false success |
+|---|---|---|---|---|---|
+| before (`results/r4b/i2`, Step 2 kept) | 24 / 50 | 16 / 50 | 6 | 9 | 15 |
+| after (`results/r4b/i3`, Step 3 changes) | 25 / 50 | 16 / 50 | 4 | 9 | 13 |
+
+Decision: KEPT. EN+KO successes 40 → 41 (not lower) and false successes fell 15 → 13 (did not rise), so the keep rule holds.
+Per task, 6 tasks gained a success and 5 lost one (EN +3 −2, KO +3 −3), so the net is +1 EN and 0 KO.
+Noise caveat: one seed and 50 tasks; the noise is about plus or minus 3 tasks. The same KO configuration gave 16, 18 and 19
+successes in Step 1, so the +1 EN success and the EN false-success drop (6 → 4) are within noise and do not prove the
+change helps. KO successes did not change (16 → 16); the KO false-success count stayed at 9.

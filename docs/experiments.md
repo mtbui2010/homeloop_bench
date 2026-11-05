@@ -601,3 +601,32 @@ Dev numbers after this tuning are optimistic; the paper reports the TEST split.
 - The two targeted items of this round (oracle dead end after the mug is parked; the forgotten Where-are-you answer
   and the repeat guard) were committed in rounds 5 and 6 (see the entries above). Dev numbers after this tuning are
   optimistic; the paper reports the TEST split.
+
+#### SAGE-v2 changes: m50 round 1 fixer (failure classes of the 30 non-ok tasks; branch `sage-v2/homeloop`)
+Every change is robot-agnostic and has a unit test with synthetic text (`robot_agent/tests/test_sage_v2_r3_m50_round1_*.py`,
+`test_wiring_robot.py`, `test_fix_execute_verify.py`). "ids" are the dev ids where the class was seen. Dev numbers after
+this tuning are optimistic; the paper reports the TEST split. Design: `DESIGN_SAGEV2.md` section 15.
+
+| class | ids | change |
+|---|---|---|
+| room-level go raises an "unsaid place" question | 020 | a `go` goal is covered when the words name its room |
+| raw ENV ids in English speech | 042, 043 | `plain_names` in the language layer for English too |
+| a step's internal text as the final sentence | 033, 043 | the pack phrase `say_could_not_do` (KO in the robot pack) |
+| request with a lost verb is guessed | 027 | `verb_lost` -> one question, first hearing only |
+| a dropped object is given up | 034, 038, 048 | contract rule DROPPED = REFIND: floor of the room, Find, Pick, the step again; one more look where the grasp failed or the object fell |
+| search ends on a miss count while places remain | 043, 046 | with search legs the end is the look total (`search_total`) or no place left |
+| a noisy check after a pick or a release | 024, 034, 041 | two more readings settle it (2 of 3), only when the skill reported success and only the sensor layer fails; a sensor that failed with a device fault is unknown, not a contradiction |
+| a move ends away from the target | 025 | its own retry for a localization failure |
+| one camera miss at the final look | 038 | one repeat look where a verified step put the object |
+| a message's listener is also the delivery's recipient | 039 | `shared_listener`: a person named once is the listener; the recipient is the speaker |
+| plan gate does not converge | 021, 039 | symbolic operators `say`, `putin`, `fetch`, `unclose` |
+
+Harness fix (homeloop_robot): the pose read after a move used the motion-call hardware rate and a persistent base fault;
+docs/failure_model.md already lists `pose` as a sensor call. A robot that reads its pose after each move was exposed twice
+as much as the calibration counts (task 041: a persistent fault on the pose read ended a run the oracle finished). Now
+`hw.p_per_sensor_call`; test `tests/test_failure_paths.py::test_pose_reading_uses_the_sensor_rate_not_the_motion_rate`.
+Earlier milestone numbers (m5, m10) were measured with the old rate and must be re-run when the milestones are repeated.
+
+Open after this round (not fixed): KO relay messages (013, 044), clarify and read-back rounds that end in give-up under
+injected ask timeouts (011, 023, 030, 032, 042), conditional goals (037), "a drink" not grounded to the ENV objects (047),
+a relation word that names two people (017), plan-gate losses in KO (021, 024, 046).

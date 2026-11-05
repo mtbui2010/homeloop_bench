@@ -759,3 +759,25 @@ successes rose 13 → 15, within the allowed +2, but the success rule already ru
 reverted in code because it was never made the default.
 Noise caveat: one seed and 50 tasks; the noise is about plus or minus 3 tasks, so the −3 EN+KO difference is at the
 edge of noise. It is recorded as worse, not as proven worse.
+
+### Step 5: planner size ablation (`robot_agent:sage` with qwen3-vl:30b-a3b-instruct as planner), measurement only, default unchanged
+
+Setup: same slice as Steps 3-4 (dev tasks 51-100, profile real, seed 0, EN and KO, one seed, 50 tasks per language). Only the
+planner model differs. No default was changed.
+
+| planner | EN success | KO success | EN+KO success | KO−EN gap | EN+KO false success |
+|---|---|---|---|---|---|
+| qwen3-vl:8b-instruct (current default, `results/r4b/i3`) | 25 / 50 | 16 / 50 | 41 / 100 | 9 | 13 |
+| qwen3-vl:30b-a3b-instruct | 23 / 50 | 12 / 50 | 35 / 100 | 11 | 21 |
+
+Reading: the 30b planner did not help. It scored 6 successes fewer in total (EN −2, KO −4) and produced 8 more false
+successes. The false-success figure of 21 is taken as the EN+KO total; the per-language split was not given for this run.
+
+What it means for the gap: model capacity does not explain the KO−EN gap. The larger planner widened the gap from 9 to 11
+points, because its KO loss (−4) is larger than its EN loss (−2). So a bigger planner closes none of the gap here. The
+remaining KO gap comes from parts of the pipeline the planner does not control (the Korean read-back and translation path,
+the dialogue, and the simulated user's answers, as in Step 2). The 8b planner stays the default.
+
+Noise caveat: one seed, 50 tasks per language, and the same configuration varied by up to 3 successes per run (Step 1).
+The 6-success total drop is at the edge of that noise, so the result is recorded as "no gain from 30b", not as "30b is
+proven worse". The false-success increase (13 → 21) is larger than the keep-rule margin of 2, so it is noted, not ignored.

@@ -902,3 +902,124 @@ any number of this section as a headline.
 3. If it passes, run the whole fresh slice (50 tasks, EN and KO) once, paired with the baseline, and only then consider making it default.
 4. Build the skill-event rule (partial open) as a separate flag, with a fake-skill replay of the failing call sequence before any LLM run.
 5. Rule R2 (commit at the cap) only after the KO read-back path is more precise: half of its KO commits are wrong today. Check it offline and with a scripted user, not by a total.
+
+## Solution lab round 1b (SAGE-v2, trigger tasks, 2026-11-06)
+
+Question: does the lab flag `person_goals` (`robot_agent:sage_lab`) help on the tasks where it should fire? The 10-task pilot above held
+almost no trigger, so its verdict was open. This round runs 59 tasks per language: 49 tasks chosen for a mixed request (a spoken message
+or a delivery to a named person plus other steps) or a person destination, and 10 control tasks where the flag has nothing to do.
+Same conditions as the pilot: profile `real` with the sensitivity condition `asr_off` (`asr.en.app_wer=0, asr.ko.app_cer=0, asr.p_partial=0`),
+qwen3-vl:8b-instruct, one seed, two runs per configuration, paired by task. Everything below is `asr_off`, never a headline. Results in
+`results/lab1/trigger/`. 8 configurations, 3 shards each; all 24 shard logs and all 8 merge logs end with EXIT=0 and `n_error` is 0 in all 8 summaries.
+
+### Result
+
+S = success, F* = false success (said done, goals not met), f = other failure. "base" = `robot_agent:sage`, "lab" = `robot_agent:sage_lab`.
+
+| configuration (59 tasks) | success | false successes | trigger tasks (49) success | control tasks (10) success |
+|---|---|---|---|---|
+| base EN run 1 / run 2 | 34 / 34 | 4 / 4 | 24 / 24 | 10 / 10 |
+| lab EN run 1 / run 2 | 35 / 35 | 4 / 5 | 25 / 25 | 10 / 10 |
+| base KO run 1 / run 2 | 17 / 20 | 10 / 9 | 9 / 10 | 8 / 10 |
+| lab KO run 1 / run 2 | 19 / 18 | 11 / 11 | 11 / 10 | 8 / 8 |
+
+The five EN tasks named in the kill criterion (the family where the offline check expected a gain), and the KO tasks of the same family:
+
+| task | base EN r1 r2 | lab EN r1 r2 | what the flag did |
+|---|---|---|---|
+| 059 | f f | f f | nothing: same plan, same gate give-up as the baseline |
+| 087 | F* F* | F* F* | nothing: hand-over still goes to the speaker's reach spot |
+| 095 | f f | S S | the only gain: gate operator `unopenable` removed the Open/Close of a cabinet that cannot be opened |
+| 015 | S S | S S | baseline already solves it; plan identical |
+| 018 | S S | S S | baseline already solves it; plan identical |
+
+| task (KO) | base r1 r2 | lab r1 r2 | note |
+|---|---|---|---|
+| 024, 054, 090 | f f | f f | plan-gate give-up, as in the baseline |
+| 066 | f F* | f f | dialogue and gate noise, no flag path |
+| 087 | F* F* | F* F* | same as EN |
+| 059 | f S | S f | noise: the two arms swap outcomes |
+
+Over all 49 trigger tasks per language: EN 24 tasks are never solved and 24 always solved, only 095 moves (a gain). KO 37 never solved, 8 always, the
+rest move between runs of the same code (see Noise).
+
+### Verdict against the kill criterion of proposals.md
+
+- At least 2 of the 5 EN tasks succeed with the flag: 3 of 5 (095, 015, 018), but only 095 is caused by the flag; 015 and 018 are solved by the
+  baseline in both runs. The proposal listed them as plan-gate give-ups; under `asr_off` the baseline no longer fails them.
+- No baseline-solved task lost: EN none. KO control task 009 went from S S (the baseline refuses the request, which is correct) to f f.
+  Traced below: it is not the flag.
+- No false-success rise: EN 4/4 to 4/5 (task 047 run 2, a different reading of the request, plan path without the flag), KO 10/9 to 11/11 (understanding
+  differences). Both inside the noise.
+- `n_error`: 0 in all 8 runs.
+
+Read literally, the KO loss on 009 is a kill. It is not credited to the flag (see below), and the more important finding is that **half of the
+prototype did not run at all** (next section). So the verdict is **inconclusive**: the flag as built was tested, it gained one task (095 EN) and
+lost none for a reason that is its own, but the mechanism the proposal ranked first (fixed template sub-goals) was never active. The result
+neither supports nor refutes the idea. Do not promote the flag and do not record the idea as a negative result.
+
+### Finding 1: the fixed template sub-goals never ran in any episode
+
+`assist_loop.py:2108` builds the fixed blocks only if `getattr(r.planner, "fixed_subgoals", False)`. In a run, `r.planner` is a `GraceBackend`
+(`robot_agent/core/planning/backends/pyplanner_grace.py:166`), a wrapper around the embodiplan planner. The attribute lives on the wrapped
+`SAGEPlanner` (`embodiplan/sage.py:356`), the wrapper has no such attribute and no `__getattr__`, so the check is always False
+(checked by calling `getattr(GraceBackend.wrap(embodiplan.get("GRACE")), "fixed_subgoals", False)`: False). The unit tests use a stub with the
+attribute set (`tests/test_sage_lab_person_goals.py:102`), so they passed.
+Evidence in the runs: the sub-goal blocks of 059 EN in the lab arm are all expanded and refined by the LLM (`refined_blocks` all true, block sizes
+[2, 2, 7, 2], 8 LLM calls, three `Announce` steps with a paraphrased sentence), identical to the baseline; a fixed block would be one or two
+steps, not refined, and would use `Say` with the exact sentence. Over the 49 trigger tasks the gate-repair log of the lab arm shows the flag at work only through the
+two gate operators: `unopenable` on EN 069, 094, 095. The operator `recipient` never fired, and the fixed sub-goals never fired.
+So this round tested "two gate operators plus goal de-duplication", not the proposal.
+
+### Analysis of the trigger tasks where the flag did not turn a failure into a success
+
+Cause groups, from the lab-arm debug logs and episode records (task ids are slice numbers; the lab arm and the baseline have the same cause
+unless noted). "Flag acted as designed?" asks whether the part of the flag that applies did what it was written to do.
+
+| group | tasks (EN) | tasks (KO) | what the planner did, cause | flag acted as designed? |
+|---|---|---|---|---|
+| A. Mixed set, plan gate gives up | 059, 066, 023 | 024, 054, 066 (some runs), 006 (some runs) | The free planner expands the say / go blocks itself: three `Announce` steps with paraphrased sentences, a `Place` where the goal needs a hand-over, a go-to-dock block that drops the earlier goals. The gate repair stops when the findings do not fall (`subgoal_repair.py:127`: "edits stopped: ... not fewer than the round before"), the plan is uncertified and never runs (`assist_loop.py:2012-2017`). 059 EN ends with only "go to the dock" unmet. | No. The fixed blocks that were meant to prevent exactly this were inactive (Finding 1). |
+| B. Hand-over to the wrong recipient, false success | 087 | 087 | The understood goal puts the wallet's destination on "the spot within your reach", a place, while the person is named only in the say goal. `op_recipient` needs a goal whose `to` is a person (`plan_repair.py:286`), so it has nothing to repair; the run says done, the hand-over goes to the speaker. The wrong recipient comes from the understanding, upstream of the operator. | The operator is correct but cannot fire. The offline estimate assumed it would. |
+| C. Hand goal to a person executed as `Place` | (066 EN) | 054, 090 | The planner writes `Place grandpa` for a hand goal. `op_recipient` only rewrites a release action (`plan_repair.py:282`: `a not in rel`), a `Place` to a person is outside its scope. | As designed, but the design does not cover this form. |
+| D. Searches fail ("absent") | 032, 053, 088, 047 (run 1), 033 | 032, 033, 053, 078, 094, 080, 048 | The object is not at any of the six places searched. Not in the flag's scope (search). KO 094 also tries to open a cabinet the map says cannot be opened, in a plan the lab operator never reaches because the Open sits in an earlier block of a differently ordered plan. | Not applicable. |
+| E. Hardware or manipulation stop | 002, 005, 036, 057, 079 (injected `hw_fault`), 021, 034 (grasp collision), 048 (drop), 086 (drawer only partly open) | 002, 005, 034, 036, 057, 069, 079, 084 | Skill failures or injected device faults end the run. Not in the flag's scope. 086 and the `partial_open` event are the target of Proposal 3, not built. | Not applicable. |
+| F. Dialogue gives up | 030, 063 | 007, 008, 023, 064, 066, 071, 077, 086, 099, 032 | The read-back or clarify loop ends at the cap ("could not confirm"), no plan is made. Proposal 2 territory. | Not applicable (the flag acts after understanding). |
+| G. False success from understanding | 054, 069, 071 | 021, 038, 061, 063, 075, 088, 095 | The understood goal set misses a goal (KO 095: the repeated go goals replace the delivery; KO 061, 088: one go goal for a whole request), the plan achieves what was understood, the run says done. The EN ones (054, 069, 071) are not mixed-person tasks: same result in all four runs. | Not applicable; `goals.dedupe` ran but removed repeats only. |
+
+Reading of the one gain, 095 EN: baseline run 1 stops at the dialogue cap, run 2 reaches the gate and gives up on "upper_cabinet cannot be
+opened or closed" (twice). In the lab arm the operator `unopenable` removes the two Open/Close steps in four edits (the gate log shows "gate
+repair (unopenable): 0 critical finding(s) left") and the plan runs and succeeds in both runs. The first part of the plan still has the `Announce` of a
+paraphrased sentence; the gate's existing `say` operator turned the first one into `Say`, which is why it passes. This is the mechanism
+acting as designed, but it is the smaller half of the idea (an unopenable container), not the person-goal compile.
+
+On EN 069 and 094 the same operator fired and the outcome did not change (069 stays a false success because the glass never reaches the person, 094 already
+succeeded).
+
+### Noise
+
+- EN: the repeats are close to identical. Success differs between run 1 and run 2 of the same code on 0 of 59 tasks (base) and 0 of 59 (lab); outcome class
+  (S / F* / f) differs on 0 and 1 tasks.
+- KO: the repeats are not identical. Success differs between run 1 and run 2 on 5 of 59 tasks for the baseline (17 vs 20 successes) and 1 of 59 for the lab;
+  outcome class differs on 7 and 3. Lab vs base in the same run position: 4 to 6 tasks differ in success. So the KO difference between the arms
+  (19 / 18 vs 17 / 20) is not distinguishable from run-to-run variation, and the earlier estimate of about 3 tasks of 50 holds for KO, not for EN.
+- The cause is the model server, not the agent. For the same prompt (same cache key) the response differs in 25 to 35 of 326 common prompts in EN and 41 to 45 of about
+  300 in KO, between two runs of the same code and between the arms alike. KO 009 is an example: the request is the same prompt in both arms (cache key `3cf99a0d`);
+  the baseline runs read the cleaning product as a detergent and refuse (correct), the lab runs read it as a harmless soap and ask three questions
+  before giving up. The flag does not touch that path (no template goal, no gate), so the "lost" task is model-server variation, in two runs per arm.
+- Two runs per arm and one seed per run therefore add little in EN (repeats agree) and are too few in KO (repeats disagree by 3 tasks).
+
+### What to do next
+
+1. Fix the wiring first. Make the wrapper expose the capability of the planner it wraps (for example a `fixed_subgoals` property on `GraceBackend` that
+   reads the wrapped planner), and change the unit test so that it builds the real `GraceBackend.wrap(...)` around a scripted `SAGEPlanner` instead of a stub with the
+   attribute. A fake-LLM run of 059 EN must show `Say` with the exact sentence and `refined_blocks` false for the template blocks before any LLM run.
+2. Record in the episode, for the flag, whether it was active: the gate findings, `repaired_by_op` and a `fixed_blocks` count. Today the proof had to be rebuilt from
+   debug logs that are deleted with the temp directory.
+3. Re-run the same 59 tasks per language, EN and KO, two runs per arm, in a new output directory, after the fix. Same kill / keep rule, with one change: judge "baseline-solved task lost"
+   only on tasks where the lab arm's plan path differs from the baseline's (the gate log), so model-server variation (KO 009) cannot decide it.
+4. Handle the two cases the log shows the operators cannot reach: the recipient named only in the say goal (087), where the understanding must give the hand goal a person as
+   destination (an understanding-side rule, checked offline on the cached understand outputs first), and a `Place` to a person written for a hand goal (KO 054, 090), where
+   `op_recipient` could rewrite a `Place` to a person to the pack's release action.
+5. For KO use more than two runs, or fewer claims: with repeats that differ by up to 5 tasks, a paired total of 59 tasks cannot show a gain of 1 to 3 tasks. Report per-task changes.
+6. Do not start Proposals 2 and 3 on the strength of this round; groups D, E and F above are their territory and this round only shows they are the large part of the failures
+   (about 40 of the 59 tasks per language fail for reasons outside the flag).

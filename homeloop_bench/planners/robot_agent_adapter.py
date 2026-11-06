@@ -480,7 +480,9 @@ class _RobotAgentPlanner:
     people_tracking = True       # the ENV gives people's last-seen positions (False: the robot must ask)
     loop_options: dict = {}      # AssistLoop options of the variant (hazard_rules, gate_complete)
     _LAB_FLAGS = ("exec_integrity", "gate_strict", "endstate_check", "reset_container", "wait_on_robot",
-                  "inventory_ask", "dialog_unstick")      # lab round 3 (and 4: dialog_unstick) (round 2's flags were never recorded: their summary.json stay as they were)
+                  "inventory_ask", "dialog_unstick",       # lab round 3 (and 4: dialog_unstick)
+                  "reask_anchor", "no_shared_listener", "understand_views", "understand_goals_first")   # round 7
+    # (round 2's flags were never recorded: their summary.json stay as they were)
     # every option the loop reads from the variant: the episodes of a variant that sets one carry ``lab_events``
     _ALL_LAB_FLAGS = _LAB_FLAGS + ("person_goals", "go_steps", "kind_anchor", "name_canon", "reask_abstain")
     # Data the variant adds to the robot pack's manifest for this run (a dict merged key by key into the loop's
@@ -813,6 +815,35 @@ class SageR3uPlanner(SagePlanner):
     name = "robot_agent:sage_r3u"
     loop_options = {**SageR3Planner.loop_options, "dialog_unstick": "1"}
     manifest_overlay = EXEC_UNSTICK_OVERLAY
+
+
+class SageU1Planner(SagePlanner):
+    """Lab round 7, step 1: sage_ground2 + ``reask_anchor`` (a goal-less where-is-it reading is understood once more and the
+    new reading is taken only when every place in it is in the person's words). One extra understand call on about 8 % of
+    readings. Needs a robot_agent with the round-7 options (an older one drops unknown options silently). A prototype."""
+    name = "robot_agent:sage_u1"
+    loop_options = {**SageGround2Planner.loop_options, "reask_anchor": "1"}
+
+
+class SageU2Planner(SagePlanner):
+    """sage_u1 + ``no_shared_listener`` (the shared_listener rule is off: a person who is the listener of a message and the
+    recipient of a delivery stays the recipient). The GPU re-read of the cases this changes is still open."""
+    name = "robot_agent:sage_u2"
+    loop_options = {**SageU1Planner.loop_options, "no_shared_listener": "1"}
+
+
+class SageU3Planner(SagePlanner):
+    """sage_u2 + ``understand_views``: a non-English request is read from the original and from the translator's English
+    (the translator is the planner's model unless ``translate_model`` says otherwise, as for ``sage_pivot_translate``); equal readings act, different ones ask one
+    'which one?' question. About +2 calls per non-English episode."""
+    name = "robot_agent:sage_u3"
+    loop_options = {**SageU2Planner.loop_options, "understand_views": "1"}
+
+
+class SageUPlanner(SagePlanner):
+    """sage_u3 + ``understand_goals_first`` (the understand schema lists the goals before the verdict)."""
+    name = "robot_agent:sage_u"
+    loop_options = {**SageU3Planner.loop_options, "understand_goals_first": "1"}
 
 
 class SageGoldPlanner(SagePlanner):

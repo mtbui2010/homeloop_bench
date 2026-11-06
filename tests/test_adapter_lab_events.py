@@ -136,3 +136,17 @@ def test_sage_r3u_is_registered_and_is_sage_r3_plus_dialog_unstick():
     # the loop accepts the option (an unknown one is dropped)
     import robot_agent.core.planning.assist_loop as AL
     assert set(cfg["loop_options"]) <= AL.ASSIST_OPTIONS
+
+
+def test_round7_variants_are_registered_and_each_adds_one_flag_to_the_previous():
+    from homeloop_bench.planners import REGISTRY, planner_class
+    names = ["robot_agent:sage_ground2", "robot_agent:sage_u1", "robot_agent:sage_u2", "robot_agent:sage_u3", "robot_agent:sage_u"]
+    assert all(n in REGISTRY for n in names) and "robot_agent:sage_r3u" in REGISTRY
+    opts = [planner_class(n).run_config()["loop_options"] for n in names]
+    added = [set(b) - set(a) for a, b in zip(opts, opts[1:])]
+    assert added == [{"reask_anchor"}, {"no_shared_listener"}, {"understand_views"}, {"understand_goals_first"}]
+    assert all(b.items() >= a.items() for a, b in zip(opts, opts[1:]))
+    import robot_agent.core.planning.assist_loop as AL
+    pytest_missing = set(opts[-1]) - AL.ASSIST_OPTIONS
+    assert not pytest_missing, pytest_missing                 # the robot_agent on the path knows every option
+    assert planner_class("robot_agent:sage_u").run_config()["reask_anchor"] == 1

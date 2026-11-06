@@ -20,6 +20,7 @@ robot_agent is imported inside functions only, so the planner listing works with
 from __future__ import annotations
 
 import contextlib
+import copy
 import importlib
 import json
 import os
@@ -132,6 +133,28 @@ class FakeState:
 
     def save_world(self):
         return None
+
+
+def apply_overlay(loop, overlay: dict) -> None:
+    """Merge ``overlay`` ({"planner": {...}}) into this loop instance's manifest (only this loop's robot view changes,
+    never the pack's file). A dict value is merged key by key, anything else replaces."""
+    def merge(base: dict, extra: dict) -> dict:
+        out = dict(base or {})
+        for k, v in extra.items():
+            out[k] = merge(out.get(k) or {}, v) if isinstance(v, dict) else copy.deepcopy(v)
+        return out
+    for section, data in (overlay or {}).items():
+        if isinstance(data, dict):
+            setattr(loop.robot.manifest, section, merge(getattr(loop.robot.manifest, section, None) or {}, data))
+
+
+# The wait schedule of the execution-integrity variants. ASSUMED: the robot pack declares no recovery wait and no
+# published spec gives one; a doubling backoff from 2 s is this variant's own assumption (a camera or detector that
+# gave no image is usually back within a few seconds), not a property of the robot. The action name is the pack's
+# own Wait action. Recorded in summary.json under planner_config.manifest_overlay.
+WAIT_OVERLAY = {"planner": {"recovery": {"wait": {"action": "Wait", "schedule_s": [2, 4, 8]}}},
+                "assumed": True,
+                "note": "assumed: no spec sheet declares a wait schedule for the mock robot; doubling backoff from 2 s"}
 
 
 def structured_asks(loop, proxy) -> bool:
@@ -369,6 +392,11 @@ class _RobotAgentPlanner:
     loop_options: dict = {}      # AssistLoop options of the variant (hazard_rules, gate_complete)
     _LAB_FLAGS = ("exec_integrity", "gate_strict", "endstate_check", "reset_container", "wait_on_robot",
                   "inventory_ask")      # lab round 3 (round 2's flags were never recorded: their summary.json stay as they were)
+    # every option the loop reads from the variant: the episodes of a variant that sets one carry ``lab_events``
+    _ALL_LAB_FLAGS = _LAB_FLAGS + ("person_goals", "go_steps", "kind_anchor", "name_canon", "reask_abstain")
+    # Data the variant adds to the robot pack's manifest for this run (a dict merged key by key into the loop's
+    # ``robot.manifest.planner``), declared apart from the pack: the pack stays as it is, the summary records the overlay.
+    manifest_overlay: dict = {}
 
     @classmethod
     def run_config(cls) -> dict:
@@ -387,6 +415,10 @@ class _RobotAgentPlanner:
                 **({"person_goals": 1} if cls.loop_kind == "assist" and cls.loop_options.get("person_goals") else {}),
                 # lab-round options, likewise only where set
                 **({k: 1 for k in cls._LAB_FLAGS if cls.loop_options.get(k)} if cls.loop_kind == "assist" else {}),
+                # every loop option the variant sets, as given (also the round-2 flags), and the manifest data it adds
+                **({"loop_options": {k: str(v) for k, v in sorted(cls.loop_options.items())}}
+                   if cls.loop_kind == "assist" and cls.loop_options else {}),
+                **({"manifest_overlay": copy.deepcopy(cls.manifest_overlay)} if cls.manifest_overlay else {}),
                 # the language layer (robot_agent core/planning/language.py): what a Korean user says reaches the
                 # understand prompt as the original (none), its English (translate) or both
                 "input_pivot": str(cls.loop_options.get("input_pivot", mp.get("input_pivot", "none"))
@@ -486,6 +518,9 @@ class _RobotAgentPlanner:
                     if env.over or n > MAX_EVENTS or env.stop_k is not None and self._stop_after(env):
                         break
                 self.final = final
+                if any(self.loop_options.get(k) for k in self._ALL_LAB_FLAGS):
+                    # what the opt-in options did in this run (robot_agent AssistLoop.lab_log), into episodes.jsonl
+                    env.lab_events = [dict(e) for e in (getattr(loop, "lab_log", None) or [])]
                 if run is not None:
                     try:
                         manager.finish(run.run_id, ok=_status(final) == "done", outcome=str((final or {}).get("status")))
@@ -524,8 +559,10 @@ class _RobotAgentPlanner:
         if self.loop_kind == "assist":
             from robot_agent.core.planning.assist_loop import AssistLoop
             gen = self.generator or (FAKE_GENERATOR if fake else self.ra_planner)
-            return AssistLoop(agent, emit=None, generator=gen,
+            loop = AssistLoop(agent, emit=None, generator=gen,
                               health_wait_s=0, memory_path=str(tmp / "mem.json"), **dict(self.loop_options), **common)
+            apply_overlay(loop, self.manifest_overlay)
+            return loop
         from robot_agent.core.planning.loop import ClosedLoop
         planner = self.ra_planner
         if fake and planner == "grace":
@@ -626,6 +663,7 @@ class SageExecPlanner(SagePlanner):
     No extra LLM call. A prototype under test, not a result."""
     name = "robot_agent:sage_exec"
     loop_options = {"exec_integrity": "1"}
+    manifest_overlay = WAIT_OVERLAY             # wait_on_robot acts only where a wait is declared
 
 
 class SageInventoryPlanner(SagePlanner):
@@ -657,6 +695,7 @@ class SageEiWaitPlanner(SagePlanner):
     """Ablation of sage_exec: wait_on_robot only (acts only where the robot package declares planner.recovery.wait)."""
     name = "robot_agent:sage_ei_wait"
     loop_options = {"wait_on_robot": "1"}
+    manifest_overlay = WAIT_OVERLAY
 
 
 class SageR3Planner(SagePlanner):
@@ -664,6 +703,7 @@ class SageR3Planner(SagePlanner):
     inventory_ask. Every option is default off in robot_agent; this variant differs from robot_agent:sage in them only."""
     name = "robot_agent:sage_r3"
     loop_options = {"go_steps": "1", "kind_anchor": "1", "name_canon": "1", "exec_integrity": "1", "inventory_ask": "1"}
+    manifest_overlay = WAIT_OVERLAY
 
 
 class SageGoldPlanner(SagePlanner):

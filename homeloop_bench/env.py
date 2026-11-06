@@ -623,6 +623,9 @@ class EpisodeEnv:
             "final_say": self.final_say,
             "finish_reason": self.finish_reason,
         }
+        lab = getattr(self, "lab_events", None)
+        if lab is not None:             # a planner variant with opt-in options: what they did (planner's own log)
+            rec["lab_events"] = [dict(e) for e in lab]
         paths: dict = {}
         not_in_lang = 0
         for c in self.calls:

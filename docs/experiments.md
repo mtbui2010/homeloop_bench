@@ -1752,3 +1752,61 @@ constant; on 014 EN it ran into the call budget).
 
 Artifacts: `lab/r3/` (scripts `table.py`, `m5/table.py`, `m5/why.py`, `gate5/*.py`, `off/replay_perf1.py`, `off/diff.py`). Commits: robot_agent ab47bfe, 28c3c80,
 18c7872; bench 70a2b49, f50ee44, bbafd77.
+
+## Solution lab round 3: fixes found by the review, m5 and m10 rerun with a shared cache (2026-11-06)
+
+Six fixes first (no rate or scoring is tuned; each has a test), then the m5 and m10 gates again. Condition for every
+run: profile `real`, seed 0, `asr_off` (`asr.en.app_wer=0, asr.ko.app_cer=0, asr.p_partial=0`; a sensitivity condition,
+never the headline), `qwen3-vl:8b-instruct` with `qwen3-vl:30b-a3b-instruct` as translator, repeats a and b, one shared
+read-through cache. Raw runs: `results/r3/m5s`, `results/r3/m10s` (not in git); `table.py` there prints the tables below.
+
+| fix | repo | what | test |
+|---|---|---|---|
+| H1 | homeloop_robot | the ENV loc of a person entry with no spot is refreshed from the position the move uses (the person's true position), also when the spot stays None; before, a person who sat down elsewhere left the loc at the old stop point and robot_agent's arrival check failed | `tests/test_person_spot_walk.py` (every house and person; `verify._at_target` passes; a person who did not move: entry unchanged) |
+| H2 | homeloop_bench | `run --shared-cache DIR`: paired runs share one read-through, write-through prompt-sha response cache per model (understand, translator and intent prompts alike): common random numbers | `tests/test_shared_llm_cache.py` |
+| H3 | homeloop_bench | `tell_fetch`: the fetch clause has its own sentence; `gen/attach.py` check as paraphrase filter, EN judge asks the attachment question; 79 train and dev tasks re-rendered and the 44 with LLM text re-paraphrased; test split untouched (see [generation.md](generation.md)) | `tests/test_tell_fetch_attach.py` |
+| V1 | robot_agent, homeloop_robot | restated read-back = lead phrase `rb_restated` + the ordinary `q_confirm`; a question keeps its kind in the language layer's last resort (a read-back never becomes "say the task in other words"); Vietnamese `localized` threshold; KO lead phrase in the pack | `tests/test_sage_lab_r5_restated_readback.py` (KO and VI through the real loop) |
+| V2 | robot_agent, homeloop_bench | `canon_inventory` counts instances (record id, or the pack's `object_aliases`), one name per instance; the which-question declares `qtype: which_object`, which the adapter hands to the simulated user | `tests/test_sage_lab_r5_inventory_instances.py`, `tests/test_declared_ask.py` |
+| 6 | homeloop_bench | `robot_agent:sage_r3u` (sage_r3 + dialog_unstick) registered | `tests/test_adapter_lab_events.py` |
+
+### m5 (dev 065 008 015 014 074), P1 sub-flags
+
+Cell = outcome a|b (S success, F false success, x gave up). The baseline sage ran first and filled the shared cache.
+
+| variant | EN 065 008 015 014 074 | EN S / F* | KO 065 008 015 014 074 | KO S / F* |
+|---|---|---|---|---|
+| oracle | S S S S S | 5 / 0 | S S S S S | 5 / 0 |
+| sage | F S F x x | 1 / 2 | F S x x x | 1 / 1 |
+| sage_ei_gate | F S F x x | 1 / 2 | F S x x x | 1 / 1 |
+| sage_ei_end | S S F x x | 2 / 1 | S S x x x | 2 / 0 |
+| sage_ei_reset | F S F x x | 1 / 2 | F S x x x | 1 / 1 |
+| sage_ei_wait | F S F x x | 1 / 2 | F S x x x | 1 / 1 |
+| sage_exec | S S F x x | 2 / 1 | S S x x x | 2 / 0 |
+| sage_r3 | S S F S x | 3 / 1 | S S x S x | 3 / 0 |
+| sage_r3u | S S F S x | 3 / 1 | S S x S x | 3 / 0 |
+
+a and b are identical in every cell and in every episode's calls and asks (the shared cache makes the repeats replays;
+they measure the harness, not LLM noise). **Gate:** every cell that differs from the baseline has fired lab events and
+different calls (065 by `endstate_check`; 014 by `inventory_ask` + `wait_on_robot`); 0 unexplained differences, 0 losses,
+0 errors. `gate_strict`, `reset_container` and `wait_on_robot` alone change no cell here. One conflict in the shared
+cache: `sage_r3` and `sage_r3u` asked one repair prompt at the same moment and got two texts (no cell changed). Run
+identical-code variants one after the other.
+
+### m10 (P1: m5 + 024 066 042 058 003; P2: 014 027 062 021 089)
+
+| variant | EN success a,b | EN F* | KO success a,b | KO F* | differing episodes (all explained by fired lab events) |
+|---|---|---|---|---|---|
+| oracle | 14 | 0 | 14 | 0 | |
+| sage | 1 | 4 | 2 | 4 | baseline |
+| sage_ei_gate | 2 | 4 | 2 | 4 | EN 024 x to S (`gate_strict` per-goal repair) |
+| sage_ei_end | 2 | 3 | 3 | 3 | 065 F to S, EN and KO (`endstate_check`) |
+| sage_ei_reset / sage_ei_wait | 1 / 1 | 4 / 4 | 2 / 2 | 4 / 4 | none (the triggers fired, no cell changed) |
+| sage_exec | 3 | 3 | 3 | 3 | EN 065, EN 024; KO 065 |
+| sage_inv | 3 | 2 | 5 | 2 | 027, 062 F to S, EN and KO; KO 021 x to S (`inventory_ask`) |
+| sage_r3 / sage_r3u | 6 / 6 | 1 / 1 | 7 / 7 | 1 / 1 | the union: 065, 014, 024 (EN), 027, 062, 021 (KO) |
+
+Zero losses on the controls (042, 058, 003, 066 in both languages) and 0 unexplained differences. Task 021 EN stays
+unsolved by `sage_inv` (the question is asked, the run still gives up), 066 and 042 stay unsolved by every variant. The
+`dialog_unstick` part of `sage_r3u` fired on `unsure_search` only and moved no cell on these ids. This is dev 0..99 again
+(in-sample for the ideas); the fresh slice dev 100..199 is the next confirmation. Containers: started with
+`OLLAMA_NUM_PARALLEL=6`, at most 8 clients, stopped afterwards.

@@ -129,7 +129,10 @@ def test_sage_r3u_is_registered_and_is_sage_r3_plus_dialog_unstick():
     cfg = planner_class("robot_agent:sage_r3u").run_config()
     r3 = planner_class("robot_agent:sage_r3").run_config()
     assert cfg["loop_options"] == {**r3["loop_options"], "dialog_unstick": "1"}
-    assert cfg["manifest_overlay"] == r3["manifest_overlay"]
+    # same declarations as sage_r3, plus the numbers of dialog_unstick (pack data; assumed, recorded in the summary)
+    assert cfg["manifest_overlay"]["planner"]["recovery"] == r3["manifest_overlay"]["planner"]["recovery"]
+    assert cfg["manifest_overlay"]["planner"]["unstick"]["restate_frac"] == 0.6 and cfg["manifest_overlay"]["assumed"]
+    assert "unstick" not in r3["manifest_overlay"]["planner"]
     # the loop accepts the option (an unknown one is dropped)
     import robot_agent.core.planning.assist_loop as AL
     assert set(cfg["loop_options"]) <= AL.ASSIST_OPTIONS

@@ -172,9 +172,24 @@ INTENT_TO_QTYPE = {"choose": ("which_object", {"about": "obj"})}
 BLOCKED_PUTIN_OVERLAY = {"planner": {"recovery": {"blocked_putin": ["Close", "Open"]}},
                          "assumed": True,
                          "note": "assumed: remedy for a PutIn blocked by a container believed open; overlaps the mock robot's partial-open rule"}
-# execution-integrity variants: both declarations (a deep merge of the two overlays above)
-EXEC_OVERLAY = {"planner": {"recovery": {**WAIT_OVERLAY["planner"]["recovery"], **BLOCKED_PUTIN_OVERLAY["planner"]["recovery"]}},
-                "assumed": True, "note": WAIT_OVERLAY["note"] + "; " + BLOCKED_PUTIN_OVERLAY["note"]}
+# How many times ``endstate_check`` runs the return to the last go goal again (``planner.recovery.return_tries``; none
+# declared = the option does nothing). ASSUMED: three tries, the value used by lab round 3; no spec sheet gives one.
+RETURN_OVERLAY = {"planner": {"recovery": {"return_tries": 3}}, "assumed": True,
+                  "note": "assumed: three tries to re-achieve the last go goal (lab round 3 value)"}
+# execution-integrity variants: all three declarations (a deep merge of the overlays above)
+EXEC_OVERLAY = {"planner": {"recovery": {**WAIT_OVERLAY["planner"]["recovery"], **BLOCKED_PUTIN_OVERLAY["planner"]["recovery"],
+                                         **RETURN_OVERLAY["planner"]["recovery"]}},
+                "assumed": True, "note": "; ".join((WAIT_OVERLAY["note"], BLOCKED_PUTIN_OVERLAY["note"], RETURN_OVERLAY["note"]))}
+# The numbers of ``dialog_unstick`` (manifest ``planner.unstick``; any missing = that part does nothing). ASSUMED: the
+# values of lab round 4, fitted by eye on the 100-task dev slice and never validated on train; no source gives them.
+# Read the dialog_unstick results with that in mind.
+UNSTICK_OVERLAY = {"planner": {"unstick": {"fallback_words": 5, "fallback_chars": 24, "restate_frac": 0.6,
+                                           "restate_word_len": 3, "restate_min_words": 4, "restate_min_bigrams": 6}},
+                   "assumed": True,
+                   "note": "assumed: dialog_unstick thresholds of lab round 4 (dev slice, not validated)"}
+EXEC_UNSTICK_OVERLAY = {"planner": {**EXEC_OVERLAY["planner"], **UNSTICK_OVERLAY["planner"],
+                                    "recovery": EXEC_OVERLAY["planner"]["recovery"]},
+                        "assumed": True, "note": EXEC_OVERLAY["note"] + "; " + UNSTICK_OVERLAY["note"]}
 
 
 def declared_meaning(question) -> dict | None:
@@ -748,6 +763,7 @@ class SageUnstickPlanner(SagePlanner):
     understand call, once); a question with its own apology is not prefixed with the silence apology. A prototype."""
     name = "robot_agent:sage_unstick"
     loop_options = {"dialog_unstick": "1"}
+    manifest_overlay = UNSTICK_OVERLAY          # its numbers are pack data: none declared, the numeric parts do nothing
 
 
 class SageEiGatePlanner(SagePlanner):
@@ -760,6 +776,7 @@ class SageEiEndPlanner(SagePlanner):
     """Ablation of sage_exec: endstate_check only."""
     name = "robot_agent:sage_ei_end"
     loop_options = {"endstate_check": "1"}
+    manifest_overlay = RETURN_OVERLAY
 
 
 class SageEiResetPlanner(SagePlanner):
@@ -788,7 +805,7 @@ class SageR3uPlanner(SagePlanner):
     """sage_r3 + dialog_unstick (lab round 4 combination)."""
     name = "robot_agent:sage_r3u"
     loop_options = {**SageR3Planner.loop_options, "dialog_unstick": "1"}
-    manifest_overlay = EXEC_OVERLAY
+    manifest_overlay = EXEC_UNSTICK_OVERLAY
 
 
 class SageGoldPlanner(SagePlanner):

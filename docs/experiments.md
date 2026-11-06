@@ -2059,3 +2059,84 @@ and in how the simulator is built.
 - **`kind_anchor`.** Its English and Korean open-verb patterns express the same idea as the simulated user's open rule in `dialog.py`; the
   robot's Korean morphology is separate.
 - **`go_steps`.** It drops a go to a person; the bench gold is written the same way. Keep the `sage_g2_go` ablation next to it.
+
+## Generalisation audit (lab flags, 2026-11-06)
+
+Question: does each lab flag work from data the robot pack declares, or do nothing, on a robot and a language other
+than the HomeLoop ones? Flags: go_steps, kind_anchor, name_canon (sage_ground2); endstate_check, wait_on_robot,
+reset_container, gate_strict (sage_exec); inventory_ask (sage_inv); dialog_unstick (sage_unstick); reask_abstain;
+the combinations sage_r3 and sage_r3u. Code: robot_agent branch sage-v2/homeloop, head 583747f (baseline 7bd0ee4).
+
+### What was hard-coded, and what moved
+
+| item | before | now |
+|---|---|---|
+| kind_anchor open words | en/ko/vi in core; any other language dropped the open goal, and the pack's open_words for it were ignored | the run language's words: core (en/ko/vi) plus the pack's i18n open_words for any language; no data means no drop |
+| reset_container remedy | Close then Open fixed in core | pack data planner.recovery.blocked_putin; none declared means no-op; all spliced actions must be in plan_actions; no put-down when another hand is free. The bench declares [Close, Open] (BLOCKED_PUTIN_OVERLAY, assumed) |
+| endstate_check | fixed re-dock | re-runs the action that achieved the go goal; tries from planner.recovery.return_tries (default 3) |
+| dialog_unstick | restatement read back always; structural not-sure fallback also for English | read back only when it adds an ENV entity; fallback only for a language with no answer_unsure data |
+| inventory_ask schema | the sim user's qtype in core | neutral {intent, options, about}; the bench adapter maps it with INTENT_TO_QTYPE |
+| which-option list | fixed " or " | list slot with the pack's sep_or |
+| wait_on_robot | schedule in core | pack data planner.recovery.wait (action, schedule_s); none means no-op |
+
+### What remains
+
+- KO and VI open-word lists stay in core as regexes (pack words are escaped literals); overlap with the sim user's VERB_RX is documented above.
+- English paraphrases without an "open" word ("pop the fridge door") still drop an open goal silently; the pack can extend open_words.
+- Thresholds in dialog_unstick (MAX_FALLBACK_WORDS, 0.6, 4 words, 6 bigrams) and the Latin-script threshold in language.localized are code constants, not manifest data, with no sensitivity sweep.
+- reset_container's put-down is always Place; the wait_on_robot schedule interacts with the simulator's WAIT_CLEARS_S = 5 s.
+- Low items not done: typed seconds for Wait, character n-grams, a CJK label_tokens default, name_canon _singular retirement.
+
+### Checks run (CPU only, no GPU, no LLM server, 2026-11-06)
+
+1. Suites: robot_agent worktree (sagev2 embodiplan on PYTHONPATH) exit 0 (2 skipped); homeloop_bench 429 passed in 93 s.
+2. Replay of cached episodes (replay_flag.py: source run i2, 31 dev tasks, EN and KO, real profile, cache-only LLM), planners sage, sage_r3 and sage_r3u, run with the pre-refactor code (7bd0ee4) and with HEAD: episodes.jsonl byte-identical in all 6 pairs, and the miss counts are equal (1/9/9 EN, 3/13/17 KO). Flag-off and the flag-on combinations are therefore unchanged on this slice. Limit: replay misses (a prompt the cache never saw) end that episode early, so these runs exercise the cached part of each episode only. The changed flag-on paths (dialog_unstick part 1, reset_container) are covered by unit tests, not by this slice. The n5 / understand-eval set was not replayed again: only the i2 slice is cached under replay/.
+3. Third language and second robot (scratch probe, not in the repo, test_generalisation_probe.py in the lab gen notes dir): every flag on, language codes en, qq and xx-YY (no pack words), scripted LLM through the real AssistLoop, 18 loops (clear and abstaining reading, three dialogue scripts): no error. Unit level: for qq, kind_anchor drops nothing without data and honours a declared open_words; blocked_putin_remedy, wait_schedule, fold_rules return empty, localized returns True. The base_robot manifest (MoveTo, Say, Ask, Dock, WaitForUnload, Observe, Verify; no recovery block) loaded with load_manifest: kind_anchor no-op for en, ko, qq; remedy empty and wait (None, []).
+
+### Honest limits
+
+No live run on base_robot and none on a real third language; qq is a made-up code, so it shows fail-open behaviour, not quality. The base_robot check is unit-level (manifest data and helpers), not a loop with its skills. The probe asserts no exception, not a particular outcome. Sensitivity to wait schedules and to an instance-keyed bench memory was not run.
+
+## Generalisation round 6: language and robot facts as data (2026-11-06)
+
+User decision: no language, robot, benchmark or simulator fact in the code of the lab flags. Korean is supported as data,
+Vietnamese is dropped, every other list or number is declared data, and missing data means the flag does nothing.
+Code: robot_agent branch sage-v2/homeloop, head 686b2b6 (before: 583747f). This section replaces the "What remains"
+list of the audit above for the items it names as moved.
+
+### What moved
+
+| item | now |
+|---|---|
+| open words (en, ko), the other word lists of `lexicon` | language packs `core/planning/lang/en.json`, `ko.json`; a robot pack extends them with its i18n phrase of the same key, for any language |
+| not-sure phrases (`CORE_UNSURE`) | pack key `answer_unsure` (English ships it; Korean does not, so Korean still uses the structural fallback, as before) |
+| `MAX_FALLBACK_WORDS`, 24 characters, 0.6, 4 words, 3 letters, 6 bigrams | manifest `planner.unstick.*`; a missing number switches that part off. The bench declares the old values as an assumed overlay (`UNSTICK_OVERLAY`), read them as fitted on the dev slice |
+| `endstate_check` default of 3 tries | manifest `planner.recovery.return_tries`; none declared = the option does nothing. The bench declares 3 (`RETURN_OVERLAY`, assumed) |
+| `LANGS`, `REGISTER`, `NON_ASCII_MIN`, the Korean script test | pack keys `name`, `register`, `non_ascii_min`, `script`; a language without a pack is never "not localized" |
+| English articles and plural rules, the model's English where-is patterns (`reask_abstain`) | pack keys `articles`, `plural_rules`, `where_now`, `where_put`, `where_obj`; no data for the prompt language = no-op |
+| Vietnamese | removed from the core lists, router, announcer, TTS codes, safety word lists, tests and docs; a test scans the package for it |
+
+### English paraphrase of open (K2)
+
+New option `kind_anchor_ask` (default 0, only with `kind_anchor`). An open goal with no open word in the person's words is
+kept and the ordinary read-back says "I am not sure you asked me to open the ...", so the person decides. No new question kind;
+the existing `r.unsure` path carries it. Not run on a benchmark yet: it is a prototype with unit tests. Whether the extra
+read-back helps or costs a turn is open.
+
+### Checks (CPU only, no GPU, no LLM server)
+
+1. robot_agent suite: all pass (new `tests/test_sage_lab_r6_langdata.py` covers made-up languages: "qq" with no data does
+   nothing, "zz" with a pack works, through the real AssistLoop). homeloop_bench: 429 pass.
+2. Replay of the cached i2 slice (31 dev tasks, EN and KO, planners sage, sage_r3, sage_r3u, `lab/gen/run_cmp.sh`): episodes.jsonl
+   byte-identical to the run on 583747f in all 6 pairs, including the flag-on r3 and r3u with the bench's declared numbers. The
+   same limit as before: a replay miss ends an episode early, so only the cached part is exercised.
+
+### Still left
+
+- Korean morphology elsewhere in core (the particle list and the verb endings in `understand`, `speech`, `dialog_converge`, `_EN_INTO`
+  / `_KO_INTO` in `goal_fix`) is still code; it is not flag code and moving it would touch every run.
+- `dialog.restate` (`_restates`, 0.6 / 4 / 3) in the always-on loop and the `understand` word lists for refusals are code.
+- Korean has no `answer_unsure` phrases. Adding them would change Korean dialog_unstick behaviour, so it needs an ablation first.
+- The pivot language is a code constant (`langdata.PROMPT_LANG = "en"`, the language of the prompts); `lg == "en"` checks in the language layer
+  still assume an English pivot. The action names (Find, MoveTo, Open) are the action model's vocabulary.
+- The thresholds above are data now but still unvalidated: no sensitivity sweep, and no run on a second robot.

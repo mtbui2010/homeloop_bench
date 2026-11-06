@@ -2304,3 +2304,87 @@ is no differing task to explain. The last end-to-end gate is the round-4 m5 / m1
 1. End-to-end m5 gate for `sage_u1` against `sage_ground2` (paired, shared cache, `aa-check` first). It is the only near miss.
 2. If `shared_listener` is to be narrowed, narrow it on structure (a recipient named once who is not a speaker), not by switching it off.
 3. Ablation for Korean `answer_unsure` phrases, and a slice run of `kind_anchor_ask`.
+
+## Round 7, step 3: a larger model reads the request (2026-11-07)
+
+What was built (all opt-in, default off; the default path is unchanged). robot_agent, branch `sage-v2/homeloop`: `understand_model`
+(option > `$ROBOT_AGENT_UNDERSTAND_MODEL` > manifest `planner.understand_model` > the planner), `understand_url` (default `translate_url`,
+then the planner's), `understand_model_lang` (manifest data, language code -> model, resolved by `lang[:2]`, an unknown or missing language
+takes the default), a runaway guard that is active only when the understand model differs from the planner's
+(`understand_max_tokens` sent as `num_predict`, `understand_max_goals`; a non-JSON answer, too many goals, or three identical goals in a
+row falls back to ONE call of the planner with the same prompt, no quoting repair, event `understand_fallback{reason}`; a model the
+server does not have falls back the same way), and three schema / prompt flags (`understand_schema_strict`, `understand_give_kind`,
+`understand_verify_verdict`). Only the understand step uses the other model (first reading, re-samples, re-asks, dialogue re-reads,
+`understand_views`); gate, plan, plan repair and translation stay on the planner / translator. Bench: the understand client is routed by
+ROLE (`UnderstandCounter`: on the episode cap, in `llm_calls_understand`, cache `llm_cache/<model>.jsonl`), `OllamaHTTP` takes a
+per-call `num_predict` that is not in any cache key, `understand-eval --understand-model`, per-record `understand_model_used` /
+`fallback`, a summary `understand` block, `planner_config.n_fallbacks`, and the metric fixes M1 / M2 ([understand_eval.md](understand_eval.md)).
+
+### Checks before any GPU run
+- The default path is byte-identical: the 12-task `--llm fake` pin for `sage_ground2` (EN and KO, `fake_cmp.sh`) gives identical
+  `episodes.jsonl` before and after (only the git SHAs in `summary.json` differ). robot_agent suite: all pass (new file
+  `tests/test_sage_lab_r7_understand_model.py`, 30 tests through the real `AssistLoop.run_blocking` with two scripted clients: the
+  understand prompts go to the understand model and the search ranking to the planner; a runaway falls back with no quoting repair and
+  the event comes before the reading it replaced; too many goals / three identical goals; `num_predict` only on the understand call; a
+  missing model, also one that cannot be built; a KO-only map leaves EN equal to the default run; a made-up code `zz` with no map entry takes
+  the default and with a map entry gets its model; the base_robot manifest with the new keys). homeloop_bench: 449 tests pass.
+- Rescoring the cached 8B baselines with M1 / M2 added matches only (train 226 -> 232 of 476, dev 288 -> 290 of 484, zero LLM calls).
+  All later baseline numbers in this section are these rescored ones; the variants are scored by the same code.
+
+### Pilot (train tasks 30..34, EN and KO, clean and ASR = 20 records, twice on fresh caches)
+Guard fired 4 of 20 times in each run (`non_json`: the answer was cut at 512 tokens in a loop of `go` goals) and was logged; no record
+ended; 12 of 20 exact in both runs against 7 of 20 for the 8B; between the two runs the reading differed in 3 of 20 records and
+the exact flag in 2 of 20 (the 30B is not deterministic at temperature 0 / seed 0 under a shared server).
+
+### Slice (tasks 30..149 of train and dev, EN and KO, clean and ASR; first reading only, `understand-eval`, not end to end)
+Baseline: the 8B planner reads (`sage_ground2`, r6 cache, rescored). `sage_um`: the 30B reads, the 8B is the guard's fallback. 772
+headline records (a feasible task with no refused part) of 960; 960 30B understand calls, 99 fallbacks (10.3 %: train EN 16, KO 24, dev EN
+26, KO 33 of 240; 98 `non_json`, 2 `goals`, 1 `repeat`), 0 `ended`, no record needed more than one understand call. All 79 non-JSON answers
+inspected were the same runaway (a list of `go` goals through the houses' places; 69 repeat one goal block three times or more); the longest
+valid answer was 1227 characters (p95 628), so the 512-token cap (about 1650 characters) cut no valid reading. A fallback reading equals
+the 8B baseline's reading (75 of 75 headline fallbacks).
+
+| group | n | exact 8B -> 30B | d pt | prec | rec | dropped | spurious | confident wrong | asked | asked-on-exact pt | gains/losses |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| all | 772 | 399 -> 460 | **+7.9** | 0.777 -> 0.789 | 0.712 -> 0.782 | 406 -> 308 | 288 -> 296 | 192 -> 196 | 195 -> 134 | +1.42 | +115 / -54 |
+| train | 384 | 176 -> 225 | +12.8 | 0.720 -> 0.777 | 0.687 -> 0.774 | 219 -> 158 | 187 -> 156 | 110 -> 96 | 103 -> 70 | +1.82 | +66 / -17 |
+| dev | 388 | 223 -> 235 | +3.1 | 0.839 -> 0.801 | 0.737 -> 0.789 | 187 -> 150 | 101 -> 140 | 82 -> 100 | 92 -> 64 | +1.03 | +49 / -37 |
+| EN | 386 | 222 -> 248 | +6.7 | 0.814 -> 0.828 | 0.751 -> 0.810 | 176 -> 134 | 121 -> 119 | 87 -> 86 | 79 -> 45 | -0.52 | +52 / -26 |
+| KO | 386 | 177 -> 212 | +9.1 | 0.740 -> 0.750 | 0.674 -> 0.754 | 230 -> 174 | 167 -> 177 | 105 -> 110 | 116 -> 89 | +3.37 | +63 / -28 |
+
+- The gain is mostly recall: fewer dropped atoms (`give` 214 -> 173, `put_on` 94 -> 72) and fewer questions. Spurious atoms do not fall
+  (dev: 101 -> 140): `go` 42 -> 66, extra `close` after a put-in, a `say` to the speaker, a `put_on` instead of a `give`.
+  Of the 54 losses, 23 have both a dropped and a spurious atom, 13 only a spurious one, 9 also asked a question, 8 have a refusal / ambiguity status with the goals dropped.
+- Confident wrong readings do not fall (192 -> 196), so the 30B alone does not reduce false successes at the reading; the asked-on-exact
+  rate rises 1.4 points (limit used in round 6: 1.5).
+- `sage_um_ko` (the 30B reads Korean only; English is the 8B): English identical to the baseline (0 gains, 0 losses, no 30B call for English),
+  Korean identical to `sage_um` (zero new calls). All: 399 -> 434 (+4.5 pt, +63 / -28). Reading English with the 30B is worth +6.7 points more.
+
+### Increments (tasks 30..89 of train and dev, 480 records, 384 headline; `sage_um` + one flag)
+A replicate of `sage_um` itself (fresh caches, same code) is the noise floor: 234 and 246 exact for the same configuration (+19 / -7 records
+between the two runs; 72 of 480 readings differ, 18 of 120 tasks have a different exact count). Compare an increment with that spread,
+not with the first run.
+
+| variant (8B baseline: 203 exact) | exact | vs mean of the two `sage_um` (240) | prec | rec | spurious | confident wrong | fallbacks of 480 | note |
+|---|---|---|---|---|---|---|---|---|
+| sage_um (run 1 / replicate) | 234 / 246 | 0 | 0.787 / 0.789 | 0.799 / 0.815 | 150 / 151 | 105 / 93 | 51 / 46 | |
+| sage_um_strict | 246 | +6 | 0.795 | 0.814 | 145 | 93 | 59 | `said` now in 498 of 708 goals (10 of 703 before), so F4.5 runs; "What should I say?" 20 -> 21 |
+| sage_um_give | 242 | +2 | 0.796 | 0.811 | 144 | 95 | 44 | spurious `say` 17 -> 7 (the echo filter) |
+| sage_um_verdict | 253 | +13 | 0.813 | 0.822 | 131 | 93 | 39 | fewer refusals with goals dropped |
+| sage_m2 (all three) | 259 | +19 | 0.814 | 0.842 | 133 | 92 | 20 | the runaway rate falls from about 10 % to 4 % |
+
+Reading: every variant with the 30B is above the 8B (+31 to +56 records of 384); `sage_um_verdict` and `sage_m2` are the only increments
+clearly above the spread of two identical runs (+13 and +19 against a spread of 12); `strict` and `give` are inside it. Not run: replicates of
+the increments themselves, the 30B-only variants on tasks 90..149, `sage_m2` on the full slice.
+
+### Caveats
+- First reading only: no read-back, clarify dialogue, plan or motion. A better reading is not a better episode (round 6 caveat).
+- The 30B is not deterministic: the same prompt gives a different answer on a fresh cache in about 15 % of the readings. The slice runs share a
+  cache (a changed cell comes from a changed prompt), the replicate does not.
+- The guard values (512 tokens, 8 goals) are ASSUMED (a cap far above any valid reading seen: p95 628 characters, 1227 at most; at most 6
+  goals read by the 8B), recorded in `summary.json` under `manifest_overlay`. They were not tuned on an outcome.
+- Cost: the 30B reading adds one call of a 19 GB model per episode; on the shared GPU the slice (960 30B calls, 4 clients) took about 15 minutes.
+- Train and dev only; the test split was not touched. The `give` flag's effect on the model's own use of `give` is not visible in the
+  records (the loop maps it to `on` before the event).
+- Not built (later, one at a time): the `withdrawn` list (corrections), the `condition` field, the structural go / duplicate drop and the
+  evidence check.

@@ -4,8 +4,8 @@
   "reach": 3273
  },
  "by_mode_reason": {
-  "hand:explicit": 415,
-  "hand:no_surface": 1030,
+  "hand:explicit": 416,
+  "hand:no_surface": 1029,
   "hand:user_needs": 453,
   "reach:None": 3273
  },
@@ -16,8 +16,8 @@
     "reach": 337
    },
    "by_mode_reason": {
-    "hand:explicit": 39,
-    "hand:no_surface": 92,
+    "hand:explicit": 40,
+    "hand:no_surface": 91,
     "hand:user_needs": 22,
     "reach:None": 337
    },
@@ -59,7 +59,7 @@
  "reseed_pass2": 52,
  "tasks_with_delivery": 4615,
  "variant_append": 242,
- "variant_append_named": 121,
+ "variant_append_named": 122,
  "variant_ko_verb": 66,
  "within_reach_at_start": []
 }

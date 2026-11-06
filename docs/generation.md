@@ -135,3 +135,21 @@ since then, and `validate` check 12 fails on any such text. The check covers 안
 안으로) followed by any verb of putting away: 넣, 담, 놓, 두 / 둬, 정리, 보관. Fixed: hl-dev-000001 (template
 fallback), hl-train-000184 and hl-train-000313 (particle); after the check was widened, hl-test-000001 ("양말 안에
 정리해") and hl-train-000361 ("김치통 안에 놓아"), both template fallback.
+
+## tell_fetch: the fetch clause cannot attach to the message (lab round 3, H3)
+
+"Could you tell Grandpa to come to the kitchen and bring me the red book?" can be read as a message that includes the
+fetch. The family `tell_fetch` ("tell P <message>, bring me X") is therefore written with the fetch clause in its own
+sentence (`compound.EN_TELLFETCH`, `KO_TELLFETCH`, five request wrappers as before). `gen/attach.py` is the check: in a
+tell_fetch text, no fetch verb (bring, fetch, grab, hand, `get me ...`; 가져-, 갖다, 건네-) may follow the message verb in
+the same sentence, in English and in Korean. It is a filter of every paraphrase (`fetch_attached_to_message`), and the
+English judge asks the attachment question as a second, separate call (`judge_attach`; the cached same-meaning judgements
+stay valid). Korean keeps its back-translation check.
+
+A full `generate` cannot redo one family (its draws depend on which texts were accepted before), so the 79 train and
+dev tasks of the family were re-rendered by `python -m homeloop_bench.data tellfix`: same house, seed_state, goals and
+request wrapper, text drawn again through `compound.render`, the dock and explicit-hand sentences kept. Then
+`paraphrase --tellfix` asked again only for the 44 records that had an LLM text (cache-first, `paraphrase_run_tellfix.json`),
+and `delivery` and `kofix` ran as usual (one record became template text in both languages and got an explicit-hand
+sentence by the delivery rule). `meta.tellfix` keeps the old text. **The test split was not touched**: its 59 tell_fetch
+tasks keep the old wording (about 58 of 66 texts fail the check). Report results on test with that in mind.

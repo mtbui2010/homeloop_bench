@@ -16,7 +16,7 @@ the property of the Licensor, LG Management Development Institute Co., Ltd. (EXA
 https://huggingface.co/LGAI-EXAONE/EXAONE-3.5-7.8B-Instruct/blob/main/LICENSE
 In short (the agreement governs): use, modification and distribution for research purposes only (Sec. 2.1(a),
 4.2); no commercial use of the Model, Derivatives or Output (Sec. 3.1); the Output must not be used to develop
-or improve other models (Sec. 3.1), so do not train or fine-tune models on it (the train split holds 2,083 such
+or improve other models (Sec. 3.1), so do not train or fine-tune models on it (the train split holds 2,086 such
 records). Only the author's own contribution to that part (selection, filtering, labels) is under
 CC BY-NC 4.0 (LICENSE-DATA).
 

@@ -14,7 +14,7 @@ Which licence covers what
 
 3. Task data, EXAONE part. This part is:
    - `text.ko` and `meta.paraphrase.ko` (which holds an English back-translation of that text) of the records
-     whose `paraphrase_model.ko` is `exaone3.5:latest` (5,190 records: train 2,083, dev 555, test 2,552);
+     whose `paraphrase_model.ko` is `exaone3.5:latest` (5,192 records: train 2,086, dev 554, test 2,552);
    - the whole Korean LLM cache homeloop_bench/data/llm_cache/paraphrase_ko.jsonl: its EXAONE writer rows
      (`model` = `exaone3.5:latest`) and also the qwen3-vl:30b-a3b-instruct back-translation (`back`) and judge
      (`judge_ko`) rows, whose `input` is in most cases EXAONE-written text word for word.
@@ -28,7 +28,7 @@ Which licence covers what
      derivatives for research purpose");
    - no commercial use of the Model, Derivatives or Output (Sec. 3.1);
    - no use of the Output to develop or improve other models (Sec. 3.1). This means: do NOT train, fine-tune or
-     distil any model on this part. The train split contains 2,083 such records; for training, replace their
+     distil any model on this part. The train split contains 2,086 such records; for training, replace their
      `text.ko` with `meta.template_text.ko` (part 2) or use the English text only.
 
    The author's own contribution to this part (the selection and filtering of the outputs, and the labels and

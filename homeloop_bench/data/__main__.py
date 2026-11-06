@@ -107,6 +107,18 @@ def cmd_delivery(a):
     return 0
 
 
+def cmd_tellfix(a):
+    """Lab round 3, H3: re-render the train / dev tell_fetch tasks with the fetch clause in its own sentence."""
+    from ..gen.tellfix import apply
+    from ..tasks import read_records
+    recs = [r for s in SPLITS for r in read_records(s)]
+    n = apply(recs, log=lambda m: print(m, file=sys.stderr))
+    for s in SPLITS:
+        _dump([r for r in recs if r["split"] == s], TASKS_DIR / f"{s}.jsonl")
+    print(json.dumps(n, sort_keys=True))
+    return 0 if not n["failed"] else 1
+
+
 def cmd_kofix(a):
     from ..gen.kofix import fix_all
     out, report = fix_all(_all())
@@ -126,7 +138,7 @@ def cmd_paraphrase(a):
     from ..gen.paraphrase import run
     return run(url=a.url, model=a.model, ko_model=a.ko_model, ko_judge=a.ko_judge, frac=a.frac, rounds=a.rounds,
                ko_rounds=a.ko_rounds, workers=a.workers, apply=not a.no_apply, offline=a.offline,
-               langs=tuple(a.langs.split(",")))
+               langs=tuple(a.langs.split(",")), tellfix=a.tellfix)
 
 
 def cmd_quality(a):
@@ -163,6 +175,9 @@ def main(argv=None):
     p.add_argument("--workers", type=int, default=8)
     p.add_argument("--no-apply", action="store_true", help="only fill the cache")
     p.add_argument("--offline", action="store_true", help="use only cached responses (no LLM calls)")
+    p.add_argument("--tellfix", action="store_true",
+                   help="lab round 3 (H3): paraphrase again only the records `tellfix` re-rendered")
+    sub.add_parser("tellfix")
     q = sub.add_parser("quality")
     q.add_argument("--url", default="http://127.0.0.1:11536")
     q.add_argument("--model", default="qwen3-vl:30b-a3b-instruct", help="back-translator (the Korean judge model)")
@@ -173,7 +188,7 @@ def main(argv=None):
     sub.add_parser("kofix")
     a = ap.parse_args(argv)
     return {"delivery": cmd_delivery, "datasheet": cmd_datasheet, "kofix": cmd_kofix, "generate": cmd_generate, "validate": cmd_validate, "stats": cmd_stats, "realism": cmd_realism,
-            "paraphrase": cmd_paraphrase, "quality": cmd_quality, "resplit": cmd_resplit}[a.cmd](a)
+            "tellfix": cmd_tellfix, "paraphrase": cmd_paraphrase, "quality": cmd_quality, "resplit": cmd_resplit}[a.cmd](a)
 
 
 if __name__ == "__main__":

@@ -40,6 +40,8 @@ from homeloop_robot.houses import list_houses, load_house
 from homeloop_robot.rng import derive_seed
 
 from ..data import CACHE_DIR, QUALITY_DIR, SPLITS, TASKS_DIR
+from .attach import FAMILIES as ATTACH_FAMILIES
+from .attach import attach_problem
 from .chrf import chrf
 from .dedup import NearDupIndex, norm
 from .textcheck import KO_BAD_HON, check_text, sentences, words
@@ -107,6 +109,14 @@ PROMPT = {
               "greetings and politeness may differ. Answer only JSON: {{\"same\": true}} or {{\"same\": false}}."
               "\n\nA: {a}\nB: {text}"),
 }
+# lab round 3 (H3): the clause-attachment question for "tell P <message> and bring me X" (English judge; a separate task, so
+# the cached same-meaning judgements and their sha stay valid). Korean has the back-translation check.
+PROMPT["judge_attach"] = (
+    "Request B was said to a home robot. It asks the robot to tell a message to a person and to bring an object. "
+    "Is the bringing of the object a separate request to the ROBOT (true), or can it be read as part of the message that "
+    "the person is told, for example the person being told to bring the object (false)? A request such as 'Tell Grandpa "
+    "to come to the kitchen and bring the book' is ambiguous (false). 'Tell Grandpa to come to the kitchen. And bring me "
+    "the book.' is separate (true). Answer only JSON: {{\"separate\": true}} or {{\"separate\": false}}.\n\nB: {text}")
 COMPOUND_NOTE = {
     "para_en": " The request holds several tasks: keep every task, its order words (first, then), its if/otherwise "
                "branches and any self-correction ('no wait, the other one') exactly as meant.",
@@ -115,7 +125,8 @@ COMPOUND_NOTE = {
     "para_ko": " 여러 가지 일을 한 번에 부탁하는 말이에요. 모든 일을 빠짐없이 두고, 순서(먼저, 그다음에), 조건(있으면/없으면), "
                "말을 고치는 부분(아니, 잠깐만요, ~ 말고)도 뜻이 그대로 유지되게 써 주세요.",
 }
-OPTIONS = {"para": {"temperature": 0.8, "num_predict": 256, "num_ctx": 2048},
+OPTIONS = {"judge_attach": {"temperature": 0.0, "num_predict": 32, "num_ctx": 2048},
+           "para": {"temperature": 0.8, "num_predict": 256, "num_ctx": 2048},
            "back": {"temperature": 0.0, "num_predict": 256, "num_ctx": 2048},
            "judge": {"temperature": 0.0, "num_predict": 32, "num_ctx": 2048},
            "judge_ko": {"temperature": 0.0, "num_predict": 64, "num_ctx": 2048}}
@@ -162,7 +173,8 @@ class LLM:
 
     def ask(self, task: str, inp: dict, seed: int) -> tuple:
         """(response text or "", sha)."""
-        opts = dict(OPTIONS[task if task in ("back", "judge", "judge_ko") else "para"], seed=int(seed) % 2**31)
+        opts = dict(OPTIONS[task if task in ("back", "judge", "judge_ko", "judge_attach") else "para"],
+                    seed=int(seed) % 2**31)
         prompt = build_prompt(task, inp)
         sha = request_sha(self.model, opts, prompt)
         hit = self.cache.d.get(sha)
@@ -191,6 +203,8 @@ def _decode(task: str, resp: str) -> str:
         return _judge(resp)
     if task == "judge_ko":
         return _judge_ko(resp)
+    if task == "judge_attach":
+        return _judge_attach(resp)
     return _parse(resp)
 
 
@@ -209,6 +223,14 @@ def _judge_ko(resp: str) -> str:
         if d.get(k) is not True:
             return "not_" + k
     return "same"
+
+
+def _judge_attach(resp: str) -> str:
+    try:
+        d = json.loads(resp)
+        return "same" if isinstance(d, dict) and d.get("separate") is True else "attached"
+    except Exception:  # noqa: BLE001
+        return "attached"
 
 
 def _judge(resp: str) -> str:
@@ -436,6 +458,8 @@ def filters(rec: dict, lang: str, para: str, near: NearDupIndex | None = None, s
     compound = rec.get("n_subtasks", 1) > 1 or rec.get("structure", "single") != "single"
     if check_text(para, lang, compound):
         why.append("R-g")
+    if attach_problem(rec, lang, para):
+        why.append("fetch_attached_to_message")        # lab round 3 (H3): the fetch clause shares the message's sentence
     if seen is not None and norm(para, lang) in seen[lang]:
         why.append("duplicate")
     if near is not None and near.find(para, lang, other_than=gsplit(rec)) is not None:
@@ -549,6 +573,14 @@ def _rounds(lang, sel, writer, judge, back, rounds, seen, near, gen_seed, batch,
                 rej[x] += 1
             still.append(r)
         verdicts = batch(judge, jobs)
+        if lang == "en":       # the clause-attachment question, for the tell + fetch family only (a second, separate judge call)
+            ax = [(i, r, text) for i, (r, text, *_rest) in enumerate(pend)
+                  if verdicts[i][0] == "same" and (r.get("meta") or {}).get("family") in ATTACH_FAMILIES]
+            av = batch(judge, [("judge_attach", {"text": text}, derive_seed(gen_seed, "judge_attach", gid(r)))
+                               for _i, r, text in ax])
+            for (i, _r, _t), (v2, sha2) in zip(ax, av):
+                if v2 != "same":
+                    verdicts[i] = ("judge_attach_" + v2, verdicts[i][1])
         for (r, text, sha, sc, bt, bsha), (v, jsha) in zip(pend, verdicts):
             if v != "same":
                 rej["judge_" + v] += 1
@@ -569,17 +601,28 @@ def _rounds(lang, sel, writer, judge, back, rounds, seen, near, gen_seed, batch,
 
 
 def run(url="http://127.0.0.1:11536", model=EN_MODEL, ko_model=KO_WRITER, ko_judge=KO_JUDGE, frac=0.6, rounds=3,
-        ko_rounds=4, workers=8, apply=True, offline=False, langs=("en", "ko"), gen_seed=2026, log=print) -> int:
+        ko_rounds=4, workers=8, apply=True, offline=False, langs=("en", "ko"), gen_seed=2026, log=print,
+        tellfix=False) -> int:
+    """``tellfix``: lab round 3 (H3). Only the records ``data tellfix`` re-rendered (``meta.tellfix``, template text
+    again) are paraphrased again, the ones that had an LLM text before; every other record keeps its text, which also
+    seeds the duplicate and near-duplicate indexes. The run summary goes to paraphrase_run_tellfix.json."""
     data = load_records()
     recs = [r for s in SPLITS for r in data[s]]
-    for r in recs:
-        restore_template(r)
+    if tellfix:
+        only = {r["id"] for r in recs if (r.get("meta") or {}).get("tellfix") and r["source"] == "template"
+                and not r["meta"]["tellfix"].get("paraphrased")
+                and any((r["meta"]["tellfix"].get("was_paraphrased") or {}).values())}
+        log(f"tellfix: {len(only)} records to paraphrase again")
+    else:
+        only = None
+        for r in recs:
+            restore_template(r)
     byid = {r["id"]: r for r in recs}
     llm = {"en": LLM(url, model, Cache(CACHE), offline=offline)}
     ko_cache = Cache(CACHE_KO)
     llm["ko_w"] = LLM(url, ko_model, ko_cache, offline=offline)
     llm["ko_j"] = LLM(url, ko_judge, ko_cache, offline=offline)
-    sel = select(recs, frac, gen_seed)
+    sel = select(recs, frac, gen_seed) if only is None else [r for r in recs if r["id"] in only]
     log(f"paraphrase: {len(sel)} of {len(recs)} records selected (frac {frac}); en {model}, ko {ko_model} "
         f"(judge {ko_judge}); offline={offline}")
     seen = {"en": set(), "ko": set()}
@@ -606,6 +649,10 @@ def run(url="http://127.0.0.1:11536", model=EN_MODEL, ko_model=KO_WRITER, ko_jud
     n_app = Counter()
     for i in sorted(byid, key=lambda k: gid(byid[k])):
         r = byid[i]
+        if only is not None and i not in only:
+            continue
+        if only is not None:
+            r["meta"]["tellfix"]["paraphrased"] = True
         new, mp = dict(r["text"]), {}
         for lg in langs:
             a = acc[lg].get(i)
@@ -648,7 +695,8 @@ def run(url="http://127.0.0.1:11536", model=EN_MODEL, ko_model=KO_WRITER, ko_jud
         for s in SPLITS:
             _write(TASKS_DIR / f"{s}.jsonl", data[s])
     QUALITY_DIR.mkdir(parents=True, exist_ok=True)
-    with open(QUALITY_DIR / "paraphrase_run.json", "w", encoding="utf-8") as f:
+    with open(QUALITY_DIR / ("paraphrase_run_tellfix.json" if tellfix else "paraphrase_run.json"), "w",
+              encoding="utf-8") as f:
         json.dump(summary, f, sort_keys=True, ensure_ascii=False, indent=1)
         f.write("\n")
     return 0

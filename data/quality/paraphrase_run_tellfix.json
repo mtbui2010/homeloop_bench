@@ -1,0 +1,75 @@
+{
+ "accepted": {
+  "en": 30,
+  "ko": 40
+ },
+ "applied": {
+  "any": 43,
+  "both": 27,
+  "en": 30,
+  "ko": 40
+ },
+ "asked": {
+  "en": 80,
+  "ko": 80
+ },
+ "cache_misses_offline": {
+  "en": 0,
+  "ko_j": 0,
+  "ko_w": 0
+ },
+ "chrf_min": 35.0,
+ "frac": 0.6,
+ "llm_calls": {
+  "en": 0,
+  "ko_j": 2,
+  "ko_w": 0
+ },
+ "models": {
+  "en": {
+   "judge": "qwen3-vl:8b-instruct",
+   "prompt_version": "p1",
+   "writer": "qwen3-vl:8b-instruct"
+  },
+  "ko": {
+   "back_translation": "qwen3-vl:30b-a3b-instruct",
+   "judge": "qwen3-vl:30b-a3b-instruct",
+   "prompt_version": "k2",
+   "writer": "exaone3.5:latest"
+  }
+ },
+ "rejections": {
+  "en": {
+   "ending_only": 15,
+   "entity_missing": 1,
+   "fetch_attached_to_message": 29,
+   "too_similar": 26
+  },
+  "ko": {
+   "R-g": 7,
+   "entity_missing": 3,
+   "fetch_attached_to_message": 7,
+   "ko_goal_verb_delivered": 13,
+   "ko_goal_verb_said_to": 1,
+   "ko_handover_as_place": 5,
+   "ko_imperative_question": 1,
+   "ko_register": 3,
+   "ko_speaker_honorific": 1,
+   "ko_wrong_honorific": 5,
+   "new_entity": 2,
+   "speaker_role_flip": 3,
+   "too_similar": 1
+  }
+ },
+ "rounds": {
+  "en": 3,
+  "ko": 4
+ },
+ "selected": 44,
+ "share_of_all": {
+  "any": 0.0043,
+  "both": 0.0027,
+  "en": 0.003,
+  "ko": 0.004
+ }
+}

@@ -679,6 +679,12 @@ CTX_KO = {
 # English joins; {a} {b} {c} verb phrases, {A} capitalised first phrase
 EN_SEQ2 = ["Could you {a} and {b}?", "{A}, and then {b}, please.", "Can you {a}? And after that, {b}.",
            "Please {a}, and {b}.", "{A}, then {b}."]
+# tell_fetch ("tell P <message> and bring me X"): the fetch clause never shares a sentence with the message, so it cannot
+# be read as part of it (lab round 3, H3; gen/attach.py checks every text). Index = request wrapper nn, as EN_SEQ2.
+EN_TELLFETCH = ["Could you {a}? And {b}.", "{A}. Then {b}, please.", "Can you {a}? And after that, {b}.",
+                "Please {a}. And {b}.", "{A}. After that, {b}."]
+KO_TELLFETCH = ["{a.imp} 그리고 {b.F}", "{a.imp} 그다음에 {b.F}", "{a.imp} 그러고 나서 {b.F}", "{a.imp} 그리고 {b.F}",
+                "{a.imp} 그 후에 {b.F}"]
 EN_ERRAND = ["Could you {a}, and while you're in {room}, {b}?", "{A}, and on your way back, {b}, please.",
              "Can you {a}? And since you're in {room} anyway, {b}.", "Could you {a} and {b}?", "{A}, then {b}."]
 EN_CONJ2 = ["Could you {a} and {b}?", "{A} and {b}, please.", "Can you {a}, and also {b}?", "I need you to {a} and {b}.",
@@ -903,6 +909,8 @@ def render(lex: Lex, cand: dict, rng, nn: int) -> dict | None:
         en_p, ko_p = EN_CONJ3, KO_CONJ3
     elif st in ("conjunction",):
         en_p, ko_p = EN_CONJ2, KO_CONJ2
+    elif fam == "tell_fetch":
+        en_p, ko_p = EN_TELLFETCH, KO_TELLFETCH
     else:
         en_p, ko_p = EN_SEQ2, KO_SEQ2
     en = _en_join(en_p[nn], vps, extra_en)

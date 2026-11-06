@@ -157,6 +157,19 @@ WAIT_OVERLAY = {"planner": {"recovery": {"wait": {"action": "Wait", "schedule_s"
                 "note": "assumed: no spec sheet declares a wait schedule for the mock robot; doubling backoff from 2 s"}
 
 
+def declared_meaning(question) -> dict | None:
+    """The structured form a question DECLARES about itself (robot_agent ``speech.LocalText.ask``: ``qtype`` plus slots,
+    e.g. the inventory which-question), else None: the question is then read from its words (``ra_dialog.derive``)."""
+    try:
+        from robot_agent.core.planning.speech import declared_ask
+    except ImportError:
+        return None
+    d = declared_ask(question)
+    if not d or not d.get("qtype"):
+        return None
+    return {**{k: v for k, v in d.items() if v}, "template": ["declared"]}
+
+
 def structured_asks(loop, proxy) -> bool:
     """Give the AssistLoop's questions their structured form (homeloop_robot docs/user_model.md): wrap
     ``_ask_io`` on this loop instance (robot_agent is not changed). It receives the English question before
@@ -169,7 +182,7 @@ def structured_asks(loop, proxy) -> bool:
         return False
 
     def _ask_io(question, node, log_fn, lang):
-        proxy.meaning = derive(question)
+        proxy.meaning = declared_meaning(question) or derive(question)
         try:
             return orig(question, node, log_fn, lang)
         finally:

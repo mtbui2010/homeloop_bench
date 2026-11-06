@@ -128,6 +128,15 @@ class CachedLLM:
     a miss (another run may have filled it since), under no lock: two runs that miss the same prompt at the same time
     both call the server, so run the baseline first."""
 
+    # Process-wide tally of every CachedLLM (planner, translator and the user's intent classifier of the run): the runner
+    # reads it before and after an episode and writes the difference to the record (``llm_cache``). "hits": own cache,
+    # "shared": answered from the shared file (another configuration asked it first), "misses": went to the server.
+    tally = {"hits": 0, "shared": 0, "misses": 0}
+
+    @classmethod
+    def tally_snapshot(cls) -> dict:
+        return dict(cls.tally)
+
     def __init__(self, inner, path, shared=None):
         self.inner = inner
         self.model = inner.model
@@ -185,17 +194,20 @@ class CachedLLM:
     def _cached(self, k: str, call, row: dict) -> str:
         if k in self._mem:
             self.hits += 1
+            CachedLLM.tally["hits"] += 1
             return self._mem[k]
         if self.shared is not None:
             self._scan_shared()
             smem = self._smem
             if k in smem:
                 self.shared_hits += 1
+                CachedLLM.tally["shared"] += 1
                 resp = smem[k]
                 self._mem[k] = resp
                 self._append(self.path, _dumps({"sha": k, "model": self.model, **row, "response": resp}) + "\n")
                 return resp
         self.misses += 1
+        CachedLLM.tally["misses"] += 1
         resp = call()
         self._mem[k] = resp
         line = _dumps({"sha": k, "model": self.model, **row, "response": resp}) + "\n"

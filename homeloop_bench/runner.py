@@ -20,7 +20,7 @@ from homeloop_robot.rng import r6
 from homeloop_robot.types import _round_tree
 
 from .env import Budgets, EpisodeEnv, give_up_text, task_dict
-from .llm import BudgetExceeded, FakeLLM, LLMError, llm_kind, make_llm
+from .llm import BudgetExceeded, CachedLLM, FakeLLM, LLMError, llm_kind, make_llm
 from .user_intent import classifier_kind
 from .planners import make_planner, needs_llm, planner_available, planner_class
 
@@ -33,6 +33,11 @@ def dumps(obj) -> str:
 
 class PlannerConfigError(ValueError):
     pass
+
+
+class StaleTasksError(PlannerConfigError):
+    """A ``--tasks`` file holds records that differ from the packaged ones with the same id (H1: a file written before a
+    data fix, e.g. the tell_fetch re-render, silently measures the old text)."""
 
 
 class InfraError(RuntimeError):
@@ -58,6 +63,7 @@ def run_episode(task, planner_name: str, profile: str, seed: int, lang: str, llm
     if llm is None and llm_spec:
         llm = make_llm(llm_spec, model)
     cls = planner_class(planner_name)
+    tally0 = CachedLLM.tally_snapshot()
     env = EpisodeEnv(task, profile, seed, lang, budgets, llm=llm, privileged=bool(getattr(cls, "privileged", False)),
                      interrupt_via=getattr(cls, "interrupt_via", "robot"))
     env.planner_name = planner_name
@@ -77,13 +83,62 @@ def run_episode(task, planner_name: str, profile: str, seed: int, lang: str, llm
     failed = getattr(env.llm(), "failed", None)
     if failed is not None:              # an LLM error that the planner's own code swallowed
         raise InfraError(f"task {env.task_id} seed {seed}: {type(failed).__name__}: {failed}") from failed
-    return env.record()
+    rec = env.record()
+    # H4: how many of this episode's LLM prompts were answered from the run's own cache ("hits"), from the file shared
+    # by the configurations of a replicate ("shared") and by the server ("misses"). misses > 0 = the episode is
+    # "touched": it asked something no earlier configuration asked, so a difference to them may come from there.
+    # Only a cached URL run has the field (a run with no cache or the fake LLM writes the record as before).
+    t1 = CachedLLM.tally_snapshot()
+    d = {k: t1[k] - tally0[k] for k in t1}
+    if any(d.values()):
+        rec["llm_cache"] = {**d, "touched": d["misses"] > 0}
+    return rec
 
 
 # ── task loading ────────────────────────────────────────────────────────────────────────────────────────
 
-def load_tasks(split: Optional[str] = None, limit: Optional[int] = None, tasks_file: Optional[str] = None) -> list:
-    """Tasks of a split (``homeloop_bench.tasks.load_split``) or of a JSONL file, first ``limit``."""
+def stale_records(records: list) -> list:
+    """Ids of ``records`` (dicts of a task file) that exist in the packaged train / dev split with other content.
+    A record whose id is not packaged (fixtures, custom tasks) is never stale. The test split is not read: a record
+    of the test split (by its ``split`` field or its id) is not compared."""
+    from .data import SPLITS
+    from .tasks import read_records
+    packaged: dict = {}
+    for sp in SPLITS:
+        if sp == "test":
+            continue
+        for r in read_records(sp):
+            packaged[r.get("id")] = r
+    bad = []
+    for r in records:
+        if not isinstance(r, dict):
+            continue
+        ref = packaged.get(r.get("id"))
+        if ref is not None and json.dumps(ref, sort_keys=True) != json.dumps(r, sort_keys=True):
+            bad.append(r.get("id"))
+    return bad
+
+
+def check_fresh_tasks(records: list, path, allow_stale: bool = False) -> None:
+    """Refuse a task file whose records differ from the packaged ones (see :func:`stale_records`) unless ``allow_stale``."""
+    if allow_stale:
+        return
+    try:
+        bad = stale_records(records)
+    except (ImportError, OSError):          # no packaged data to compare with: nothing to check
+        return
+    if bad:
+        raise StaleTasksError(
+            f"{path}: {len(bad)} of {len(records)} records differ from the packaged split (first: "
+            f"{', '.join(map(str, bad[:5]))}). The file is older than the data; regenerate it from the packaged split "
+            f"(`homeloop-bench tasks-file`) or pass --allow-stale to measure the old text on purpose")
+
+
+def load_tasks(split: Optional[str] = None, limit: Optional[int] = None, tasks_file: Optional[str] = None,
+               allow_stale: bool = False) -> list:
+    """Tasks of a split (``homeloop_bench.tasks.load_split``) or of a JSONL file, first ``limit``. A file whose
+    records differ from the packaged ones with the same id is refused (:class:`StaleTasksError`) unless
+    ``allow_stale``."""
     if tasks_file:
         out = []
         with open(tasks_file, encoding="utf-8") as f:
@@ -91,6 +146,7 @@ def load_tasks(split: Optional[str] = None, limit: Optional[int] = None, tasks_f
                 line = line.strip()
                 if line:
                     out.append(json.loads(line))
+        check_fresh_tasks(out, tasks_file, allow_stale)
         if split:
             same = [t for t in out if t.get("split") in (None, split)]
             out = same
@@ -177,7 +233,7 @@ def _worker(args) -> list:
 def run_many(planner_name: str, split: Optional[str], limit: Optional[int], profile: str, seeds: int, lang: str,
              llm_spec: Optional[str], out_dir, model: Optional[str] = None, workers: int = 1,
              tasks: Optional[list] = None, tasks_file: Optional[str] = None, budgets: Budgets = Budgets(),
-             llm=None, progress: bool = False, shard: Optional[tuple] = None) -> dict:
+             llm=None, progress: bool = False, shard: Optional[tuple] = None, allow_stale: bool = False) -> dict:
     """Run ``tasks x range(seeds)``, write DIR/episodes.jsonl, DIR/summary.json, DIR/report.md;
     returns the summary. ``shard=(k, n)``: only the tasks at index ``i % n == k`` of the run's task list (same
     order, seeds and settings), written to DIR/shard<k>/ with a shard.json for :func:`merge_shards`."""
@@ -188,7 +244,7 @@ def run_many(planner_name: str, split: Optional[str], limit: Optional[int], prof
     check_planner(planner_name)
     shares = None
     if tasks is None:
-        full = load_tasks(split, None, tasks_file)
+        full = load_tasks(split, None, tasks_file, allow_stale)
         tasks = full[: int(limit)] if limit is not None else full
         if len(tasks) < len(full):
             shares = split_shares(full)
@@ -267,6 +323,40 @@ def write_run(out_dir, episodes: list, summary: dict) -> Path:
                                       + "\n", encoding="utf-8")
     (out / "report.md").write_text(report.render(summary, episodes), encoding="utf-8")
     return out
+
+
+def _untouched(e: dict) -> bool:
+    """Every LLM prompt of the episode was answered from a cache (or it used no cached LLM)."""
+    return not (e.get("llm_cache") or {}).get("misses")
+
+
+def aa_compare(eps_a: list, eps_b: list) -> dict:
+    """A/A self-check of two runs of ONE configuration on a shared cache (common random numbers). Episodes are paired by
+    (task_id, seed). A run-B episode is *untouched* when all its prompts hit a cache (``llm_cache.misses`` is 0, or
+    the field is absent); an untouched episode must equal run A's, apart from the ``llm_cache`` field, because the
+    code then saw the same answers. A touched one asked something new (a prompt that changed between the runs) and is
+    only counted. ``ok``: no untouched episode differs and at least one was compared."""
+    key = lambda e: (e["task_id"], int(e["seed"]))                                   # noqa: E731
+    a = {key(e): e for e in eps_a}
+    strip = lambda e: json.dumps({k: v for k, v in e.items() if k != "llm_cache"}, sort_keys=True)   # noqa: E731
+    differ, same, touched, missing = [], 0, [], []
+    n_un = 0
+    for e in eps_b:
+        k = key(e)
+        if k not in a:
+            missing.append(f"{k[0]}#{k[1]}")
+            continue
+        if not _untouched(e):
+            touched.append(f"{k[0]}#{k[1]}")
+            continue
+        n_un += 1
+        if strip(e) == strip(a[k]):
+            same += 1
+        else:
+            differ.append(f"{k[0]}#{k[1]}")
+    return {"n_episodes": len(eps_b), "n_untouched": n_un, "n_touched": len(touched), "touched": touched,
+            "n_identical_untouched": same, "n_differ_untouched": len(differ), "differ_untouched": differ,
+            "unpaired": missing, "ok": not differ and not missing and n_un > 0}
 
 
 class MergeError(RuntimeError):

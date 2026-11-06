@@ -483,7 +483,11 @@ class EpisodeEnv:
         self.finish_reason = str(reason or "")
         if status not in FINISH_STATUSES:
             raise ValueError(f"finish status must be one of {FINISH_STATUSES}, got {status!r}")
-        if self.budget_hit or (status == "give_up" and self.llm_budget_hit and not self._hw_fault_after_llm_budget()):
+        if self.budget_hit or (status == "give_up" and self.llm_budget_hit and not self._hw_fault_after_llm_budget()) \
+                or (status == "give_up" and not self._budget_left() and not self._ended_by_fault()):
+            # (third clause, H3: a give-up when the call budget or the simulated-time budget is already used up is the
+            # budget too, also when the planner stopped without asking for one more call; before, such a run, e.g.
+            # n5_a2 sage_exec EN 014 with 60 of 60 calls and 360.4 s, was labelled give_up with an empty final_say)
             # a planner that gave up after its LLM budget ran out (it caught BudgetExceeded and went on, as robot_agent
             # does) ended for the budget; a claimed done / refuse keeps the planner's status (the judge is unchanged).
             # A hardware fault after the last refused LLM call ended it instead: the plan ran on without the LLM and
@@ -495,6 +499,11 @@ class EpisodeEnv:
         self.final_say = str(say or "")
         if status == "refuse":
             self.refusals.append({"text": self.final_say, "subtask": None, "obj": None, "whole": True})
+
+    def _ended_by_fault(self) -> bool:
+        """The last skill call failed with a persistent hardware fault or an e-stop: the robot broke down."""
+        c = self.calls[-1] if self.calls else None
+        return bool(c) and not c["ok"] and (c.get("code") == "estop" or c.get("event") == "hw_fault_persistent")
 
     def _hw_fault_after_llm_budget(self) -> bool:
         """A skill call made after the last refused LLM call failed with a hardware fault (or an e-stop), or one made

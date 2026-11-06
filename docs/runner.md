@@ -62,7 +62,7 @@ the private `env._world`, and a planner that reads it is not comparable with the
 | `max_llm_calls` | 30 per episode | design choice, so a looping LLM planner cannot run forever |
 
 A call past the budget is not executed: it returns `{"ok": false, "code": "timeout", "msg": "episode budget
-exhausted"}`, `env.over` becomes true, and the episode's status is `budget`.
+exhausted"}`, `env.over` becomes true, and the episode's status is `budget`. A `give_up` while the call or simulated-time budget is used up is `budget` too, unless the last call failed with a persistent hardware fault or an e-stop.
 
 ## Judge
 

@@ -11,6 +11,8 @@ from pathlib import Path
 from .llm import DEFAULT_MODEL
 
 LIVE_PLANNERS = "robot_agent:sage,progprompt_like"
+STALE_HELP = ("accept a --tasks file whose records differ from the packaged ones with the same id (default: refused; "
+              "such a file measures an old data version)")
 
 
 def cmd_planners(a) -> int:
@@ -30,6 +32,48 @@ def _budgets(a):
                    max_llm_calls=a.max_llm_calls or d.max_llm_calls)
 
 
+def _set_shared_cache(a) -> None:
+    """--shared-cache DIR [--replicate NAME] -> the environment variable the cached LLMs read (spawned workers inherit it)."""
+    if getattr(a, "shared_cache", None):
+        from .llm import SHARED_CACHE_ENV
+        d = Path(a.shared_cache) / a.replicate if getattr(a, "replicate", None) else Path(a.shared_cache)
+        os.environ[SHARED_CACHE_ENV] = str(d.resolve())
+
+
+def cmd_aa_check(a) -> int:
+    """Run one configuration twice on the same shared cache and compare (docs/runner.md "Common random numbers")."""
+    from .runner import InfraError, PlannerConfigError, aa_compare, run_many
+    if not getattr(a, "shared_cache", None) and not (a.llm is None or a.llm == "fake"):
+        print("aa-check with a URL needs --shared-cache DIR (the second run must find the first run's answers)",
+              file=sys.stderr)
+        return 2
+    prof = f"{a.profile}+{a.set}" if getattr(a, "set", None) else a.profile
+    outs = []
+    try:
+        _set_shared_cache(a)
+        for i in (1, 2):
+            out = Path(a.out) / f"aa_{i}"
+            run_many(a.planner, a.split, a.limit, prof, a.seeds, a.lang, a.llm, out, model=a.model, workers=a.workers,
+                     tasks_file=a.tasks, budgets=_budgets(a), progress=True,
+                     allow_stale=getattr(a, "allow_stale", False))
+            outs.append(out)
+    except PlannerConfigError as e:
+        print(str(e), file=sys.stderr)
+        return 2
+    except InfraError as e:
+        print(f"aa-check aborted: {e}", file=sys.stderr)
+        return 3
+    from .runner import read_episodes
+    res = aa_compare(read_episodes(outs[0]), read_episodes(outs[1]))
+    (Path(a.out) / "aa_check.json").write_text(json.dumps(res, sort_keys=True, indent=1) + "\n", encoding="utf-8")
+    print(json.dumps({k: res[k] for k in ("n_episodes", "n_untouched", "n_touched", "n_identical_untouched",
+                                           "n_differ_untouched", "ok")}, sort_keys=True))
+    if res["differ_untouched"]:
+        print("untouched episodes that differ (same prompts, same answers, other result): "
+              + ", ".join(res["differ_untouched"][:20]), file=sys.stderr)
+    return 0 if res["ok"] else 1
+
+
 def cmd_run(a) -> int:
     from .planners import REGISTRY, is_spec
     from .runner import InfraError, PlannerConfigError, run_many
@@ -47,11 +91,10 @@ def cmd_run(a) -> int:
                 print(f"--shard {a.shard!r}: use K/N, e.g. 0/3", file=sys.stderr)
                 return 2
             shard = (k, n)
-        if getattr(a, "shared_cache", None):
-            from .llm import SHARED_CACHE_ENV
-            os.environ[SHARED_CACHE_ENV] = str(Path(a.shared_cache).resolve())     # spawned workers inherit it
+        _set_shared_cache(a)
         s = run_many(a.planner, a.split, a.limit, prof, a.seeds, a.lang, a.llm, a.out, model=a.model,
-                     workers=a.workers, tasks_file=a.tasks, budgets=_budgets(a), progress=True, shard=shard)
+                     workers=a.workers, tasks_file=a.tasks, budgets=_budgets(a), progress=True, shard=shard,
+                     allow_stale=getattr(a, "allow_stale", False))
     except PlannerConfigError as e:
         print(str(e), file=sys.stderr)
         return 2
@@ -85,7 +128,7 @@ def cmd_prompt(a) -> int:
     from .planners.robot_agent_adapter import built_prompt
     from .env import task_dict
     from .runner import load_tasks
-    ts = [t for t in load_tasks(a.split, None, a.tasks) if task_dict(t).get("id") == a.task_id]
+    ts = [t for t in load_tasks(a.split, None, a.tasks, getattr(a, "allow_stale", False)) if task_dict(t).get("id") == a.task_id]
     if not ts:
         print(f"no task {a.task_id} in {a.tasks or a.split}", file=sys.stderr)
         return 1
@@ -110,7 +153,7 @@ def cmd_understand_eval(a) -> int:
     try:
         check_llm(a.planner, a.llm)
         check_planner(a.planner)
-        tasks = load_tasks(None if a.tasks else a.split, None, a.tasks)
+        tasks = load_tasks(None if a.tasks else a.split, None, a.tasks, getattr(a, "allow_stale", False))
     except PlannerConfigError as e:
         print(str(e), file=sys.stderr)
         return 2
@@ -198,7 +241,7 @@ def cmd_report(a) -> int:
 def cmd_show(a) -> int:
     from .runner import load_tasks
     if a.tasks:
-        ts = [t for t in load_tasks(None, None, a.tasks) if t.get("id") == a.task_id]
+        ts = [t for t in load_tasks(None, None, a.tasks, getattr(a, "allow_stale", False)) if t.get("id") == a.task_id]
         if not ts:
             print(f"no task {a.task_id}", file=sys.stderr)
             return 1
@@ -211,12 +254,41 @@ def cmd_show(a) -> int:
     return 0
 
 
+def cmd_tasks_file(a) -> int:
+    """Write packaged task records (current data, verbatim) to a JSONL file for ``run --tasks``: all of a split, or the
+    ids given (numbers like 14 stand for hl-<split>-000014). The test split is refused."""
+    from .tasks import read_records
+    if a.split == "test":
+        print("tasks-file does not write the test split", file=sys.stderr)
+        return 2
+    recs = read_records(a.split)
+    if a.ids:
+        want = []
+        for x in (i.strip() for i in a.ids.split(",") if i.strip()):
+            want.append(f"hl-{a.split}-{int(x):06d}" if x.isdigit() else x)
+        by = {r["id"]: r for r in recs}
+        missing = [w for w in want if w not in by]
+        if missing:
+            print(f"not in the {a.split} split: {', '.join(missing)}", file=sys.stderr)
+            return 1
+        recs = [by[w] for w in want]
+    if a.limit is not None:
+        recs = recs[: int(a.limit)]
+    out = Path(a.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with out.open("w", encoding="utf-8", newline="\n") as f:
+        for r in recs:
+            f.write(json.dumps(r, ensure_ascii=False, sort_keys=True) + "\n")
+    print(f"{len(recs)} records -> {out}")
+    return 0
+
+
 def cmd_calibrate(a) -> int:
     from .llm import make_llm
     from .planners.knowno_like import CALIB_PATH, calibrate
     from .runner import load_tasks
     llm = make_llm(a.llm, a.model)
-    tasks = load_tasks(a.split, a.limit, a.tasks)
+    tasks = load_tasks(a.split, a.limit, a.tasks, getattr(a, "allow_stale", False))
     c = calibrate(tasks, llm, epsilon=a.epsilon, lang=a.lang)
     c.update({"split": a.split, "limit": a.limit, "model": a.model if a.llm != "fake" else "fake", "lang": a.lang})
     out = Path(a.out) if a.out else CALIB_PATH
@@ -238,7 +310,7 @@ def cmd_live_smoke(a) -> int:
             out = live_dir(root, p, a.model, lang)
             try:
                 s = run_many(p, a.split, a.limit, a.profile, a.seeds, lang, a.llm, out, model=a.model,
-                             tasks_file=a.tasks, progress=True)
+                             tasks_file=a.tasks, progress=True, allow_stale=getattr(a, "allow_stale", False))
             except PlannerConfigError as e:
                 print(str(e), file=sys.stderr)
                 return 2
@@ -257,7 +329,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("planners", help="list planners").set_defaults(fn=cmd_planners)
 
-    r = sub.add_parser("run", help="run a planner on a split")
+    r = argparse.ArgumentParser(add_help=False)          # the arguments of `run`, shared with `aa-check`
     r.add_argument("--planner", required=True)
     r.add_argument("--split", default="dev")
     r.add_argument("--limit", type=int, default=None)
@@ -269,6 +341,7 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--out", required=True)
     r.add_argument("--workers", type=int, default=1)
     r.add_argument("--tasks", default=None, help="a task JSONL file instead of the packaged split")
+    r.add_argument("--allow-stale", action="store_true", help=STALE_HELP)
     r.add_argument("--set", default=None, metavar="KEY=V[,KEY=V]",
                    help="override scalar profile parameters, e.g. asr.ko.app_cer=0.02 (sensitivity runs; the "
                         "summary's config.profile and profile_sha record it)")
@@ -281,7 +354,14 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--max-calls", type=int, default=None)
     r.add_argument("--max-sim-time-s", type=float, default=None)
     r.add_argument("--max-llm-calls", type=int, default=None)
-    r.set_defaults(fn=cmd_run)
+    r.add_argument("--replicate", default=None, metavar="NAME",
+                   help="with --shared-cache DIR: use DIR/NAME as the cache, one per replicate (repeat of the same "
+                        "slice); every configuration of the replicate gets the same answer to an identical prompt")
+    sub.add_parser("run", help="run a planner on a split", parents=[r]).set_defaults(fn=cmd_run)
+    sub.add_parser("aa-check", parents=[r],
+                   help="A/A self-check: run the same configuration twice on one shared cache (OUT/aa_1, OUT/aa_2) "
+                        "and require identical episodes wherever every prompt hit the cache; needs --shared-cache"
+                   ).set_defaults(fn=cmd_aa_check)
 
     c = sub.add_parser("compare", help="paired McNemar test of two run directories")
     c.add_argument("dir_a")
@@ -298,6 +378,7 @@ def build_parser() -> argparse.ArgumentParser:
     pr.add_argument("--planner", default="robot_agent:sage")
     pr.add_argument("--split", default="dev")
     pr.add_argument("--tasks", default=None)
+    pr.add_argument("--allow-stale", action="store_true", help=STALE_HELP)
     pr.add_argument("--lang", default="en", choices=["en", "ko"])
     pr.add_argument("--profile", default="real", choices=["ideal", "real", "stress"])
     pr.add_argument("--seed", type=int, default=0)
@@ -310,6 +391,7 @@ def build_parser() -> argparse.ArgumentParser:
     ue.add_argument("--planner", default="robot_agent:sage", help="a SAGE planner; its options, ENV and translate model are used")
     ue.add_argument("--split", default="train", choices=["train", "dev", "test"], help="the test split is refused")
     ue.add_argument("--tasks", default=None, help="a task JSONL file instead of the packaged split")
+    ue.add_argument("--allow-stale", action="store_true", help=STALE_HELP)
     ue.add_argument("--limit", type=int, default=None)
     ue.add_argument("--offset", type=int, default=0)
     ue.add_argument("--lang", default="en", help="en, ko or en,ko")
@@ -332,7 +414,15 @@ def build_parser() -> argparse.ArgumentParser:
     sh = sub.add_parser("show", help="print one task")
     sh.add_argument("task_id")
     sh.add_argument("--tasks", default=None)
+    sh.add_argument("--allow-stale", action="store_true", help=STALE_HELP)
     sh.set_defaults(fn=cmd_show)
+
+    tf = sub.add_parser("tasks-file", help="write the packaged records of a split (or some ids) to a JSONL for `run --tasks`")
+    tf.add_argument("--split", default="dev", choices=["train", "dev", "test"], help="the test split is refused")
+    tf.add_argument("--ids", default=None, help="comma list: full ids or numbers (14 = hl-<split>-000014)")
+    tf.add_argument("--limit", type=int, default=None)
+    tf.add_argument("--out", required=True)
+    tf.set_defaults(fn=cmd_tasks_file)
 
     k = sub.add_parser("calibrate-knowno", help="conformal threshold for knowno_like")
     k.add_argument("--split", default="train")
@@ -342,6 +432,7 @@ def build_parser() -> argparse.ArgumentParser:
     k.add_argument("--epsilon", type=float, default=0.15)
     k.add_argument("--lang", default="en", choices=["en", "ko"])
     k.add_argument("--tasks", default=None)
+    k.add_argument("--allow-stale", action="store_true", help=STALE_HELP)
     k.add_argument("--out", default=None)
     k.set_defaults(fn=cmd_calibrate)
 
@@ -356,13 +447,19 @@ def build_parser() -> argparse.ArgumentParser:
     ls.add_argument("--langs", default="en,ko")
     ls.add_argument("--root", default="results/live_smoke")
     ls.add_argument("--tasks", default=None)
+    ls.add_argument("--allow-stale", action="store_true", help=STALE_HELP)
     ls.set_defaults(fn=cmd_live_smoke)
     return ap
 
 
 def main(argv=None) -> int:
     a = build_parser().parse_args(argv)
-    return int(a.fn(a) or 0)
+    from .runner import StaleTasksError
+    try:
+        return int(a.fn(a) or 0)
+    except StaleTasksError as e:
+        print(str(e), file=sys.stderr)
+        return 2
 
 
 if __name__ == "__main__":

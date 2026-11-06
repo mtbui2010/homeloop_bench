@@ -29,7 +29,7 @@ from typing import Optional
 
 from homeloop_robot.intent import QTYPES, clean
 
-from .llm import CachedLLM, FakeLLM, LLMError, parse_json
+from .llm import CachedLLM, FakeLLM, LLMError, parse_json, shared_cache_path
 
 PROMPT_VERSION = "ui2"
 CACHE_NAME = "user_intent.jsonl"
@@ -140,7 +140,8 @@ def make_classifier(llm) -> Optional[IntentClassifier]:
         path = Path(cached.path).parent / CACHE_NAME
         key = (str(path), getattr(raw, "model", ""))
         if key not in _SHARED:
-            _SHARED[key] = IntentClassifier(CachedLLM(raw, path))
+            _SHARED[key] = IntentClassifier(CachedLLM(raw, path, shared=shared_cache_path(getattr(raw, "model", "") or "")
+                                                      if getattr(raw, "model", None) else None))
         return _SHARED[key]
     key = (id(raw), getattr(raw, "model", ""))
     if key not in _SHARED:

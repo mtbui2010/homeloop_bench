@@ -406,6 +406,7 @@ def seed_memory(env, path) -> int:
 
     from homeloop_robot.catalog import COLORS, class_names
     places: dict = {}
+    who: dict = {}                      # name -> ids of the objects it can mean
     for o in env.object_memory():
         for lg in ("en", "ko"):
             try:
@@ -418,8 +419,14 @@ def seed_memory(env, path) -> int:
             names = base + ([f"{cname} {b}" for b in base] if cname else [])
             for n in names:
                 places.setdefault(words(n), set()).add(o.usual_place)
+                who.setdefault(words(n), set()).add(o.id)
     now = time.time()
-    objs = {n: {"place": next(iter(ps)), "ts": now, "how": "house memory"}
+    # H2: a record names the object it is about (``instance``) when the name means exactly one. robot_agent's
+    # ``inventory_ask`` counts remembered INSTANCES (goal_fix.instances: the same instance id, or the pack's aliases),
+    # not names; without the id "black mug" and "black coffee mug" of one mug were two candidates, the which-question
+    # listed 4 names for 2 mugs, and the person's one-word answer picked among synonyms.
+    objs = {n: {"place": next(iter(ps)), "ts": now, "how": "house memory",
+                **({"instance": next(iter(who[n]))} if len(who[n]) == 1 else {})}
             for n, ps in sorted(places.items()) if n and len(ps) == 1}
     Path(path).write_text(json.dumps({"objects": objs, "answers": []}, ensure_ascii=False, indent=1))
     return len(objs)

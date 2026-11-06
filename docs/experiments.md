@@ -2140,3 +2140,20 @@ read-back helps or costs a turn is open.
 - The pivot language is a code constant (`langdata.PROMPT_LANG = "en"`, the language of the prompts); `lg == "en"` checks in the language layer
   still assume an English pivot. The action names (Find, MoveTo, Open) are the action model's vocabulary.
 - The thresholds above are data now but still unvalidated: no sensitivity sweep, and no run on a second robot.
+
+## Round 6, step 1: measurement fixes (2026-11-06; CPU only, no scoring change)
+
+The n5_a2 gate left four measurement problems. They are fixed here before any new run. No rate, no scoring rule and no task changed.
+
+| # | defect (evidence) | fix | test |
+|---|---|---|---|
+| H1 | `--tasks FILE` was trusted. `results/r4/n5_a2/run.sh` reused the `tasks.jsonl` of `n5_a1` (14:18), older than the tell_fetch re-render (4a0550c, 15:19), so the 015 cells measured the old text. | A tasks file is compared with the packaged train / dev records of the same id. One that differs is refused (`StaleTasksError`, exit 2) unless `--allow-stale`. An id that is not packaged (fixtures, custom tasks) is never stale; the test split is not read. `tasks-file --split S [--ids 14,15]` writes the current records. | `tests/test_measurement_fixes_r6.py` |
+| H2 | `inventory_ask` asked "the black mug or the white mug or the black coffee mug or the white coffee mug" for 2 mugs (n5_a2, 014 EN `sage_inv`). robot_agent counts remembered instances (record `instance` / `id`, or the pack's aliases), but the adapter's `seed_memory` wrote name -> place only, so every synonym was its own candidate. Mapping `INTENT_TO_QTYPE` itself was right: the question reached the user as `which_object` with its options. | `seed_memory` adds `instance` (the object id) to a record when the name means exactly one object. The option list is now 2 names for 2 mugs. Other planners are not touched (only `goal_fix.instances` reads the key). | same file |
+| H3 | `finish` labelled a give-up `budget` only after a refused call. A planner that stopped with the call or time budget used up but asked for no more call stayed `give_up` (n5_a2 `sage_exec` EN 014: 60 of 60 calls, 360.4 s, empty final_say). The gate text called it a budget stop, the record said give_up. | A `give_up` while the call or the simulated-time budget is used up is `budget`, except when the last call failed with a persistent hardware fault or an e-stop (the robot broke down). `done` and `refuse` keep their status; success is unchanged. | same file |
+| H4 | `--shared-cache` existed, but (a) nothing said which episode had asked the server, (b) the user-intent classifier did not read it, (c) no check showed that two identical configurations give identical episodes. | Every cached LLM (planner, translator, intent classifier) counts into a tally. An episode record has `llm_cache` = `{hits, shared, misses, touched}` (`touched` = some prompt went to the server; absent for the fake LLM or no cache). `--shared-cache ROOT --replicate NAME` uses ROOT/NAME, one cache per replicate for all configurations. `aa-check` takes the arguments of `run`, runs the configuration twice on one shared cache (OUT/aa_1, aa_2) and requires identical episodes wherever the second run had 0 misses; it writes OUT/aa_check.json and exits 1 on a difference, 2 when nothing could be compared. | same file |
+
+Left: (1) for a class whose instances all share one usual place (28 % of the multi-instance classes in the dev clarify tasks, for
+example two books on one shelf) the bare class name stays in the object memory, so `inventory_ask` has nothing to ask. Dropping the name
+would change what every planner remembers, so it is not done. (2) `llm_cache` counts depend on the order of the configurations, so
+they are not in summary.json. (3) The A/A check needs a live server to be meaningful for SAGE; it was tested with a local server over the
+keyword model only.

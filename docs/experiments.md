@@ -2135,7 +2135,7 @@ read-back helps or costs a turn is open.
 
 - Korean morphology elsewhere in core (the particle list and the verb endings in `understand`, `speech`, `dialog_converge`, `_EN_INTO`
   / `_KO_INTO` in `goal_fix`) is still code; it is not flag code and moving it would touch every run.
-- `dialog.restate` (`_restates`, 0.6 / 4 / 3) in the always-on loop and the `understand` word lists for refusals are code.
+- `AssistLoop._restates` (0.6 / 4 / 3) in the always-on loop and the `understand` word lists for refusals are code.
 - Korean has no `answer_unsure` phrases. Adding them would change Korean dialog_unstick behaviour, so it needs an ablation first.
 - The pivot language is a code constant (`langdata.PROMPT_LANG = "en"`, the language of the prompts); `lg == "en"` checks in the language layer
   still assume an English pivot. The action names (Find, MoveTo, Open) are the action model's vocabulary.

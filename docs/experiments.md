@@ -2323,11 +2323,11 @@ per-call `num_predict` that is not in any cache key, `understand-eval --understa
 ### Checks before any GPU run
 - The default path is byte-identical: the 12-task `--llm fake` pin for `sage_ground2` (EN and KO, `fake_cmp.sh`) gives identical
   `episodes.jsonl` before and after (only the git SHAs in `summary.json` differ). robot_agent suite: all pass (new file
-  `tests/test_sage_lab_r7_understand_model.py`, 30 tests through the real `AssistLoop.run_blocking` with two scripted clients: the
+  `tests/test_sage_lab_r7_understand_model.py`, 30 tests (the base_robot one is skipped when base_robot is not on the path) through the real `AssistLoop.run_blocking` with two scripted clients: the
   understand prompts go to the understand model and the search ranking to the planner; a runaway falls back with no quoting repair and
   the event comes before the reading it replaced; too many goals / three identical goals; `num_predict` only on the understand call; a
   missing model, also one that cannot be built; a KO-only map leaves EN equal to the default run; a made-up code `zz` with no map entry takes
-  the default and with a map entry gets its model; the base_robot manifest with the new keys). homeloop_bench: 449 tests pass.
+  the default and with a map entry gets its model; the base_robot manifest with the new keys). homeloop_bench: 456 tests pass; robot_agent 1382 passed, 3 skipped.
 - Rescoring the cached 8B baselines with M1 / M2 added matches only (train 226 -> 232 of 476, dev 288 -> 290 of 484, zero LLM calls).
   All later baseline numbers in this section are these rescored ones; the variants are scored by the same code.
 
@@ -2339,8 +2339,8 @@ the exact flag in 2 of 20 (the 30B is not deterministic at temperature 0 / seed 
 ### Slice (tasks 30..149 of train and dev, EN and KO, clean and ASR; first reading only, `understand-eval`, not end to end)
 Baseline: the 8B planner reads (`sage_ground2`, r6 cache, rescored). `sage_um`: the 30B reads, the 8B is the guard's fallback. 772
 headline records (a feasible task with no refused part) of 960; 960 30B understand calls, 99 fallbacks (10.3 %: train EN 16, KO 24, dev EN
-26, KO 33 of 240; 98 `non_json`, 2 `goals`, 1 `repeat`), 0 `ended`, no record needed more than one understand call. All 79 non-JSON answers
-inspected were the same runaway (a list of `go` goals through the houses' places; 69 repeat one goal block three times or more); the longest
+26, KO 33 of 240; 96 `non_json`, 2 `goals`, 1 `repeat`), 0 `ended`, no record needed more than one understand call. Of the first 780 cached 30B readings, 79 were non-JSON; all of them
+were the same runaway (a list of `go` goals through the houses' places; 69 repeat one goal block three times or more); the longest
 valid answer was 1227 characters (p95 628), so the 512-token cap (about 1650 characters) cut no valid reading. A fallback reading equals
 the 8B baseline's reading (75 of 75 headline fallbacks).
 
@@ -2354,7 +2354,7 @@ the 8B baseline's reading (75 of 75 headline fallbacks).
 
 - The gain is mostly recall: fewer dropped atoms (`give` 214 -> 173, `put_on` 94 -> 72) and fewer questions. Spurious atoms do not fall
   (dev: 101 -> 140): `go` 42 -> 66, extra `close` after a put-in, a `say` to the speaker, a `put_on` instead of a `give`.
-  Of the 54 losses, 23 have both a dropped and a spurious atom, 13 only a spurious one, 9 also asked a question, 8 have a refusal / ambiguity status with the goals dropped.
+  Of the 54 losses, 23 have both a dropped and a spurious atom, 13 only a spurious one, 9 also asked a question, 7 have a refusal / ambiguity status with the goals dropped.
 - Confident wrong readings do not fall (192 -> 196), so the 30B alone does not reduce false successes at the reading; the asked-on-exact
   rate rises 1.4 points (limit used in round 6: 1.5).
 - `sage_um_ko` (the 30B reads Korean only; English is the 8B): English identical to the baseline (0 gains, 0 losses, no 30B call for English),

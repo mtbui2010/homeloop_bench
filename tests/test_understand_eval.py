@@ -382,3 +382,20 @@ def test_the_new_variants_are_registered_and_say_what_they_set():
     assert planner_class("robot_agent:sage_um_strict").run_config()["understand_schema_strict"] == 1
     assert planner_class("robot_agent:sage_m2").run_config()["understand_verify_verdict"] == 1
     assert "understand_model" not in planner_class("robot_agent:sage_ground2").run_config()
+
+
+def test_run_episodes_of_an_understand_model_variant_record_the_calls_and_fallbacks(tmp_path):
+    """The episode path (``run``): the understand model's calls are counted apart on the episode cap, the record and the summary
+    say so, and a variant without one has none of those keys (--llm fake, the fake answers every prompt)."""
+    from homeloop_bench.runner import run_many
+    tasks = fixture_tasks()[:3]
+    s = run_many("robot_agent:sage_um", None, None, "ideal", 1, "en", "fake", tmp_path / "um", tasks=tasks)
+    eps = [json.loads(l) for l in (tmp_path / "um" / "episodes.jsonl").read_text().splitlines()]
+    assert all(e["llm_calls_understand"] >= 1 and e["llm_calls_understand"] <= e["llm_calls"] and e["llm_calls_translate"] == 0
+               and e["understand_fallbacks"] == [] for e in eps)
+    assert s["llm_calls_understand_mean"] > 0 and s["understand_fallbacks"] == 0
+    assert s["config"]["planner_config"]["n_fallbacks"] == 0
+    assert s["config"]["planner_config"]["understand_model"] == "qwen3-vl:30b-a3b-instruct"
+    s2 = run_many("robot_agent:sage_ground2", None, None, "ideal", 1, "en", "fake", tmp_path / "plain", tasks=tasks)
+    eps2 = [json.loads(l) for l in (tmp_path / "plain" / "episodes.jsonl").read_text().splitlines()]
+    assert all("llm_calls_understand" not in e for e in eps2) and "llm_calls_understand_mean" not in s2

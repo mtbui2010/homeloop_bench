@@ -439,6 +439,8 @@ def run_eval(tasks: list, planner_name: str, profile: str, seed: int, langs: lis
            "model": model if llm_spec and llm_spec != "fake" else None, "llm": "fake" if llm_spec == "fake" else "live",
            "n_tasks": len(tasks), **({"understand_model": understand_model} if understand_model else {}), **(config or {})}
     summary = summarize(rows, cfg)
+    if "understand" in summary:
+        summary["config"]["n_fallbacks"] = summary["understand"]["fallbacks"]
     with (out / "records.jsonl").open("w", encoding="utf-8", newline="\n") as f:
         for r in rows:
             f.write(dumps(r) + "\n")

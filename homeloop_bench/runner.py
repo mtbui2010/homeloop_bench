@@ -295,6 +295,10 @@ def run_many(planner_name: str, split: Optional[str], limit: Optional[int], prof
               "versions": _versions(planner_name), "model_digest": _digest(llm, llm_spec, model),
               "budgets": {"max_calls": budgets.max_calls, "max_sim_time_s": r6(budgets.max_sim_time_s),
                           "max_llm_calls": budgets.max_llm_calls}}
+    if any("llm_calls_understand" in e for e in episodes) and isinstance(config["planner_config"], dict):
+        # a variant with its own understand model: how many readings fell back to the planner (robot_agent's runaway guard)
+        config["planner_config"] = {**config["planner_config"],
+                                    "n_fallbacks": sum(len(e.get("understand_fallbacks") or []) for e in episodes)}
     if shard is not None:
         sh_info = {"k": k, "n": n_sh, "task_ids": [task_dict(t)["id"] for t in all_tasks], "seeds": int(seeds),
                    "config": config, "split_shares": shares}

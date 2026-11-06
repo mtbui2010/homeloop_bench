@@ -367,6 +367,8 @@ class _RobotAgentPlanner:
     seed_pool = True             # the robot package's seed pool (manifest planner.seed_memory) is retrieved from
     people_tracking = True       # the ENV gives people's last-seen positions (False: the robot must ask)
     loop_options: dict = {}      # AssistLoop options of the variant (hazard_rules, gate_complete)
+    _LAB_FLAGS = ("exec_integrity", "gate_strict", "endstate_check", "reset_container", "wait_on_robot",
+                  "inventory_ask")      # lab round 3 (round 2's flags were never recorded: their summary.json stay as they were)
 
     @classmethod
     def run_config(cls) -> dict:
@@ -383,6 +385,8 @@ class _RobotAgentPlanner:
                 "gate_complete": int(cls.loop_options.get("gate_complete", 0)) if cls.loop_kind == "assist" else None,
                 # recorded only where the flag is set, so the other variants' summary.json stay as they were
                 **({"person_goals": 1} if cls.loop_kind == "assist" and cls.loop_options.get("person_goals") else {}),
+                # lab-round options, likewise only where set
+                **({k: 1 for k in cls._LAB_FLAGS if cls.loop_options.get(k)} if cls.loop_kind == "assist" else {}),
                 # the language layer (robot_agent core/planning/language.py): what a Korean user says reaches the
                 # understand prompt as the original (none), its English (translate) or both
                 "input_pivot": str(cls.loop_options.get("input_pivot", mp.get("input_pivot", "none"))
@@ -613,6 +617,53 @@ class SageReaskPlanner(SagePlanner):
     """robot_agent:sage with reask_abstain on: one directed re-understand of a goal-less where-is-it reading."""
     name = "robot_agent:sage_reask"
     loop_options = {"reask_abstain": "1"}
+
+
+class SageExecPlanner(SagePlanner):
+    """robot_agent:sage with execution integrity on (SAGE-v2 lab round 3, robot_agent option family ``exec_integrity``:
+    gate_strict, endstate_check, reset_container, wait_on_robot; default off). A certifying per-goal repair, a checked
+    return to the last go goal, a reset of a BLOCKED container, a wait on the robot where the pack declares one.
+    No extra LLM call. A prototype under test, not a result."""
+    name = "robot_agent:sage_exec"
+    loop_options = {"exec_integrity": "1"}
+
+
+class SageInventoryPlanner(SagePlanner):
+    """robot_agent:sage with ``inventory_ask`` on (lab round 3): an object the person names that matches more than one
+    instance in the robot's own object memory is narrowed by the person's words, else asked once (closed choice)."""
+    name = "robot_agent:sage_inv"
+    loop_options = {"inventory_ask": "1"}
+
+
+class SageEiGatePlanner(SagePlanner):
+    """Ablation of sage_exec: gate_strict only."""
+    name = "robot_agent:sage_ei_gate"
+    loop_options = {"gate_strict": "1"}
+
+
+class SageEiEndPlanner(SagePlanner):
+    """Ablation of sage_exec: endstate_check only."""
+    name = "robot_agent:sage_ei_end"
+    loop_options = {"endstate_check": "1"}
+
+
+class SageEiResetPlanner(SagePlanner):
+    """Ablation of sage_exec: reset_container only."""
+    name = "robot_agent:sage_ei_reset"
+    loop_options = {"reset_container": "1"}
+
+
+class SageEiWaitPlanner(SagePlanner):
+    """Ablation of sage_exec: wait_on_robot only (acts only where the robot package declares planner.recovery.wait)."""
+    name = "robot_agent:sage_ei_wait"
+    loop_options = {"wait_on_robot": "1"}
+
+
+class SageR3Planner(SagePlanner):
+    """The lab-round-3 combination: grounding chain v2 (go_steps, kind_anchor, name_canon) + execution integrity +
+    inventory_ask. Every option is default off in robot_agent; this variant differs from robot_agent:sage in them only."""
+    name = "robot_agent:sage_r3"
+    loop_options = {"go_steps": "1", "kind_anchor": "1", "name_canon": "1", "exec_integrity": "1", "inventory_ask": "1"}
 
 
 class SageGoldPlanner(SagePlanner):

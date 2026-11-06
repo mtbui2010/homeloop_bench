@@ -40,9 +40,6 @@ def understand_goals(env, with_source: bool = True) -> list:
         o = w.objects.get(oid)
         return "" if not with_source else o.at if o is not None and o.at in w.house.places else ""
 
-    def seat(pid):                      # robot_agent moves to ENV places only: a person's seat place
-        p = w.people.get(pid)
-        return p.seat if p is not None else pid
     for a in gold_goals(env):
         if "any" in a:                  # robot_at in any one of a room's places: go to the first that is not the floor
             ps = sorted(x["args"][0] for x in a["any"] if x.get("pred") == "robot_at")
@@ -68,8 +65,11 @@ def understand_goals(env, with_source: bool = True) -> list:
                 # "near the person": the robot package binds a person as a place to the surface they can reach
                 out.append({"type": "on", "object": _obj_name(w, args[0]), "from": src(args[0]), "to": args[1]})
             else:
-                out.append({"type": "deliver", "object": _obj_name(w, args[0]), "from": src(args[0]),
-                            "to": seat(args[1])})
+                # a hand delivery to another person, written the way robot_agent's understanding writes it: the object
+                # ``on`` the person, ``hand``. (The goal kind ``deliver`` compiles to MoveTo + WaitForUnload with no
+                # fetch, which the plan gate refuses: a measurement artifact of the gold ceiling, not robot behaviour.)
+                out.append({"type": "on", "object": _obj_name(w, args[0]), "from": src(args[0]),
+                            "to": _person_key(w, args[1]), "hand": True})
         elif p == "said_to":
             txt = (MESSAGE_TEXT.get(args[1]) or {}).get(env.lang) or args[1]
             # the listener's ENV entry (robot_agent goes to a person entry: its last-seen spot, or the person)

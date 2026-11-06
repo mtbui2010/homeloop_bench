@@ -83,8 +83,10 @@ class RAClient:
         self.history: dict = {}
 
     def chat(self, prompt: str = "", format=None, **kw) -> str:
+        # ``num_predict`` (robot_agent's cap on the guarded understand call) is passed on only when given
+        extra = {"num_predict": int(kw["num_predict"])} if kw.get("num_predict") else {}
         return self.llm.chat(prompt, format=format, temperature=float(kw.get("temperature") or 0.0),
-                             seed=int(kw.get("seed") or 0))
+                             seed=int(kw.get("seed") or 0), **extra)
 
     def chat_guide(self, prompt, guide=None, reuse=False, **kw) -> str:
         p = guide.replace("COMMAND_HERE", prompt) if isinstance(guide, str) and "COMMAND_HERE" in guide else prompt
@@ -326,6 +328,28 @@ class TranslateCounter:
         return out
 
 
+class UnderstandCounter:
+    """The client of robot_agent's ``understand_model`` (role ``understand``): its own model on the same server, its own cache
+    (``llm_cache/<model>.jsonl``), counted on the EPISODE's call counter (the one cap) and apart in
+    ``env.llm_calls_understand``. Routed by the ROLE robot_agent gives the client, not by the model name: with the understand
+    model equal to the translator's, the understand calls would otherwise be counted as translation. A failed call does not
+    abort the episode (robot_agent's runaway guard falls back to the planner's model); a budget that is used up refuses it."""
+
+    def __init__(self, env, model: str, inner=None):
+        self.env, self.model, self.inner = env, model, inner
+
+    def chat(self, prompt: str, format=None, temperature: float = 0.0, seed: int = 0, num_predict=None) -> str:
+        counter = self.env.llm()
+        inner = self.inner if self.inner is not None else counter.inner
+        if counter.max_calls is not None and counter.calls >= counter.max_calls:
+            counter.refused += 1
+            raise BudgetExceeded(f"LLM budget of {counter.max_calls} calls exhausted")
+        counter.calls += 1
+        self.env.llm_calls_understand = getattr(self.env, "llm_calls_understand", 0) + 1
+        extra = {"num_predict": num_predict} if num_predict else {}
+        return inner.chat(prompt, format=format, temperature=temperature, seed=seed, **extra)
+
+
 def translator_inner(env, model: str):
     """The translate model's client on the episode's server and cache dir (None under --llm fake: the fake
     answers translation prompts itself)."""
@@ -466,6 +490,11 @@ def _status(final: dict | None) -> str:
     return "give_up"
 
 
+def _understands_apart(loop_options: dict, overlay: dict) -> bool:
+    ov = (overlay or {}).get("planner") or {}
+    return any((loop_options or {}).get(k) or ov.get(k) for k in ("understand_model", "understand_model_lang"))
+
+
 class _RobotAgentPlanner:
     privileged = False
     # a correction reaches robot_agent as an utterance injected into the run (its live dialog channel),
@@ -481,13 +510,21 @@ class _RobotAgentPlanner:
     loop_options: dict = {}      # AssistLoop options of the variant (hazard_rules, gate_complete)
     _LAB_FLAGS = ("exec_integrity", "gate_strict", "endstate_check", "reset_container", "wait_on_robot",
                   "inventory_ask", "dialog_unstick",       # lab round 3 (and 4: dialog_unstick)
-                  "reask_anchor", "no_shared_listener", "understand_views", "understand_goals_first")   # round 7
+                  "reask_anchor", "no_shared_listener", "understand_views", "understand_goals_first",   # round 7
+                  "understand_schema_strict", "understand_give_kind", "understand_verify_verdict")
     # (round 2's flags were never recorded: their summary.json stay as they were)
     # every option the loop reads from the variant: the episodes of a variant that sets one carry ``lab_events``
-    _ALL_LAB_FLAGS = _LAB_FLAGS + ("person_goals", "go_steps", "kind_anchor", "name_canon", "reask_abstain")
+    _ALL_LAB_FLAGS = _LAB_FLAGS + ("person_goals", "go_steps", "kind_anchor", "name_canon", "reask_abstain",
+                                   "understand_model")
     # Data the variant adds to the robot pack's manifest for this run (a dict merged key by key into the loop's
     # ``robot.manifest.planner``), declared apart from the pack: the pack stays as it is, the summary records the overlay.
     manifest_overlay: dict = {}
+
+    @classmethod
+    def understands_apart(cls) -> bool:
+        """Does this variant read the request with a model other than the planner's (robot_agent's ``understand_model`` /
+        ``understand_model_lang``, set as a loop option or in the manifest overlay)?"""
+        return _understands_apart(cls.loop_options, cls.manifest_overlay)
 
     @classmethod
     def run_config(cls) -> dict:
@@ -510,6 +547,13 @@ class _RobotAgentPlanner:
                 **({"loop_options": {k: str(v) for k, v in sorted(cls.loop_options.items())}}
                    if cls.loop_kind == "assist" and cls.loop_options else {}),
                 **({"manifest_overlay": copy.deepcopy(cls.manifest_overlay)} if cls.manifest_overlay else {}),
+                # the model that reads the request, where the variant sets one (and its per-language map; "n_fallbacks" is
+                # the run's count, in summary.json under llm_stats)
+                **({"understand_model": cls.loop_options.get("understand_model")
+                    or ((cls.manifest_overlay or {}).get("planner") or {}).get("understand_model"),
+                    "understand_model_lang": cls.loop_options.get("understand_model_lang")
+                    or ((cls.manifest_overlay or {}).get("planner") or {}).get("understand_model_lang")}
+                   if cls.loop_kind == "assist" and cls.understands_apart() else {}),
                 # the language layer (robot_agent core/planning/language.py): what a Korean user says reaches the
                 # understand prompt as the original (none), its English (translate) or both
                 "input_pivot": str(cls.loop_options.get("input_pivot", mp.get("input_pivot", "none"))
@@ -522,6 +566,7 @@ class _RobotAgentPlanner:
         self.on_loop = None          # inspection hook (loop, env) -> True to stop before the run (built_prompt)
         self.until = None            # event names: the run stops (the generator is closed) at the first of them
         self.reached = None          # the event it stopped at (understand-eval reads the `understand` event)
+        self.loop_info = None        # understand_model_used / fallback of the last reading (a variant with an understand model)
 
     def run(self, env) -> None:
         import robot_agent.connect.llm as ra_llm
@@ -545,9 +590,18 @@ class _RobotAgentPlanner:
         tm = str(manifest_planner().get("translate_model") or "") if self.loop_kind == "assist" else ""
         tr_client = RAClient(TranslateCounter(env, tm, None if fake else translator_inner(env, tm))) if tm else None
 
+        um_clients: dict = {}
+        if self.loop_kind == "assist" and _understands_apart(self.loop_options, self.manifest_overlay):
+            env.llm_calls_understand = 0
+
         def init_client(cfg=None, **k):
-            """robot_agent's LLM client by model: the translator's own (counted apart), else the planner's."""
+            """robot_agent's LLM client: by ROLE ``understand`` (its own model, counted apart), else by model: the
+            translator's own (counted apart), else the planner's."""
             m = (cfg or {}).get("model")
+            if (cfg or {}).get("role") == "understand" and m and m != client.model:
+                if m not in um_clients:
+                    um_clients[m] = RAClient(UnderstandCounter(env, m, None if fake else translator_inner(env, m)))
+                return um_clients[m]
             return tr_client if tr_client is not None and m == tm and m != client.model else client
         tmp = Path(tempfile.mkdtemp(prefix="homeloop_ra_"))
         node = FakeNode()
@@ -611,6 +665,10 @@ class _RobotAgentPlanner:
                     if env.over or n > MAX_EVENTS or env.stop_k is not None and self._stop_after(env):
                         break
                 self.final = final
+                if getattr(env, "llm_calls_understand", None) is not None:
+                    env.understand_fallbacks = list(getattr(loop, "um_fallbacks", None) or [])
+                    self.loop_info = {"understand_model_used": (getattr(loop, "um_last", None) or {}).get("model"),
+                                      "fallback": (getattr(loop, "um_last", None) or {}).get("fallback")}
                 if any(self.loop_options.get(k) for k in self._ALL_LAB_FLAGS):
                     # what the opt-in options did in this run (robot_agent AssistLoop.lab_log), into episodes.jsonl
                     env.lab_events = [dict(e) for e in (getattr(loop, "lab_log", None) or [])]
@@ -655,6 +713,8 @@ class _RobotAgentPlanner:
             loop = AssistLoop(agent, emit=None, generator=gen,
                               health_wait_s=HEALTH_WAIT_S, memory_path=str(tmp / "mem.json"), **dict(self.loop_options), **common)
             apply_overlay(loop, self.manifest_overlay)
+            if self.manifest_overlay and hasattr(loop, "_um_cfg"):      # the keys robot_agent reads once, at construction
+                loop.cfg.update(loop._um_cfg(dict(self.loop_options)))
             return loop
         from robot_agent.core.planning.loop import ClosedLoop
         planner = self.ra_planner
@@ -844,6 +904,68 @@ class SageUPlanner(SagePlanner):
     """sage_u3 + ``understand_goals_first`` (the understand schema lists the goals before the verdict)."""
     name = "robot_agent:sage_u"
     loop_options = {**SageU3Planner.loop_options, "understand_goals_first": "1"}
+
+
+# The runaway guard of a model other than the planner's (robot_agent planner.understand_max_tokens / _max_goals; none declared
+# = no guard). ASSUMED: 512 tokens is robot_agent's suggested cap (a valid answer to the bench's tasks is a few hundred
+# characters; the runaways seen in lab round 7 were 22000 characters), and 8 goals is above any request in the task files
+# (at most 3 gold atoms) and above the most the 8B model reads (6). Not tuned on any outcome. Recorded in summary.json.
+UM_MODEL = "qwen3-vl:30b-a3b-instruct"
+UM_GUARD = {"planner": {"understand_max_tokens": 512, "understand_max_goals": 8},
+            "assumed": True,
+            "note": "assumed: understand guard of 512 tokens and 8 goals (a cap far above a valid reading; lab round 7)"}
+
+
+class SageUmPlanner(SagePlanner):
+    """Lab round 7: sage_ground2 + ``understand_model`` (the 30B model reads the request; the 8B planner plans and gates) with the
+    runaway guard (a non-JSON, over-long or repeating answer falls back to the planner once, event understand_fallback).
+    Understand calls are counted on the episode cap and apart (``llm_calls_understand``). A prototype."""
+    name = "robot_agent:sage_um"
+    loop_options = {**SageGround2Planner.loop_options, "understand_model": UM_MODEL}
+    manifest_overlay = UM_GUARD
+
+
+class SageUmKoPlanner(SagePlanner):
+    """sage_um with the model chosen by language, as manifest data: Korean requests are read by the 30B model, English ones by the
+    planner (``understand_model_lang`` = {ko: 30B}); the guard as for sage_um."""
+    name = "robot_agent:sage_um_ko"
+    loop_options = dict(SageGround2Planner.loop_options)
+    manifest_overlay = {"planner": {**UM_GUARD["planner"], "understand_model_lang": {"ko": UM_MODEL}},
+                        "assumed": True, "note": UM_GUARD["note"]}
+
+
+class SageUmStrictPlanner(SagePlanner):
+    """sage_um + ``understand_schema_strict`` (every goal carries ``said`` and ``content``)."""
+    name = "robot_agent:sage_um_strict"
+    loop_options = {**SageUmPlanner.loop_options, "understand_schema_strict": "1"}
+    manifest_overlay = UM_GUARD
+
+
+class SageUmGivePlanner(SagePlanner):
+    """sage_um + ``understand_give_kind`` (a ``give`` goal kind for a hand-over, and the say-to-the-speaker echo filter)."""
+    name = "robot_agent:sage_um_give"
+    loop_options = {**SageUmPlanner.loop_options, "understand_give_kind": "1"}
+    manifest_overlay = UM_GUARD
+
+
+class SageUmVerdictPlanner(SagePlanner):
+    """sage_um + ``understand_verify_verdict`` (an infeasible verdict must name a missing action; location_unknown is clear)."""
+    name = "robot_agent:sage_um_verdict"
+    loop_options = {**SageUmPlanner.loop_options, "understand_verify_verdict": "1"}
+    manifest_overlay = UM_GUARD
+
+
+class SageM1Planner(SageUmPlanner):
+    """Workflow name for the understand-model option on top of sage_ground2 (the same configuration as sage_um)."""
+    name = "robot_agent:sage_m1"
+
+
+class SageM2Planner(SagePlanner):
+    """sage_m1 + the three schema / prompt flags (strict, give kind, verify verdict)."""
+    name = "robot_agent:sage_m2"
+    loop_options = {**SageUmPlanner.loop_options, "understand_schema_strict": "1", "understand_give_kind": "1",
+                    "understand_verify_verdict": "1"}
+    manifest_overlay = UM_GUARD
 
 
 class SageGoldPlanner(SagePlanner):

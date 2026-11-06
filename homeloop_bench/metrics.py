@@ -282,6 +282,13 @@ def summarize(episodes: list, config: dict, split_shares: Optional[dict] = None)
         "llm_calls_mean": _mean(e["llm_calls"] for e in episodes) if n else 0.0,
         # of those, the translator's (robot_agent translate_model; counted on the same episode cap)
         "llm_calls_translate_mean": _mean(e.get("llm_calls_translate", 0) for e in episodes) if n else 0.0,
+        # of those, the understand model's (robot_agent understand_model), and the readings it fell back from; only for a
+        # variant that has one (the key is then in the episode record)
+        **({"llm_calls_understand_mean": _mean(e.get("llm_calls_understand", 0) for e in episodes),
+            "understand_fallbacks": sum(len(e.get("understand_fallbacks") or []) for e in episodes),
+            "understand_fallbacks_by_reason": {k: v for k, v in sorted(_count(
+                r for e in episodes for r in (e.get("understand_fallbacks") or [])).items())}}
+           if n and any("llm_calls_understand" in e for e in episodes) else {}),
         # episodes whose LLM budget ran out (a refused call), also when the planner caught it and went on
         "llm_budget_hit_rate": _share(sum(1 for e in episodes if e.get("llm_budget_hit")), n),
         # how the simulated user read the robot's questions (homeloop_robot docs/user_model.md): share per path

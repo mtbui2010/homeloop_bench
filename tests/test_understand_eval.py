@@ -256,3 +256,129 @@ def test_cli_refuses_test_split_and_unknown_planner(tmp_path):
     f = write_jsonl(tmp_path / "t.jsonl", [t])
     assert main(["understand-eval", "--tasks", f, "--llm", "fake", "--out", str(tmp_path / "x")]) == 2
     assert main(["understand-eval", "--planner", "oracle", "--llm", "fake", "--out", str(tmp_path / "x")]) == 2
+
+
+# ── metric fixes M1 (a colour-word class) and M2 (class id, head noun, plural) ──────────────────────────────
+def test_M1_a_name_of_colour_words_only_is_the_class_when_a_class_has_that_name():
+    c = ctx_of("fx-feas-010")
+    assert c.object_class("orange") == ("orange", "")                      # the fruit, no colour said
+    assert c.object_class("an orange") == ("orange", "")
+    assert c.object_class("orange orange") == ("orange", "orange")         # as before: colour and class
+    assert c.object_class("red") == ("", "red")                            # a colour with no class of that name: as before
+    assert c.object_class("orange mug") == ("mug", "orange")
+
+
+def test_M2_class_id_head_noun_and_plural_are_names():
+    c = ctx_of("fx-feas-010")
+    assert c.object_class("snack") == ("snack", "") and c.object_class("snacks") == ("snack", "")     # the class id; plural
+    assert c.object_class("snack bag") == ("snack", "") and c.object_class("soup") == ("canned_soup", "")   # head noun
+    assert c.object_class("canned soup") == ("canned_soup", "")                                      # the class id with a space
+    assert c.object_class("mug") == ("mug", "")                                                      # a full name still wins
+    assert c.object_class("flux capacitor")[0] == "?flux capacitor"                                  # unknown: still unknown
+    # a head noun two classes share is not a name
+    from homeloop_robot.catalog import CLASSES, class_names
+    heads: dict = {}
+    for cid in CLASSES:
+        for n in class_names(cid, "en"):
+            if len(n.split()) > 1:
+                heads.setdefault(n.split()[-1].lower(), set()).add(cid)
+    for h, cids in heads.items():
+        if len(cids) > 1 and h not in c.classes.keys() - {h}:
+            assert c.classes.get(h) is None or c.classes[h] in cids
+
+
+def test_the_fixes_only_add_matches():
+    c = ctx_of("fx-feas-010")
+    idx_names = ue._class_index(None)
+    for name, cid in idx_names.items():
+        if cid:
+            assert c.object_class(name)[0] == cid
+
+
+# ── an understand model: counted apart, runaway falls back, records and summary say so ──────────────────────
+class Seq:
+    """The language model as a list of answers, in call order (the understand call first)."""
+    model = "scripted"
+
+    def __init__(self, *answers):
+        self.answers, self.calls = list(answers), []
+
+    def chat(self, prompt, format=None, temperature=0.0, seed=0, num_predict=None):
+        self.calls.append(prompt)
+        a = self.answers.pop(0) if len(self.answers) > 1 else self.answers[0]
+        return a if isinstance(a, str) else json.dumps(a)
+
+    def chat_messages(self, messages, temperature=0.0, seed=0, format=None):
+        return self.chat(messages[-1]["content"], format, temperature, seed)
+
+
+GOOD = ans(G("on", "blue mug", "kitchen_sink@kitchen"))
+
+
+def test_understand_calls_are_counted_apart_from_translation(tmp_path):
+    llm = Seq(GOOD)
+    r = ue.probe(TASKS["fx-feas-010"], "robot_agent:sage_um", "ideal", 0, "en", "clean", llm)
+    assert r["llm_calls_understand"] == 1 and r["llm_calls"] == 1 and r["exact"]
+    assert r["understand_model_used"] == "qwen3-vl:30b-a3b-instruct" and r["fallback"] is None
+    plain = ue.probe(TASKS["fx-feas-010"], "robot_agent:sage_ground2", "ideal", 0, "en", "clean", Seq(GOOD))
+    assert "llm_calls_understand" not in plain and "fallback" not in plain          # other variants: the records are as they were
+
+
+def test_understand_model_equal_to_the_translator_is_still_understanding(tmp_path):
+    """The translator's model is the 30B model too; the ROLE routes the call, so it is not counted as translation."""
+    from homeloop_bench.planners.robot_agent_adapter import manifest_planner
+    assert manifest_planner().get("translate_model") == "qwen3-vl:30b-a3b-instruct"
+    env_probe = {}
+    import homeloop_bench.planners.robot_agent_adapter as ad
+    orig = ad.UnderstandCounter.chat
+
+    def spy(self, *a, **k):
+        env_probe["model"] = self.model
+        return orig(self, *a, **k)
+    ad.UnderstandCounter.chat = spy
+    try:
+        r = ue.probe(TASKS["fx-feas-010"], "robot_agent:sage_um", "ideal", 0, "en", "clean", Seq(GOOD))
+    finally:
+        ad.UnderstandCounter.chat = orig
+    assert env_probe["model"] == "qwen3-vl:30b-a3b-instruct" and r["llm_calls_understand"] == 1
+
+
+def test_a_runaway_falls_back_and_is_counted(tmp_path):
+    llm = Seq("{" + "x" * 5000, GOOD)                    # the understand model runs away; the planner's one call is right
+    r = ue.probe(TASKS["fx-feas-010"], "robot_agent:sage_um", "ideal", 0, "en", "clean", llm)
+    assert r["fallback"] == "non_json" and r["understand_model_used"] == "scripted" and r["exact"]
+    assert r["llm_calls_understand"] == 1 and r["llm_calls"] == 2 and len(llm.calls) == 2
+    assert not any(c.startswith("Your previous answer") for c in llm.calls)       # no quoting repair
+    s = ue.summarize([r], {})
+    assert s["understand"]["fallbacks"] == 1 and s["understand"]["runaway"] == 1
+    assert s["understand"]["fallbacks_by_reason"] == {"non_json": 1} and s["understand"]["ended"] == 0
+
+
+def test_understand_model_flag_on_a_plain_variant(tmp_path):
+    out = tmp_path / "f"
+    s = ue.run_eval([TASKS["fx-feas-010"]], "robot_agent:sage_ground2", "ideal", 0, ["en"], ["clean"], None, out,
+                    llm=Seq(GOOD), understand_model="some-other-model")
+    rec = json.loads((out / "records.jsonl").read_text().splitlines()[0])
+    assert rec["understand_model_used"] == "some-other-model" and s["config"]["understand_model"] == "some-other-model"
+    assert s["understand"]["model_used"] == {"some-other-model": 1}
+
+
+def test_cli_understand_model_flag(tmp_path):
+    f = write_jsonl(tmp_path / "t.jsonl", fixture_tasks())
+    out = tmp_path / "o"
+    assert main(["understand-eval", "--tasks", f, "--limit", "2", "--lang", "en", "--text", "clean", "--profile", "ideal",
+                 "--llm", "fake", "--understand-model", "other:1", "--out", str(out)]) == 0
+    s = json.loads((out / "summary.json").read_text())
+    assert s["config"]["understand_model"] == "other:1" and s["understand"]["n"] == 2
+
+
+def test_the_new_variants_are_registered_and_say_what_they_set():
+    from homeloop_bench.planners import REGISTRY, planner_class
+    for n in ("sage_um", "sage_um_ko", "sage_um_strict", "sage_um_give", "sage_um_verdict", "sage_m1", "sage_m2"):
+        assert f"robot_agent:{n}" in REGISTRY
+    cfg = planner_class("robot_agent:sage_um").run_config()
+    assert cfg["understand_model"] == "qwen3-vl:30b-a3b-instruct" and cfg["manifest_overlay"]["planner"]["understand_max_tokens"] == 512
+    assert planner_class("robot_agent:sage_um_ko").run_config()["understand_model_lang"] == {"ko": "qwen3-vl:30b-a3b-instruct"}
+    assert planner_class("robot_agent:sage_um_strict").run_config()["understand_schema_strict"] == 1
+    assert planner_class("robot_agent:sage_m2").run_config()["understand_verify_verdict"] == 1
+    assert "understand_model" not in planner_class("robot_agent:sage_ground2").run_config()

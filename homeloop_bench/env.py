@@ -632,6 +632,9 @@ class EpisodeEnv:
             "final_say": self.final_say,
             "finish_reason": self.finish_reason,
         }
+        if getattr(self, "llm_calls_understand", None) is not None:      # a variant with its own understand model
+            rec["llm_calls_understand"] = int(self.llm_calls_understand)
+            rec["understand_fallbacks"] = list(getattr(self, "understand_fallbacks", None) or [])
         lab = getattr(self, "lab_events", None)
         if lab is not None:             # a planner variant with opt-in options: what they did (planner's own log)
             rec["lab_events"] = [dict(e) for e in lab]

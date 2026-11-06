@@ -38,7 +38,7 @@ class LLMError(RuntimeError):
 class LLM(Protocol):
     model: str
 
-    def chat(self, prompt: str, format=None, temperature: float = 0.0, seed: int = 0) -> str: ...
+    def chat(self, prompt: str, format=None, temperature: float = 0.0, seed: int = 0, num_predict=None) -> str: ...
 
 
 def _dumps(obj) -> str:
@@ -59,20 +59,27 @@ class OllamaHTTP:
         self.backoff_s = float(backoff_s)
         self.n_calls = 0
 
-    def body(self, prompt: str, format=None, temperature: float = 0.0, seed: int = 0, messages=None) -> dict:
+    def body(self, prompt: str, format=None, temperature: float = 0.0, seed: int = 0, messages=None,
+             num_predict=None) -> dict:
         msgs = [dict(m) for m in messages] if messages is not None else [{"role": "user", "content": prompt}]
         b = {"model": self.model, "messages": msgs, "stream": False,
              "options": {"temperature": float(temperature), "seed": int(seed), "num_ctx": self.num_ctx}}
+        if num_predict:                  # a cap on the answer's tokens (robot_agent's guarded understand call)
+            b["options"]["num_predict"] = int(num_predict)
         if format is not None:
             b["format"] = format
         return b
 
-    def chat(self, prompt: str, format=None, temperature: float = 0.0, seed: int = 0) -> str:
-        return self.chat_messages(None, temperature, seed, format=format, prompt=prompt)
+    def chat(self, prompt: str, format=None, temperature: float = 0.0, seed: int = 0, num_predict=None) -> str:
+        extra = {"num_predict": num_predict} if num_predict else {}
+        return self.chat_messages(None, temperature, seed, format=format, prompt=prompt, **extra)
 
-    def chat_messages(self, messages, temperature: float = 0.0, seed: int = 0, format=None, prompt: str = "") -> str:
-        """A chat with a full message list (system / user / assistant turns), e.g. embodiplan's own calls."""
-        data = json.dumps(self.body(prompt, format, temperature, seed, messages=messages)).encode("utf-8")
+    def chat_messages(self, messages, temperature: float = 0.0, seed: int = 0, format=None, prompt: str = "",
+                      num_predict=None) -> str:
+        """A chat with a full message list (system / user / assistant turns), e.g. embodiplan's own calls.
+        ``num_predict``: an optional cap on the answer's tokens, per call (not part of any cache key)."""
+        data = json.dumps(self.body(prompt, format, temperature, seed, messages=messages,
+                                    num_predict=num_predict)).encode("utf-8")
         req = urllib.request.Request(self.url + "/api/chat", data=data, headers={"Content-Type": "application/json"})
         t0 = time.monotonic()
         attempt = 0
@@ -107,7 +114,7 @@ class FakeLLM:
         self.model = model
         self.n_calls = 0
 
-    def chat(self, prompt: str, format=None, temperature: float = 0.0, seed: int = 0) -> str:
+    def chat(self, prompt: str, format=None, temperature: float = 0.0, seed: int = 0, num_predict=None) -> str:
         from .planners import keyword
         self.n_calls += 1
         return keyword.answer(prompt, temperature=temperature, seed=seed)
@@ -179,9 +186,12 @@ class CachedLLM:
                 mem.setdefault(rec["sha"], rec["response"])
         self._shared_pos += end
 
-    def chat(self, prompt: str, format=None, temperature: float = 0.0, seed: int = 0) -> str:
+    def chat(self, prompt: str, format=None, temperature: float = 0.0, seed: int = 0, num_predict=None) -> str:
+        # ``num_predict`` (a per-call cap on the answer's tokens) is passed on when given and is NOT part of the key: the
+        # same prompt is the same cache entry with or without a cap
+        extra = {"num_predict": num_predict} if num_predict else {}
         return self._cached(cache_key(self.model, prompt, format, temperature, seed),
-                            lambda: self.inner.chat(prompt, format=format, temperature=temperature, seed=seed),
+                            lambda: self.inner.chat(prompt, format=format, temperature=temperature, seed=seed, **extra),
                             {"prompt": prompt, "format": format, "temperature": float(temperature), "seed": int(seed)})
 
     def chat_messages(self, messages, temperature: float = 0.0, seed: int = 0, format=None) -> str:
@@ -248,8 +258,9 @@ class CountingLLM:
         # SAGE / AssistLoop do), so the episode reads this, not the exception (pilot round 1, hl-dev-000003 KO)
         self.refused = 0
 
-    def chat(self, prompt: str, format=None, temperature: float = 0.0, seed: int = 0) -> str:
-        return self._count(lambda: self.inner.chat(prompt, format=format, temperature=temperature, seed=seed))
+    def chat(self, prompt: str, format=None, temperature: float = 0.0, seed: int = 0, num_predict=None) -> str:
+        extra = {"num_predict": num_predict} if num_predict else {}
+        return self._count(lambda: self.inner.chat(prompt, format=format, temperature=temperature, seed=seed, **extra))
 
     def chat_messages(self, messages, temperature: float = 0.0, seed: int = 0, format=None) -> str:
         return self._count(lambda: self.inner.chat_messages(messages, temperature, seed, format=format))

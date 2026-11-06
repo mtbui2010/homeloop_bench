@@ -53,6 +53,33 @@ multisets. Every rule below is in `homeloop_bench/understand_eval.py` (`gold_ato
 Gold atoms come from the task's subtasks with conditions resolved on the start world (the correction's final goal, the
 conditional's branch). A subtask of kind `refuse` has no goal (its `unmoved` atom is the judge's, not a goal).
 
+### Metric fixes M1 and M2 (round 7, 2026-11-07)
+
+Two ways the object class of a robot goal was misread by the evaluator, not by the robot. Both only ADD matches.
+
+| fix | before | now |
+|---|---|---|
+| M1, a colour-word class | the name "orange" was read as the colour orange with no class (`put_in(orange, ...)` never matched the gold `orange orange`: colour orange, class orange the fruit) | a name made of colour words only is the class when a class has that name; "orange" is the class `orange`, no colour said. "red" (no class of that name) and "orange mug" are as before |
+| M2, class id and head noun | a name that is a class id (`snack`: the class names are "snack bag", "chips") or the head noun of a multi-word name ("soup" of "can of soup") was the unknown `?snack` / `?soup`; a plural ("snacks") likewise | the class id (underscores as spaces) is a name; the last word of a multi-word name is a name when no full name and no other class claims it; a plural in -s / -es of a one-word name folds to the singular. A full name always wins; an unknown name stays `?name` |
+
+Rescoring the cached round-7 baselines (`robot_agent:sage_ground2` with the 8B planner, tasks 0..149 of train and dev, EN and KO, clean
+and ASR text; the same cache, a dead server URL, so zero LLM calls was checked, not assumed): train exact 226 -> 232 of 476, dev
+288 -> 290 of 484; every changed record is a gain (8 records: six with "orange", two with "snack"); atom precision / recall move by
++0.010 / +0.009 (train) and +0.002 / +0.002 (dev). The 30B-as-planner windows were rescored the same way (0 calls). Numbers recorded
+before this change are not comparable with later ones at the second decimal; compare a variant with a baseline scored by the same code
+(`homeloop-bench understand-eval` into a copy of the baseline's `llm_cache`).
+
+## Reading with another model (round 7)
+
+`--understand-model M` (or a planner variant that sets robot_agent's `understand_model`, e.g. `robot_agent:sage_um`) makes model M
+read the request; `--model` stays the planner's model (plan, gate, translation as the variant says). The client of M is routed by its
+ROLE (`understand`), so its calls are counted on the episode cap and in `llm_calls_understand`, never as translation, also when M is
+the translator's model. Its cache is `llm_cache/<M>.jsonl`. Each record then carries `understand_model_used` (the model that
+produced the reading; the planner's when the runaway guard fell back), `fallback` (null, `non_json`, `goals`, `repeat` or
+`unavailable`) and `llm_calls_understand`; `summary.json` has an `understand` block: `model_used` counts, `fallbacks`,
+`fallbacks_by_reason`, `runaway` (fallbacks other than `unavailable`), `llm_calls_understand`, `ended`. A run without an understand
+model has none of these keys (its files are as before).
+
 ## Metrics
 
 Per record: `exact` (the sets match: nothing dropped, nothing spurious), `dropped` (gold atoms with no match), `spurious` (predicted

@@ -57,19 +57,31 @@ def _words(s) -> str:
 
 
 def _class_index(world) -> dict:
-    """{normalised class name (en and ko, aliases too): class id}; a name two classes share maps to None (unusable)."""
+    """{normalised class name (en and ko, aliases too): class id}; a name two classes share maps to None (unusable).
+    M2 (docs/understand_eval.md): the class id itself is a name ("snack" for a class whose names are "snack bag" and
+    "chips"), and the head noun of a multi-word name ("soup" of "can of soup") is a name when no full name and no other
+    class claims it. Both only ADD names a robot may use; a full name always wins."""
     from homeloop_robot.catalog import CLASSES, class_names
     idx: dict = {}
+    heads: dict = {}
     for cid in CLASSES:
         for lg in ("en", "ko"):
             try:
-                names = class_names(cid, lg)
+                names = list(class_names(cid, lg))
             except KeyError:
                 continue
+            if lg == "en":
+                names.append(cid.replace("_", " "))
             for n in names:
                 k = _words(n)
                 if k:
                     idx[k] = cid if idx.get(k, cid) == cid else None
+                    parts = k.split()
+                    if len(parts) > 1:
+                        h = parts[-1] if "of" not in parts[:-1] else parts[-1]       # "can of soup": the noun after "of"
+                        heads[h] = cid if heads.get(h, cid) == cid else None
+    for h, cid in heads.items():
+        idx.setdefault(h, cid)
     return idx
 
 
@@ -118,16 +130,22 @@ class Context:
         """(class id or '?<name>', colour id or '') of a robot goal's object name (R7)."""
         w = _words(name)
         color = ""
-        parts = []
+        parts, color_words = [], []
         for tok in w.split():
+            if tok in self.colors:
+                color_words.append(tok)
             if tok in self.colors and not color:
                 color = self.colors[tok]
             elif tok not in ("a", "an", "the", "some", "my", "your"):
                 parts.append(tok)
         base = " ".join(parts)
         if not base:
-            return "", color
+            # M1: a name made of colour words only is the class when a class has that name ("orange" the fruit)
+            hit = self.classes.get(" ".join(color_words)) if color else None
+            return (hit, "") if hit else ("", color)
         hit = self.classes.get(base)
+        if not hit and len(parts) == 1 and base.endswith("s") and len(base) > 3:       # M2: a plural ("snacks")
+            hit = self.classes.get(base[:-1]) or (self.classes.get(base[:-2]) if base.endswith("es") else None)
         if hit:
             return hit, color
         for k in range(1, len(parts)):                       # "kitchen knife" for a class "knife", "mug cup" ...
@@ -239,8 +257,9 @@ def expectation(td: dict, world) -> str:
 
 
 def probe(task, planner_name: str, profile: str, seed: int, lang: str, text_mode: str, llm,
-          budgets: Budgets = Budgets()) -> dict:
-    """The understanding of one (task, language, text) and its comparison with the gold goals -> a record."""
+          budgets: Budgets = Budgets(), understand_model: Optional[str] = None) -> dict:
+    """The understanding of one (task, language, text) and its comparison with the gold goals -> a record.
+    ``understand_model``: robot_agent's option of that name for this probe (the planner model stays ``--model``)."""
     from .runner import InfraError
     td = task_dict(task)
     cls = planner_class(planner_name)
@@ -253,6 +272,8 @@ def probe(task, planner_name: str, profile: str, seed: int, lang: str, text_mode
     if text_mode == "clean":
         env.task_text = clean
     planner = make_planner(planner_name, llm=env.llm())
+    if understand_model:
+        planner.loop_options = {**planner.loop_options, "understand_model": understand_model}
     planner.until = STOP_EVENTS
     try:
         planner.run(env)
@@ -264,8 +285,14 @@ def probe(task, planner_name: str, profile: str, seed: int, lang: str, text_mode
     if failed is not None:
         raise InfraError(f"task {env.task_id}: {type(failed).__name__}: {failed}") from failed
     ev = planner.reached or getattr(planner, "final", None) or {"event": "none"}
-    return record(td, env, ctx_world=env.world0, ev=ev, lang=lang, text_mode=text_mode, clean=clean,
-                  heard=env.task_text, heard_event=heard_event, llm_calls=env.llm_calls)
+    rec = record(td, env, ctx_world=env.world0, ev=ev, lang=lang, text_mode=text_mode, clean=clean,
+                 heard=env.task_text, heard_event=heard_event, llm_calls=env.llm_calls)
+    if getattr(env, "llm_calls_understand", None) is not None:        # a variant (or --understand-model) with its own model
+        info = getattr(planner, "loop_info", None) or {}
+        rec["understand_model_used"] = info.get("understand_model_used")
+        rec["fallback"] = info.get("fallback")
+        rec["llm_calls_understand"] = int(env.llm_calls_understand)
+    return rec
 
 
 def record(td: dict, env, ctx_world, ev: dict, lang: str, text_mode: str, clean: str, heard: str, heard_event: str,
@@ -343,7 +370,26 @@ def summarize(rows: list, config: dict) -> dict:
             "by_lang": _by(head, lambda r: r["lang"]), "by_text": _by(head, lambda r: r["text"]),
             "by_structure": _by(head, lambda r: r["structure"]),
             "by_lang_structure": _by(head, lambda r: f"{r['lang']}/{r['structure']}"),
-            "by_lang_text_structure": _by(head, lambda r: f"{r['lang']}/{r['text']}/{r['structure']}")}
+            "by_lang_text_structure": _by(head, lambda r: f"{r['lang']}/{r['text']}/{r['structure']}"),
+            **({"understand": understand_counts(rows)} if any("understand_model_used" in r for r in rows) else {})}
+
+
+def understand_counts(rows: list) -> dict:
+    """Records of a run with an understand model: which model answered the reading, how many readings fell back to the
+    planner (``runaway`` = the understand model's answer was no JSON, too long or repeating; ``unavailable`` = the model
+    could not be called), calls on the understand model."""
+    why: dict = {}
+    for r in rows:
+        if r.get("fallback"):
+            why[r["fallback"]] = why.get(r["fallback"], 0) + 1
+    used: dict = {}
+    for r in rows:
+        used[str(r.get("understand_model_used"))] = used.get(str(r.get("understand_model_used")), 0) + 1
+    return {"n": len(rows), "model_used": dict(sorted(used.items())), "fallbacks": sum(why.values()),
+            "fallbacks_by_reason": dict(sorted(why.items())),
+            "runaway": sum(v for k, v in why.items() if k != "unavailable"),
+            "llm_calls_understand": sum(int(r.get("llm_calls_understand") or 0) for r in rows),
+            "ended": sum(1 for r in rows if r["status"] == "ended" and not r["refused"])}
 
 
 def report(summary: dict) -> str:
@@ -375,7 +421,7 @@ def dumps(obj) -> str:
 
 def run_eval(tasks: list, planner_name: str, profile: str, seed: int, langs: list, texts: list, llm_spec: Optional[str],
              out_dir, model: Optional[str] = None, llm=None, budgets: Budgets = Budgets(), progress: bool = False,
-             config: Optional[dict] = None) -> dict:
+             config: Optional[dict] = None, understand_model: Optional[str] = None) -> dict:
     """Probe every task in every language and text condition; write OUT/records.jsonl, summary.json, report.md. LLM
     calls are cached in OUT/llm_cache (a rerun with the same prompts makes no call). Returns the summary."""
     out = Path(out_dir)
@@ -386,12 +432,12 @@ def run_eval(tasks: list, planner_name: str, profile: str, seed: int, langs: lis
     for i, t in enumerate(tasks):
         for lang in langs:
             for tx in texts:
-                rows.append(probe(t, planner_name, profile, seed, lang, tx, llm, budgets))
+                rows.append(probe(t, planner_name, profile, seed, lang, tx, llm, budgets, understand_model))
         if progress and (i + 1) % 25 == 0:
             print(f"[understand-eval] {i + 1}/{len(tasks)} tasks {time.monotonic() - t0:.1f}s", file=sys.stderr)
     cfg = {"planner": planner_name, "profile": profile, "seed": int(seed), "langs": list(langs), "texts": list(texts),
            "model": model if llm_spec and llm_spec != "fake" else None, "llm": "fake" if llm_spec == "fake" else "live",
-           "n_tasks": len(tasks), **(config or {})}
+           "n_tasks": len(tasks), **({"understand_model": understand_model} if understand_model else {}), **(config or {})}
     summary = summarize(rows, cfg)
     with (out / "records.jsonl").open("w", encoding="utf-8", newline="\n") as f:
         for r in rows:

@@ -76,3 +76,35 @@ def test_cache_and_count_chat_messages(tmp_path):
     # a single user message shares its key with chat(prompt)
     assert c2.chat_messages([{"role": "user", "content": "p"}], 0.0, 0) == "p|0"
     assert c2.chat("p") == "p|0" and c2.inner.n == 2
+
+
+# ── round 7: a per-call num_predict (a cap on the answer's tokens), out of every cache key ──
+class Capped:
+    model = "capped"
+
+    def __init__(self):
+        self.seen = []
+
+    def chat(self, prompt, format=None, temperature=0.0, seed=0, num_predict=None):
+        self.seen.append(num_predict)
+        return "ok"
+
+
+def test_ollama_body_carries_num_predict_only_when_given():
+    c = OllamaHTTP("http://127.0.0.1:1", "m:1")
+    assert "num_predict" not in c.body("hi")["options"]
+    assert c.body("hi", num_predict=512)["options"] == {"temperature": 0.0, "seed": 0, "num_ctx": 8192, "num_predict": 512}
+
+
+def test_num_predict_is_passed_down_and_not_part_of_the_cache_key(tmp_path):
+    inner = Capped()
+    c = CountingLLM(CachedLLM(inner, tmp_path / "c.jsonl"))
+    c.chat("a", num_predict=512)
+    c.chat("a")                                          # the same prompt, no cap: the cached answer, no new call
+    assert inner.seen == [512] and c.calls == 2
+    from homeloop_bench.llm import cache_key
+    assert cache_key("capped", "a", None, 0.0, 0) in CachedLLM(Capped(), tmp_path / "c.jsonl")._mem
+    # a client that does not know the keyword is never given it
+    e = Echo()
+    CountingLLM(CachedLLM(e, tmp_path / "d.jsonl")).chat("a")
+    assert e.n == 1

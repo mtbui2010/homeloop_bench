@@ -172,14 +172,14 @@ def cmd_understand_eval(a) -> int:
         return 2
     try:
         s = ue.run_eval(tasks, a.planner, a.profile, a.seed, langs, texts, a.llm, a.out, model=a.model, budgets=_budgets(a),
-                        progress=True, config={"split": a.split if not a.tasks else None, "tasks_file": a.tasks,
+                        understand_model=a.understand_model, progress=True, config={"split": a.split if not a.tasks else None, "tasks_file": a.tasks,
                                                "offset": int(a.offset or 0), "limit": a.limit})
     except InfraError as e:
         print(f"understand-eval aborted, no summary written: {e}", file=sys.stderr)
         return 3
     print(json.dumps({"n_records": s["n_records"], "headline": {k: s["headline"][k] for k in (
         "n", "exact_rate", "atom_precision", "atom_recall", "dropped_atoms", "spurious_atoms", "confident_wrong",
-        "confident_wrong_of_confident")}}, sort_keys=True))
+        "confident_wrong_of_confident")}, **({"understand": s["understand"]} if s.get("understand") else {})}, sort_keys=True))
     if s["all"]["ended"] > 0.05 * max(1, s["n_records"]):
         print(f"{s['all']['ended']} of {s['n_records']} probes ended before the understand step (an error, not a reading); "
               f"see records.jsonl 'ended'", file=sys.stderr)
@@ -400,7 +400,10 @@ def build_parser() -> argparse.ArgumentParser:
     ue.add_argument("--profile", default="real", choices=["ideal", "real", "stress"], help="the speech-recognition profile")
     ue.add_argument("--seed", type=int, default=0, help="the episode seed (the speech-recognition draw)")
     ue.add_argument("--llm", default=None, help="Ollama URL (http://host:port) or 'fake' (tests only)")
-    ue.add_argument("--model", default=DEFAULT_MODEL)
+    ue.add_argument("--model", default=DEFAULT_MODEL, help="the planner's model (the one that plans; reads the request unless "
+                                                           "--understand-model or the planner variant says otherwise)")
+    ue.add_argument("--understand-model", default=None, help="robot_agent's understand_model for this run: another model reads "
+                                                             "the request (runaway guard as the planner variant declares it)")
     ue.add_argument("--out", required=True)
     ue.add_argument("--max-calls", type=int, default=None)
     ue.add_argument("--max-sim-time-s", type=float, default=None)

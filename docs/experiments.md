@@ -2201,7 +2201,7 @@ named once and not a speaker), not by removing it.
 
 | variant (flag) | verdict | reason |
 |---|---|---|
-| sage_u1 (`reask_anchor`) | **kill by the rule** (near miss) | confident-wrong rises on train (+7) and dev (+10) although exact rises with no loss (+28/-0, +16/-0) and asks fall 35 / 26. The extra confident readings are the goal-less ones turned into goals, a third of them wrong. Needs the end-to-end gate to decide, not this metric |
+| sage_u1 (`reask_anchor`) | **kill by the rule** (near miss) | confident-wrong rises on train (+7) and dev (+10) although exact rises with no loss (+28/-0, +16/-0) and asks fall 35 / 26. The extra confident readings are goal-less readings that now carry goals (asks fall, so some are wrong; not itemised). Needs the end-to-end gate to decide, not this metric |
 | sage_u2 (`no_shared_listener`) | **kill** | dev confident-wrong 206 -> 207; 0 gains / 15 losses on the 21 cases; 13 dev losses |
 | sage_u3 (`understand_views`) | **kill** | dev losses 50 > gains 28, recall -7 pt; asks 85 more questions |
 | sage_u (`understand_goals_first`) | **kill** | more losses than gains in both splits, asked-on-exact +2.1 / +2.9 (limit 1.5) |

@@ -1395,15 +1395,15 @@ follow. A gain here is a reason to run the end-to-end gate, not a result (see th
 
 - Instrument check. With every flag off, `records.jsonl` and `summary.json` of the train run are byte-identical to `results/perf1/understand/train`
   (1200 records), and `dev` 0..299 as well.
-- Pilot: tasks 0..4 of train, EN and KO, both text conditions (20 records). Flag off: identical to perf1. `sage_ground2`: 5 records change, 4 of them
-  an `open` that nobody asked for is dropped (right) and 1 loss (below); `sage_reask` fires on none of them.
+- Pilot: tasks 0..4 of train, EN and KO, both text conditions (20 records). Flag off: identical to perf1. `sage_ground2`: 4 readings change, 3 of them
+  drop an `open` that nobody asked for (right) and 1 is a loss (below); `sage_reask` fires on none of them.
 - Pairing. The baseline LLM cache of perf1 is copied into each arm's `--out`. A flag that only post-processes the reading draws nothing new,
   so every arm is a paired replay on the same model readings (exact counts, no redraw noise). `sage_reask` is the only arm that makes
   new calls: 96 on train, 98 on dev. The model is `qwen3-vl:8b-instruct`, `--profile real --seed 0`, both text conditions, EN and KO.
 - Fresh slice. dev 300..599 had not been read by anyone in this lab. The baseline was run once on GPU 0 (6 shards, 1200 records,
   `OLLAMA_NUM_PARALLEL=6`, 8 clients at most, container stopped afterwards), then every arm was replayed from that cache.
 - Disclosure. The `go` rule and the open anchor were refined in the replay lab after reading train AND dev 0..299 losses, so dev 0..299 is not clean
-  for them; only the fresh slice is. After the code review of the flag I widened the Korean open endings (`열 수`, `열지`, `열자`, `열까`, `열래`, `열도록`, ...)
+  for them; only the fresh slice is. Before the dev confirmation I widened the Korean open endings (`열 수`, `열지`, `열자`, `열까`, `열래`, `열도록`, ...)
   from my own grammar knowledge (no reference corpus or analyser was available; `kiwipiepy` and `konlpy` are not installed). It changed no train count.
   The forms are still unchecked by a native speaker.
 - A bench bug found on the way: `understand-eval` stops at the first `understand_check` event, which it reads as "the loop asked to repeat".
@@ -1483,7 +1483,7 @@ Every difference was read (a script splits the changed records by which option c
   One fresh record gets worse by one atom (`hl-dev-000341`, KO asr: ASR "열곰" for "열고"; the base was already not exact). This is the cost of anchoring on heard words, and the reason the rule needs another goal to remain.
   The `close` half is not in the chain (a policy decision: a fridge is left open).
 - **name_canon**: 4 / 6 / 4 gains and, in train, 11 same-error records: a name was renamed onto a memory name and the set is still wrong for another reason (the most visible: "bottle" -> "juice" in one KO record, the head noun matched a different object).
-  The which-one question fires on ask tasks: the ask rows lose 28 to 40 confident readings and gain as many questions, and the chain does not add a question to the clean tasks beyond 8 / 5 / 6 asked records (asked-on-exact +7 on train from this option).
+  The which-one question fires on ask tasks: the ask rows lose 28 to 39 confident readings and gain as many questions, and the chain does not add a question to the clean tasks beyond 8 / 5 / 6 asked records (asked-on-exact +7 on train from this option).
 - Interaction: in train 130 head records change, in dev 126, in fresh 119; no record changes by a third option's interaction alone.
 
 Kill criteria of `proposals.md` (3.1), all passed:

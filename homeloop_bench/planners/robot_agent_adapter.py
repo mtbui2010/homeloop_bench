@@ -157,16 +157,43 @@ WAIT_OVERLAY = {"planner": {"recovery": {"wait": {"action": "Wait", "schedule_s"
                 "note": "assumed: no spec sheet declares a wait schedule for the mock robot; doubling backoff from 2 s"}
 
 
+# robot_agent declares what a question is in its OWN schema (``speech.LocalText.ask``: ``{intent, options, about}``,
+# docs/env.md). This table maps it onto the simulated user's qtype list (homeloop_robot docs/user_model.md); a
+# question whose intent is not here stays free text. The mapping lives here, in the bench adapter, not in robot_agent.
+INTENT_TO_QTYPE = {"choose": ("which_object", {"about": "obj"})}
+
+
+# The recovery of a BLOCKED PutIn into a container believed open (option ``reset_container``) is pack data in
+# robot_agent (``planner.recovery.blocked_putin``; none declared = the option does nothing). The mock robot package
+# declares none, so the variants carry it as an overlay. ASSUMED, and it OVERLAPS the simulator: [Close, Open] is the
+# remedy the mock robot's state machine rewards (an Open that silently half-opens, a PutIn that fails "only partly
+# open", and only a Close clears that state; homeloop_robot docs/calibration.md). Read the reset_container results as
+# an ablation tied to that rule, not as a general finding.
+BLOCKED_PUTIN_OVERLAY = {"planner": {"recovery": {"blocked_putin": ["Close", "Open"]}},
+                         "assumed": True,
+                         "note": "assumed: remedy for a PutIn blocked by a container believed open; overlaps the mock robot's partial-open rule"}
+# execution-integrity variants: both declarations (a deep merge of the two overlays above)
+EXEC_OVERLAY = {"planner": {"recovery": {**WAIT_OVERLAY["planner"]["recovery"], **BLOCKED_PUTIN_OVERLAY["planner"]["recovery"]}},
+                "assumed": True, "note": WAIT_OVERLAY["note"] + "; " + BLOCKED_PUTIN_OVERLAY["note"]}
+
+
 def declared_meaning(question) -> dict | None:
-    """The structured form a question DECLARES about itself (robot_agent ``speech.LocalText.ask``: ``qtype`` plus slots,
-    e.g. the inventory which-question), else None: the question is then read from its words (``ra_dialog.derive``)."""
+    """The structured form a question DECLARES about itself (robot_agent ``speech.LocalText.ask``: ``intent`` plus slots,
+    e.g. the inventory which-question), mapped onto the simulated user's qtype; else None: the question is then read
+    from its words (``ra_dialog.derive``). A declaration that already carries a ``qtype`` is passed on as it is."""
     try:
         from robot_agent.core.planning.speech import declared_ask
     except ImportError:
         return None
     d = declared_ask(question)
-    if not d or not d.get("qtype"):
+    if not d:
         return None
+    if not d.get("qtype"):
+        hit = INTENT_TO_QTYPE.get(d.get("intent"))
+        if hit is None:
+            return None
+        qtype, rename = hit
+        d = {"qtype": qtype, **{rename.get(k, k): v for k, v in d.items() if k != "intent"}}
     return {**{k: v for k, v in d.items() if v}, "template": ["declared"]}
 
 
@@ -705,7 +732,7 @@ class SageExecPlanner(SagePlanner):
     No extra LLM call. A prototype under test, not a result."""
     name = "robot_agent:sage_exec"
     loop_options = {"exec_integrity": "1"}
-    manifest_overlay = WAIT_OVERLAY             # wait_on_robot acts only where a wait is declared
+    manifest_overlay = EXEC_OVERLAY             # wait_on_robot / reset_container act only where the pack declares them
 
 
 class SageInventoryPlanner(SagePlanner):
@@ -739,6 +766,7 @@ class SageEiResetPlanner(SagePlanner):
     """Ablation of sage_exec: reset_container only."""
     name = "robot_agent:sage_ei_reset"
     loop_options = {"reset_container": "1"}
+    manifest_overlay = BLOCKED_PUTIN_OVERLAY
 
 
 class SageEiWaitPlanner(SagePlanner):
@@ -753,14 +781,14 @@ class SageR3Planner(SagePlanner):
     inventory_ask. Every option is default off in robot_agent; this variant differs from robot_agent:sage in them only."""
     name = "robot_agent:sage_r3"
     loop_options = {"go_steps": "1", "kind_anchor": "1", "name_canon": "1", "exec_integrity": "1", "inventory_ask": "1"}
-    manifest_overlay = WAIT_OVERLAY
+    manifest_overlay = EXEC_OVERLAY
 
 
 class SageR3uPlanner(SagePlanner):
     """sage_r3 + dialog_unstick (lab round 4 combination)."""
     name = "robot_agent:sage_r3u"
     loop_options = {**SageR3Planner.loop_options, "dialog_unstick": "1"}
-    manifest_overlay = WAIT_OVERLAY
+    manifest_overlay = EXEC_OVERLAY
 
 
 class SageGoldPlanner(SagePlanner):

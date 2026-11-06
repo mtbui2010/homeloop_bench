@@ -2033,3 +2033,29 @@ direction in two runs) cannot be met at this size.
    - the coverage check fires on a word the user corrected away;
    - the KO give-up sentence is a translator refusal;
    - `wait_on_robot` is outside the call budget.
+
+## Where a lab flag overlaps the simulator or the bench (audit, 2026-11-06)
+
+A reader of the flag results needs these. The robot_agent flags are generic; the overlap sits in the declared pack data
+and in how the simulator is built.
+
+- **`reset_container` (sage_exec, sage_ei_reset, sage_r3, sage_r3u).** The remedy is pack data in robot_agent
+  (`planner.recovery.blocked_putin`; none declared = the flag does nothing). The robot package declares none, so the variants carry
+  `[Close, Open]` as an overlay (`BLOCKED_PUTIN_OVERLAY`, recorded in `summary.json` `planner_config.manifest_overlay`, `assumed`).
+  The mock robot's container state machine rewards exactly that remedy: an Open can silently leave a container half open, a PutIn
+  into it then fails "blocked", only a Close clears the state, and a full hand blocks Open and Close (`homeloop_robot` skills).
+  A BLOCKED code also covers "no free spot", where a reset cannot help. Read the result as an ablation tied to the simulator rule,
+  not as evidence for a general method.
+- **`wait_on_robot` (sage_exec, sage_ei_wait, sage_r3, sage_r3u).** The schedule 2, 4, 8 s is assumed (`WAIT_OVERLAY`). The simulator
+  clears a camera fault only when ONE wait lasts at least `WAIT_CLEARS_S` = 5 s, so the 2 s and 4 s waits cannot clear it and the effect
+  is set by that constant. The default poll (`HEALTH_WAIT_S` = 0.5 s) meets the same rule through the robot's idle-run clearing. A
+  sensitivity run with other schedules (for example 1, 2, 4 and 5, 10) is not done yet.
+- **`dialog_unstick`.** The simulated user answers a wrong read-back with "no" and the whole request again, and its answer errors are drawn
+  independently per answer. A repeated read-back therefore gets a fresh draw of that noise. robot_agent now re-reads a restatement back
+  only when it names an entity the request did not, so a bare restatement no longer gains from the re-draw.
+- **`name_canon` / `inventory_ask`.** The gain depends on the memory naming of the adapter's `seed_memory` (class and colour+class names in
+  EN and KO; a name shared by objects with different usual places is removed, so "mug" is absent while "red mug" and "blue mug" are
+  present, which is the which-question case). Test with an instance-keyed memory as well (records with `instance` / `id`).
+- **`kind_anchor`.** Its English and Korean open-verb patterns express the same idea as the simulated user's open rule in `dialog.py`; the
+  robot's Korean morphology is separate.
+- **`go_steps`.** It drops a go to a person; the bench gold is written the same way. Keep the `sage_g2_go` ablation next to it.

@@ -13,11 +13,17 @@ from robot_agent.core.planning import speech  # noqa: E402
 def test_declared_meaning_of_the_inventory_question():
     q = speech.LocalText("q_which_known", {"object": "mug", "text": "the red mug or the blue mug"},
                          text="I know of more than one mug: the red mug or the blue mug. Which one do you mean?",
-                         ask={"qtype": "which_object", "options": ["red mug", "blue mug"], "obj": "mug"})
+                         ask={"intent": "choose", "options": ["red mug", "blue mug"], "about": "mug"})
     m = declared_meaning(q)
     assert m == {"qtype": "which_object", "options": ["red mug", "blue mug"], "obj": "mug", "template": ["declared"]}
     assert declared_meaning(speech.LocalText.join(speech.LocalText("q_silence"), q))["qtype"] == "which_object"
     assert declared_meaning(speech.LocalText("q_where_go")) is None and declared_meaning("a plain string") is None
+
+
+def test_a_declaration_with_its_own_qtype_or_an_unknown_intent():
+    q = speech.LocalText("q_which_known", {}, text="x", ask={"qtype": "which_place", "options": ["a"]})
+    assert declared_meaning(q)["qtype"] == "which_place"
+    assert declared_meaning(speech.LocalText("q_which_known", {}, text="x", ask={"intent": "unknown_thing"})) is None
 
 
 def test_the_ask_wrapper_hands_the_declared_meaning_to_the_proxy():
@@ -26,7 +32,7 @@ def test_the_ask_wrapper_hands_the_declared_meaning_to_the_proxy():
     proxy = types.SimpleNamespace(meaning=None)
     assert structured_asks(loop, proxy)
     q = speech.LocalText("q_which_known", {"object": "mug", "text": "x"}, text="I know of more than one mug: x. Which one do you mean?",
-                         ask={"qtype": "which_object", "options": ["a", "b"], "obj": "mug"})
+                         ask={"intent": "choose", "options": ["a", "b"], "about": "mug"})
     assert loop._ask_io(q, None, None, "en") == "the red one"
     assert seen[0]["qtype"] == "which_object" and seen[0]["options"] == ["a", "b"] and proxy.meaning is None
     # a template question is still derived from its words

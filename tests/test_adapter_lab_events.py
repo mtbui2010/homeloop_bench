@@ -33,6 +33,15 @@ def test_run_config_records_the_wait_schedule():
     assert "manifest_overlay" not in planner_class("robot_agent:sage_ei_gate").run_config()
 
 
+def test_reset_container_variants_declare_the_blocked_putin_remedy():
+    from homeloop_bench.planners import planner_class
+    for name in ("robot_agent:sage_exec", "robot_agent:sage_ei_reset", "robot_agent:sage_r3", "robot_agent:sage_r3u"):
+        ov = planner_class(name).run_config()["manifest_overlay"]
+        assert ov["planner"]["recovery"]["blocked_putin"] == ["Close", "Open"] and ov["assumed"] is True
+    ov = planner_class("robot_agent:sage_ei_wait").run_config()["manifest_overlay"]
+    assert "blocked_putin" not in ov["planner"]["recovery"]
+
+
 def test_summary_carries_the_overlay(tmp_path):
     s = run_many("robot_agent:sage_ei_wait", "dev", None, "ideal", 1, "en", "fake", tmp_path, tasks=[TASKS["fx-feas-000"]])
     assert s["config"]["planner_config"]["manifest_overlay"]["planner"]["recovery"]["wait"]["schedule_s"] == [2, 4, 8]

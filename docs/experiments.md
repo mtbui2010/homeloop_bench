@@ -2216,3 +2216,91 @@ None of the four wins on train AND dev under the kill rule. Nothing from round 7
 - A first-reading metric: the read-back and the clarify dialogue are not run. `reask_anchor` and `understand_views` both change what the loop asks, so their end-to-end effect is unknown.
 - `asked-on-exact` is measured as (exact and asked) in the variant minus the same count in the baseline; the brief does not define it more closely.
 - Work files (cache copies, records, shard logs): `lab/r6/` in the scratchpad; not in the repo.
+
+## Round 6: Korean as data and understanding loop (summary, 2026-11-07)
+
+User request: make the lab flags general (Korean supported, Vietnamese dropped, no hard-coded facts for the rest), then run one loop to
+improve how SAGE understands a request before it plans. This section sums up the round. The detail is in the sections above:
+"Generalisation round 6", "Round 6, step 1: measurement fixes" and "Round 6 understanding loop".
+Code (none pushed or merged): robot_agent worktree `hl_wt/sagev2/robot_agent`, branch sage-v2/homeloop, 26b100d (Vietnamese dropped),
+686b2b6 (flags read data), ec47955 (round-7 understanding options, default off); homeloop_bench 42fcb21, 9d1cc08, be1079b, 5932f70,
+3c9d950, f829b4d.
+
+### 1. What moved from code to data
+
+| item | where it lives now | when the data is missing |
+|---|---|---|
+| EN / KO word lists of the lab flags (open words, not-sure phrases, articles, plural rules, where-is patterns of `reask_abstain`, translate name, register, script, `non_ascii_min`) | language packs `core/planning/lang/en.json`, `ko.json` (`ja`, `zh` only name themselves), read by `langdata.py`; a robot pack can extend them per language | the flag does nothing for that language |
+| `dialog_unstick` numbers (max fallback words, 24 characters, 0.6, 4 words, 3 letters, 6 bigrams) | manifest `planner.unstick.*`, validated in `manifest.py` | that part is off. The bench declares the old values (`UNSTICK_OVERLAY`, assumed) |
+| `endstate_check` tries | manifest `planner.recovery.return_tries` | the option does nothing. The bench declares 3 (`RETURN_OVERLAY`, assumed) |
+| Vietnamese | removed from lexicon, goal_fix, language, announcer, intent_router, read-back yes/no, TTS codes, safety and understand word lists, persons, STT list, test data and docs; a test scans the package for it | - |
+
+New option `kind_anchor_ask` (default 0, only with `kind_anchor`): an open goal with no open word in the request is kept, and the ordinary
+read-back states the doubt. Unit tests only.
+
+Check that EN / KO behaviour did not move: replay of the cached i2 slice (31 dev tasks, EN and KO; sage, sage_r3, sage_r3u) gives
+byte-identical `episodes.jsonl` against 583747f in all 6 pairs. Made-up languages through the real AssistLoop: `qq` without data (flags
+do nothing) and `zz` with a pack (flags work), `tests/test_sage_lab_r6_langdata.py`.
+
+### 2. Measurement fixes (before any new run)
+
+| # | problem | fix |
+|---|---|---|
+| H1 | a stale `--tasks` file was trusted (n5_a2 measured the old 015 text) | a tasks file that differs from the packaged train / dev record is refused (exit 2) unless `--allow-stale`; `tasks-file` writes fresh ones |
+| H2 | `inventory_ask` listed 4 names for 2 mugs | `seed_memory` writes the object id (`instance`) when a name means one object |
+| H3 | a give-up with the call or time budget used up stayed `give_up` | it is `budget`, unless the last call hit a persistent hardware fault or e-stop |
+| H4 | no proof that two runs share their LLM answers | per-episode `llm_cache` counts, one shared cache per replicate (also for the intent classifier), `aa-check` |
+
+### 3. Understanding loop (`understand-eval`, first reading only)
+
+Tasks 0..299 of train and dev, EN and KO, clean and asr text, real profile, seed 0, `qwen3-vl:8b-instruct`. Headline records: feasible,
+no refused part (train 964, dev 972). Variants are cumulative; each is compared with `sage_ground2`.
+
+| variant (new flag) | train exact | train conf-wrong | train gains / losses | dev exact | dev conf-wrong | dev gains / losses | verdict |
+|---|---|---|---|---|---|---|---|
+| sage_u1 (`reask_anchor`) | 487 -> 515 (+2.9 pt) | 252 -> 259 | +28 / -0 | 570 -> 586 (+1.6) | 206 -> 216 | +16 / -0 | kill by the rule (near miss) |
+| sage_u2 (+ `no_shared_listener`) | 487 -> 553 (+6.8) | 252 -> 222 | +73 / -7 | 570 -> 591 (+2.2) | 206 -> 207 | +34 / -13 | kill |
+| sage_u3 (+ `understand_views`) | 487 -> 516 (+3.0) | 252 -> 157 | +61 / -32 | 570 -> 548 (-2.3) | 206 -> 138 | +28 / -50 | kill |
+| sage_u (+ `understand_goals_first`, tasks 0..74) | 122 -> 119 of 236 | 63 -> 54 | +22 / -25 | 155 -> 139 of 240 | 40 -> 31 | +21 / -37 | kill |
+
+The 21 tellfix tasks (84 records), `no_shared_listener` on vs off: exact 51 -> 36, 0 gains, 15 losses. The `shared_listener` rule is right
+on these tasks, so it is not removed.
+
+Kept: none. Nothing from this loop is switched on by default.
+
+### 4. Gate milestones 5 / 10 / 50 (end to end)
+
+| milestone | slice | variants | result |
+|---|---|---|---|
+| 5 | - | - | not run |
+| 10 | - | - | not run |
+| 50 | - | - | not run |
+
+The end-to-end gate runs only variants that the understanding loop keeps. None was kept, so no gate run was made in this round, and there
+is no differing task to explain. The last end-to-end gate is the round-4 m5 / m10 (sections above).
+
+### 5. Caveats and what is not checked
+
+- All tuning in this round is on train and dev, so the numbers are optimistic. The test split was not touched.
+- `understand-eval` uses a shared cache, so a changed cell comes from a prompt that the variant changed, not from server noise. The
+  end-to-end noise of about 3 tasks per 50 does not apply to these numbers, but it does apply to any later gate.
+- A better first reading is not a better episode. The read-back and the clarify dialogue are not in this metric. `reask_anchor` changes what
+  the loop asks, so only an end-to-end run can decide it.
+- `sage_u` ran on tasks 0..74 only (GPU throughput about 30 calls a minute).
+- Not checked: `kind_anchor_ask` on a benchmark slice; a sensitivity sweep of the `planner.unstick.*` and `return_tries` numbers; a run on a
+  second robot; Korean `answer_unsure` phrases (need an ablation); Korean morphology outside the flags (particles, verb endings,
+  `_EN_INTO` / `_KO_INTO`), `AssistLoop._restates` and the refusal word lists, which are still code; the English pivot (`PROMPT_LANG`);
+  the A/A check against the live LLM server; `understand_views` for a Latin-script third language (it does nothing there); the old
+  `tasks.jsonl` files under `results/` were not regenerated.
+- `lab/r3/report4.md`, named as the source of the H3 bug, does not exist. H3 was found in the n5_a2 episodes. If another labelling bug was
+  meant, it is not fixed.
+- Test suites at the end of the round (2026-11-07): robot_agent worktree at ec47955 with the sagev2 embodiplan on `PYTHONPATH`: 1353 passed,
+  2 skipped (the about 129 failures seen in one step came from a different embodiplan on the path). homeloop_bench with the worktrees on
+  the path: 443 passed. One test, `test_listing_does_not_import_robot_agent`, starts a subprocess and fails unless `homeloop_robot` is on
+  `PYTHONPATH`; with it, it passes.
+
+### 6. Next steps (suggested)
+
+1. End-to-end m5 gate for `sage_u1` against `sage_ground2` (paired, shared cache, `aa-check` first). It is the only near miss.
+2. If `shared_listener` is to be narrowed, narrow it on structure (a recipient named once who is not a speaker), not by switching it off.
+3. Ablation for Korean `answer_unsure` phrases, and a slice run of `kind_anchor_ask`.

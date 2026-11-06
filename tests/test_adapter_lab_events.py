@@ -111,3 +111,16 @@ def test_unstick_variant_is_registered_and_recorded():
 def test_unstick_variant_runs_and_logs_nothing_on_a_clean_task():
     e = run_episode(TASKS["fx-feas-000"], "robot_agent:sage_unstick", "ideal", 0, "en", "fake")
     assert e["success"] and e["lab_events"] == []
+
+
+def test_sage_r3u_is_registered_and_is_sage_r3_plus_dialog_unstick():
+    from homeloop_bench.planners import REGISTRY, list_planners, planner_class
+    assert "robot_agent:sage_r3u" in REGISTRY
+    assert "robot_agent:sage_r3u" in [n for n, _d, _ok in list_planners()]
+    cfg = planner_class("robot_agent:sage_r3u").run_config()
+    r3 = planner_class("robot_agent:sage_r3").run_config()
+    assert cfg["loop_options"] == {**r3["loop_options"], "dialog_unstick": "1"}
+    assert cfg["manifest_overlay"] == r3["manifest_overlay"]
+    # the loop accepts the option (an unknown one is dropped)
+    import robot_agent.core.planning.assist_loop as AL
+    assert set(cfg["loop_options"]) <= AL.ASSIST_OPTIONS

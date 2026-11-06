@@ -743,6 +743,13 @@ class SageR3Planner(SagePlanner):
     manifest_overlay = WAIT_OVERLAY
 
 
+class SageR3uPlanner(SagePlanner):
+    """sage_r3 + dialog_unstick (lab round 4 combination)."""
+    name = "robot_agent:sage_r3u"
+    loop_options = {**SageR3Planner.loop_options, "dialog_unstick": "1"}
+    manifest_overlay = WAIT_OVERLAY
+
+
 class SageGoldPlanner(SagePlanner):
     """DIAGNOSTIC, PRIVILEGED: ``robot_agent:sage`` that does not understand the request. The task's gold goals, converted
     to robot_agent goals (``homeloop_bench.gold_goals``: no source location, the robot searches), are handed to

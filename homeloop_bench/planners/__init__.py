@@ -51,6 +51,7 @@ REGISTRY = {
     "robot_agent:sage_ei_reset": ("robot_agent_adapter", "SageEiResetPlanner", "ablation of sage_exec: reset_container only", True),
     "robot_agent:sage_ei_wait": ("robot_agent_adapter", "SageEiWaitPlanner", "ablation of sage_exec: wait_on_robot only", True),
     "robot_agent:sage_r3": ("robot_agent_adapter", "SageR3Planner", "robot_agent:sage_ground2 + sage_exec + sage_inv (lab round 3 combination)", True),
+    "robot_agent:sage_r3u": ("robot_agent_adapter", "SageR3uPlanner", "robot_agent:sage_r3 + dialog_unstick (lab round 4 combination)", True),
     "robot_agent:sage_gold": ("robot_agent_adapter", "SageGoldPlanner",
                               "DIAGNOSTIC, PRIVILEGED: robot_agent:sage started from the task's gold goals (understand step skipped): the execution-only ceiling", True),
     "robot_agent:grace": ("robot_agent_adapter", "GracePlanner",

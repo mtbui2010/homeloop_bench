@@ -1810,3 +1810,226 @@ unsolved by `sage_inv` (the question is asked, the run still gives up), 066 and 
 `dialog_unstick` part of `sage_r3u` fired only as `unsure_search` on EN 058 and 003 (controls) and moved no cell. This is dev 0..99 again
 (in-sample for the ideas); the fresh slice dev 100..199 is the next confirmation. Containers: started with
 `OLLAMA_NUM_PARALLEL=6`, at most 8 clients, stopped afterwards.
+
+## Round 4: bench fixes and gated validation (2026-11-06)
+
+Four harness defects that round 3 found were fixed first. These are consistency fixes. No rate, no scoring rule and no task was
+changed, and the random streams do not shift. After that, the milestone-5 gate was run again on the fixed code. Code of the run:
+homeloop_robot 1d7e4eb, robot_agent `sage-v2/homeloop` 7bd0ee4, embodiplan 4080017, bench 798e642 (later commits are docs only).
+Condition: profile `real`, seed 0, `asr_off` (`asr.en.app_wer=0, asr.ko.app_cer=0, asr.p_partial=0`; a sensitivity condition, never
+the headline), planner `qwen3-vl:8b-instruct`, translator `qwen3-vl:30b-a3b-instruct` (read from `planner_config.translate_model`).
+Repeats a and b, paired by task. There is **no shared cache** in this run, so a and b measure LLM-server nondeterminism. Raw run:
+`results/r4/n5_a2` (not in git). The table script is `lab/r3/t_r4a2.py` in the scratchpad.
+
+### Bench fixes
+
+| # | repo, commit | defect (evidence) | fix | test |
+|---|---|---|---|---|
+| 1 | homeloop_robot 5b6f16a | The simulated user drew "knows where X is" again on every question. In `hl-dev-000003` EN (`results/r3/n5_a2`) it says "I don't know." twice about the milk, then "It's on the dining table." | The user remembers per object what it said (a place, or "I don't know"), and a later answer follows it. The draw is still taken on every ask, so the streams do not shift. Note in `docs/user_model.md`. | `tests/test_user_model.py` (fails on the old code) |
+| 2 | homeloop_robot ee56e63 | `refresh_person_spot` dropped a person's spot once it was full, also when the robot's own delivery filled it. Traced on 021 EN `sage_gold`: the senior_flat nightstand holds 3 of 4 at the start, the robot's Place of the glass fills it, the spot is dropped, the final MoveTo goes to the stop point, and Find says "green glass not found" while `delivered[reach]` is true. | A spot that holds an object the robot itself placed there stays the person's spot. The robot records its own successful Place (`ra_skills.place`, `tasks.note_placed`). A spot filled by other things is still dropped. | `tests/test_person_spot_refresh.py` (fails without the fix) |
+| 3 | homeloop_robot 435984b, bench 9d0b1df | The adapter set `health_wait_s=0` and robot_agent waits in wall-clock time, so a waiting robot let no simulated time pass. | `Robot.idle(seconds)` advances the simulated clock, and 5 s of idle in a row clears a camera fault that clears on waiting, as the Wait skill does. The adapter puts `SimTime` over the planning modules' `time`, so a robot's sleep moves the episode clock. `health_wait_s` is robot_agent's default 0.5 s, the same for every robot_agent planner. | `homeloop_robot/tests/test_robot_idle.py`, `tests/test_sim_time_wait.py` |
+| 4 | bench 814dd7c | `gold_goals.py` wrote a hand delivery to another person as the goal kind `deliver`, which compiles to MoveTo + WaitForUnload, and the plan gate refused it ("the robot has no action WaitForUnload"). | Written as `{type: on, to: <person>, hand: true}`, the form robot_agent's own understanding writes (017 sage writes `{on, toy car, to kid, hand true}`). The unused `seat()` helper is removed. | `tests/test_gold_hand_delivery.py` (017 EN and KO, 018, no `deliver` left) |
+
+Both suites are green: homeloop_robot 868 passed (106 s), homeloop_bench 415 passed (95 s), run with the sagev2 robot_agent on
+PYTHONPATH as the experiments do. Nothing was pushed, and the robot_agent and embodiplan mains were not touched.
+
+Not done, or done only in part:
+- No live LLM rerun was made for the fixes themselves. The LLM server did not answer at that time. `sage_gold` was not measured again on
+  021 or on the hand-delivery ids 017 018 054 060 063 064 087 090. The `sage_gold` ceiling of about 63 / 100 instead of 56 / 100 is still an
+  estimate. The fixes rest on traces and regression tests.
+- Fix 1 works per object, not per phrasing. A `wrong` answer (`p_wrong`) can still name another place on a later turn. That is a separate,
+  intended noise path, and it was left alone.
+- Fix 3 changes little. With 0.5 s per poll a WAIT_HEALTH adds about 1 s of simulated time, and it almost never reaches the 5 s that clear a
+  camera fault. A camera fault still clears through the Wait skill (`sage_ei_wait`, `wait_on_robot`) or a long idle. The wait was not raised,
+  because that would be tuning.
+
+### What the fixes change for earlier numbers
+
+- **Not comparable with runs after the fixes:** every run before 14:05 on 2026-11-06. That covers `exp_r2`, `live_smoke`,
+  `milestones_r3`, `r4b`, `perf1` (dev 0..99, the R6 decomposition and the round-3 class table), and `results/r3/{n5_a1, n5_a2, m5}`.
+  It also covers the offline replay `off/replay_perf1.py`, which replays perf1 caches on the old simulator.
+- **After the fixes:** `results/r4/n5_a1` (14:17; the four fixes, but not yet H1, V1, V2 and tell_fetch of the previous section),
+  `results/r3/m5s` and `results/r3/m10s` (15:2x; the same code as this round, with a shared cache), and `results/r4/n5_a2` (this round).
+- What each fix moves:
+  - Fix 1: episodes in which the user is asked twice where the same object is. This is rare: in perf1, 11 of 800 episodes contain both
+    answers and 1 of 800 flips.
+  - Fix 2: deliveries onto a person's spot that becomes full (021 EN `sage_gold` is the known case).
+  - Fix 3: the simulated time and `time_mean_s` of every robot_agent episode with a `perception_unavailable` wait. It also moves what
+    depends on time: the user's walk and the interrupts. oracle, naive and the other non-robot_agent planners are not affected.
+  - Fix 4: `sage_gold` only, on tasks whose goal is a hand delivery to another person. This is the row "bench artifact (gold `deliver`
+    goal)" of the round-3 class table: 8 EN / 8 KO failures, of which the oracle solves 7 / 7. Every earlier `sage_gold` ceiling, including
+    56 / 100 and the 53-56 / 54-57 of the offline replay, must be rerun.
+- In the slice below: fix 3 acts in every 014 and 074 episode with a camera fault. Fix 1 is not visibly exercised: the only repeated
+  where-is question (EN 014 `sage_exec`) is a retry after silence with one answer. Fix 2 has no known case here (021 is not in the slice).
+  Fix 4 does not apply, because no task here hands an object to another person (014 hands it to the speaker).
+
+### Milestone 5 (dev 065 008 015 014 074, `results/r4/n5_a2`)
+
+Cell = run a | run b. S success, F false success, H gave up. Counts are [a, b]. `sage_gold` is privileged (gold goals), with one run
+and none of the lab flags.
+
+| variant | EN 008 014 015 065 074 | EN S | EN F* | KO 008 014 015 065 074 | KO S | KO F* |
+|---|---|---|---|---|---|---|
+| oracle | S\|S S\|S S\|S S\|S S\|S | [5, 5] | [0, 0] | S\|S S\|S S\|S S\|S S\|S | [5, 5] | [0, 0] |
+| sage | S\|S H\|H F\|F F\|F H\|H | [1, 1] | [2, 2] | H\|S H\|H S\|S F\|F H\|H | [1, 2] | [1, 1] |
+| sage_ground2 | S\|S H\|H S\|F F\|F H\|H | [2, 1] | [1, 2] | S\|H H\|H S\|S F\|F H\|H | [2, 1] | [1, 1] |
+| sage_exec | S\|S H\|H F\|F S\|S H\|H | [2, 2] | [1, 1] | H\|H H\|H S\|S S\|S H\|H | [2, 2] | [0, 0] |
+| sage_inv | S\|S H\|H F\|F F\|F H\|H | [1, 1] | [2, 2] | H\|H H\|H S\|S F\|F H\|H | [1, 1] | [1, 1] |
+| sage_unstick | S\|S H\|H F\|F F\|F H\|H | [1, 1] | [2, 2] | S\|S H\|H S\|S F\|F H\|H | [2, 2] | [1, 1] |
+| sage_r3 | S\|S S\|S F\|F S\|S H\|H | [3, 3] | [1, 1] | H\|S S\|S S\|S S\|S H\|H | [3, 4] | [0, 0] |
+| sage_r3u | S\|S S\|S F\|F S\|S H\|H | [3, 3] | [1, 1] | S\|S S\|S S\|S S\|S H\|H | [4, 4] | [0, 0] |
+| sage_gold (1 run) | H H S F H | 1 | 1 | S H S F H | 2 | 1 |
+
+Pooled over EN, KO and both repeats (20 episodes each), the successes are: oracle 20, sage 5, ground2 6, exec 8, inv 4, unstick 6,
+r3 13, r3u 14. False successes: sage 6, ground2 5, exec 2, inv 6, unstick 6, r3 2, r3u 2. 0 errors in every cell.
+
+**The run used a stale task file for 015.** `run.sh` reused `tasks.jsonl` from `n5_a1` (written 14:18), which is older than the
+tell_fetch re-render (4a0550c, 15:19). So 015 ran on its old text: EN "Hey, tell Grandpa to head to the kitchen for a sec and bring that
+red book over to me." In that text the fetch clause can attach to the message, which is the defect H3 removed. The other four tasks have
+the current text. On the current text (`m5s`, `m10s`, same code), `sage` EN 015 is still F, for another reason (below), and KO 015 is x.
+
+Paired against `sage` (same task, language and repeat), wins / losses, and whether a flag fired in the changed episode:
+
+| variant | wins | losses | where (flag) |
+|---|---|---|---|
+| sage_ground2 | 2 | 1 | EN 015 a, KO 008 a (no flag) / KO 008 b (no flag) |
+| sage_exec | 4 | 1 | 065 EN and KO x2 (`endstate_check`) / KO 008 b (no flag) |
+| sage_inv | 0 | 1 | KO 008 b (no flag) |
+| sage_unstick | 1 | 0 | KO 008 a (no flag) |
+| sage_r3 | 8 | 0 | 014 and 065, EN and KO, x2 (`inventory_ask` + `wait_on_robot`; `endstate_check`) |
+| sage_r3u | 9 | 0 | as sage_r3, plus KO 008 a (`dialog_unstick.restated_reading`) |
+
+Every win or loss without a fired flag sits on one of the two fork points described under 008 KO and 015 EN below.
+
+### Every task where cells differ, read from the episodes
+
+- **008 EN (S everywhere except gold).** Every variant makes the same 21 calls and succeeds. `sage_gold` gives up with 0 calls: "I could not
+  make a plan that passes my checks". This is the `bind` case that `gate_strict` targets, but `sage_gold` runs without the flags, so it
+  cannot be judged here.
+- **008 KO (the main source of noise).** The request "put the blue book on the armchair, no, actually on the TV stand, and bring me the water
+  bottle" forks at the reading of the user's restatement (LLM nondeterminism, no flag involved):
+  - The S path has 3 questions. The second read-back is right, and the user says yes.
+  - The H path has 5 questions. The first reading puts the water bottle on the TV stand, and the user says no. The second reading is right,
+    but the user draws `not_sure`. The which-part question follows, the user restates, and SAGE gives up ("무엇을 할지 확인하지 못해서
+    여기서 멈출게요.").
+  - The H path came up in sage/a, ground2/b, exec/a, exec/b, inv/a, inv/b and r3/a, and all 7 gave up. `dialog_unstick.restated_reading`
+    fired on that path 3 times (unstick/b, r3u/a, r3u/b). Each time it read the same reading back once more ("같은 뜻으로 다시
+    이해했어요. ... 맞아요?"), got "네, 맞아요." and succeeded (6 questions, 27 calls). unstick/a took the S path without the flag.
+  - Both paths also show a coverage false alarm: "안락의자 말씀하셨는데 제 계획에 없어요" ("you said armchair, but it is not in my plan").
+    The user corrected "armchair" away in the same sentence. This is a SAGE weakness, not a harness one.
+  - `sage_gold` succeeds here.
+- **014 EN and KO (only sage_r3 and sage_r3u succeed).** It is a clarify task with two mugs, and later a transient camera fault
+  (`perception_unavailable`) comes up.
+  - Baseline and ground2 / unstick give up on the camera fault ("I have to stop: something is wrong with my hardware.").
+  - `sage_inv` asks the which-question and gets "The black one, please." / "검은 거요.", read right in all firings, KO included. It then
+    gives up on the same camera fault. In KO its final sentence is again "죄송해요, 지금은 그 말씀을 드리기 어려워요." ("it is hard for me
+    to say that now"), a translator refusal and not a task report.
+  - `sage_exec` alone waits 2, 4 and 8 s and the camera clears. It then searches for a generic "mug" (absent at many places) and stops at
+    the 60-call budget, 360 s of simulated time. That is more motion for no gain.
+  - Both together (r3, r3u): the which-question names the black mug, the wait clears the camera, and the run succeeds in 41-45 calls. Neither
+    flag converts 014 alone.
+  - Seen on the way:
+    - The which-question still lists 4 names for 2 mugs ("black mug or white mug or black coffee mug or white coffee mug", EN and KO),
+      after V2's instance count. Not traced.
+    - KO baseline: the read-back translates "the mug" as "미안해요" ("sorry"): "그릇 냉장고 안에 넣을게요, 그다음 미안해요. 손에
+      건네드릴게요." The simulated user did not take the structured meaning (`structured_mismatch`). It answered from what it heard, as
+      the R2-7 rule requires. These are all 6 mismatches of the run (sage, sage_exec, sage_unstick, a and b).
+    - A later KO read-back says "그릇 사용자 안에 넣을게요" ("put the bowl inside the user"), a grounding error.
+    - `sage_gold` gives up on a grasp fault followed by the camera fault, because it has no wait flag.
+- **015 EN (F in every variant except ground2/a; stale text).** On the old text the planner puts the whole fetch clause into the message to
+  Grandpa. It moves to Grandpa, says "Grandpa, head to the kitchen for a sec and bring that red book over to me.", and reports done after 3
+  calls. ground2/a took another path: its first reading asked a confirm question with a coverage remark, the user said yes, and the run
+  succeeded. No flag fired, so this is the second fork point. `sage_gold` succeeds. On the current text (`m5s`, `m10s`) `sage` reads the
+  fetch, but the user gives the `wrong` answer "Yes, that's right." to a read-back that hands the book to Grandpa, so the run is a false
+  success through intended user noise.
+- **015 KO (S everywhere).** `gate_strict.per_goal_repair` fired in exec, r3 and r3u (6 episodes), but the baseline also certified, so there
+  were 0 flips.
+- **065 EN and KO (F to S wherever `endstate_check` runs, 12 of 12).** The final dock draws an injected transient `hw_fault`. The baseline
+  ignores it and says "Task completed" with `docked()` false. With the flag the dock is retried, succeeds, and all three goals hold.
+  `sage_gold` is F for the same reason.
+- **074 EN and KO (H in every variant; the oracle succeeds).**
+  - The first Open gives the silent `partial_open`. The robot cannot see it, and PutIn is then BLOCKED. The baseline retries PutIn 2-3
+    times and gives up.
+  - `reset_container` fires as designed: put down at the source, Close, Open, fetch, PutIn. The second `put_in(fridge)` then draws an
+    injected persistent `hw_fault` (draw key skill, args, nth = 1), and `wait_on_robot` waits 2, 4 and 8 s in vain.
+  - The oracle closes and reopens right after the `partial_open`, because it reads the true state. It makes only one put_in, so it never
+    meets that draw. Rule (b) of the milestone (the oracle fails too) therefore does not apply, although no robot-visible policy has shown
+    a way through.
+  - `sage_gold` gives up on two BLOCKED PutIns and a camera fault.
+
+### Milestone 10 (`results/r3/m10s`, post-fix code)
+
+This round ran no new milestone 10. The m10 rerun of the previous section already ran on the same code, after all four fixes, with the shared
+cache, so its a and b are identical. Success over its 14 ids (P1 m10 plus P2 m5), [a = b]:
+
+| variant | EN S | EN F* | KO S | KO F* |
+|---|---|---|---|---|
+| oracle | 14 | 0 | 14 | 0 |
+| sage | 1 | 4 | 2 | 4 |
+| sage_exec | 3 | 3 | 3 | 3 |
+| sage_ei_gate / _end / _reset / _wait | 2 / 2 / 1 / 1 | 4 / 3 / 4 / 4 | 2 / 3 / 2 / 2 | 4 / 3 / 4 / 4 |
+| sage_inv | 3 | 2 | 5 | 2 |
+| sage_r3 / sage_r3u | 6 / 6 | 1 / 1 | 7 / 7 | 1 / 1 |
+
+Every differing cell has fired lab events, there are 0 losses on the controls (042, 058, 003, 066), and `table.py` reports no unexplained
+differences. Reproduce it with `python -I results/r3/m10s/table.py results/r3/m10s 65 8 15 14 74 24 66 42 58 3 27 62 21 89`.
+
+### Milestone 50: not run
+
+The milestone-5 gate did not pass (below), so milestone 50 was not started.
+
+### Gate and keep / kill
+
+**Gate: not passed.**
+- The hygiene part passes:
+  - 0 errors, and all 34 run logs end `EXIT=0`;
+  - no wrong-language speech, no raw id said to the user, no LLM-budget hit;
+  - 6 `structured_mismatch` questions, all explained (KO 014 "미안해요" above);
+  - no HTTP 500 (1626 requests, all 200, per the run report's container-log count);
+  - at most 8 clients, and the container was stopped after the batch with no run alive.
+- The correctness part fails. The oracle solves all 5 tasks in both languages, so a correct planner needs 5 / 5. `sage` has 1 / 5 EN and
+  1-2 / 5 KO, and the best variant `sage_r3u` has 3 / 5 EN and 4 / 5 KO. 074 fails everywhere, and 015 EN fails everywhere except one
+  episode.
+
+Kill criteria of `proposals.md`, read on this run plus `m10s`:
+
+| flag | fired (this run) | result | criterion | verdict |
+|---|---|---|---|---|
+| `endstate_check` | 12 (065) | F to S 12 / 12; m10s 065 x4 | losses > wins: no; control lost: no | **keep** |
+| `gate_strict.per_goal_repair` | 8 (KO 015 x6, KO 065, KO 014) | 0 flips here; m10s EN 024 x to S x2 | F* of newly certified plans: 0 | **keep** |
+| `gate_strict` bind | 0 | not on the variants' path (gold EN 008 only) | - | not tested |
+| `reset_container` | 12 (074) | 0 flips; the next PutIn draws a persistent fault | no loss | keep, no gain shown |
+| `wait_on_robot` | 22 (014, 074) | gain only together with `inventory_ask` (014); alone, EN 014 runs into the 60-call budget | no loss | keep, weak; needs a budget cap |
+| `inventory_ask` | 12 (014) | alone 0 flips (camera fault after it); with the wait 8 wins; m10s alone EN +4, KO +6 | >= 2 net flips per language: yes (m10s); KO misread: 0 of 6; firings on non-clarify tasks: 0 here | **keep** |
+| `dialog_unstick.restated_reading` | 3 (KO 008) | 3 / 3 S on the path where the same path without it gave up 7 / 7 | no criterion written in `proposals.md`; 0 losses | keep for the fresh slice |
+| `dialog_unstick` not-sure search | 0 here (m10s: controls 058, 003, no cell moved) | - | - | not tested |
+
+**No flag is killed and none becomes a default.** These are 5 hand-picked dev tasks. The R6 keep rule (>= 6 / 100 paired in the same
+direction in two runs) cannot be met at this size.
+
+### Caveats
+
+- **Dev tuning.** The ids come from dev 0..99, where the ideas were built and the offline replay was scored. All gains are in-sample.
+  Only dev 100..199 (never run end to end) can confirm them.
+- **Noise.** Earlier rounds measured about 3 tasks in 50 from run to run. Here a and b differ in 4 of 70 SAGE task-language pairs:
+  KO 008 for sage, ground2 and r3, and EN 015 for ground2. All four sit on the two fork points above. At n = 5 one flip moves a count by 20
+  points. The earlier `n5_a1` was fully identical between a and b. The cause of that difference was not traced.
+- **Flags that never fired here:** `go_steps` and `kind_anchor` (the round-2 grounding flags inside ground2 / r3 / r3u), the `gate_strict`
+  bind, and the not-sure search of `dialog_unstick`. `name_canon` fired only in ground2 on 014, and `inventory_ask` only on 014. A null
+  result for these flags here means "not exercised", not "no effect".
+- **Stale task file** for 015 (above). The 015 cells of this run measure the old text.
+- `asr_off` throughout. With speech noise on, the dialogue failures (the 008 KO kind) grow.
+- `sage_gold` is not a ceiling for the flag variants. It runs without the flags, so on these ids it scores below `sage_r3` / `sage_r3u`.
+
+### Next steps (suggested, in order)
+
+1. Rerun this slice with `--tasks` taken from the current `data/tasks/dev.jsonl`, so that 015 uses its current text.
+2. Rerun `sage_gold` on 021 and 017 018 054 060 063 064 087 090 to measure the ceiling after fixes 2 and 4. Today it is only the estimate
+   of about 63 / 100.
+3. Run `sage` against `sage_r3u` on the fresh slice dev 100..199, paired, with two runs. This is the only out-of-sample check.
+4. SAGE-side defects seen here, for the user to decide on:
+   - the which-question lists synonyms (4 names for 2 mugs);
+   - the KO translator turns "mug" into "미안해요";
+   - the coverage check fires on a word the user corrected away;
+   - the KO give-up sentence is a translator refusal;
+   - `wait_on_robot` is outside the call budget.

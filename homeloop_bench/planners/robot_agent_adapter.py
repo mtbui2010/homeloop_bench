@@ -178,6 +178,32 @@ def structured_asks(loop, proxy) -> bool:
     return True
 
 
+HEALTH_WAIT_S = 0.5     # robot_agent's own default wait for a sensor to recover (written here so a run does not
+                        # depend on ROBOT_AGENT_HEALTH_WAIT_S); the wait is spent in simulated time, see SimTime
+
+
+class SimTime:
+    """The ``time`` module as robot_agent's loops see it in an episode: ``sleep(dt)`` is the robot waiting, so the
+    episode's simulated clock advances by ``dt`` (``Robot.idle``) and no wall-clock time is spent; ``time()`` is the
+    wall clock plus the time slept, so a deadline loop (``while time.time() < t_end``) ends after the simulated wait.
+    The same for every robot_agent planner (consistency fix, not tuning: before, a robot that waited, polling its
+    sensor health, never let simulated time pass because the adapter set ``health_wait_s=0``)."""
+
+    def __init__(self, robot):
+        import time as _t
+        self._t, self._robot, self._slept = _t, robot, 0.0
+
+    def time(self) -> float:
+        return self._t.time() + self._slept
+
+    def sleep(self, seconds: float) -> None:
+        dt = max(0.0, float(seconds))
+        self._slept += self._robot.idle(dt)
+
+    def __getattr__(self, name):
+        return getattr(self._t, name)
+
+
 @contextlib.contextmanager
 def _patched(pairs):
     """Set (module, attribute, value) triples; restore the old values afterwards."""
@@ -468,6 +494,8 @@ class _RobotAgentPlanner:
                  (ra_llm, "init_llm_client", init_client)]
         if not fake:
             pairs += _count_embodiplan(env)
+        simtime = SimTime(env.robot)
+        pairs += [(m, "time", simtime) for m in (AL, LP) if hasattr(m, "time")]
         old_backend = getattr(hb, "_backend", None)
         fk.CURRENT["env"] = env
         try:
@@ -560,7 +588,7 @@ class _RobotAgentPlanner:
             from robot_agent.core.planning.assist_loop import AssistLoop
             gen = self.generator or (FAKE_GENERATOR if fake else self.ra_planner)
             loop = AssistLoop(agent, emit=None, generator=gen,
-                              health_wait_s=0, memory_path=str(tmp / "mem.json"), **dict(self.loop_options), **common)
+                              health_wait_s=HEALTH_WAIT_S, memory_path=str(tmp / "mem.json"), **dict(self.loop_options), **common)
             apply_overlay(loop, self.manifest_overlay)
             return loop
         from robot_agent.core.planning.loop import ClosedLoop

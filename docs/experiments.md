@@ -1807,6 +1807,6 @@ identical-code variants one after the other.
 
 Zero losses on the controls (042, 058, 003, 066 in both languages) and 0 unexplained differences. Task 021 EN stays
 unsolved by `sage_inv` (the question is asked, the run still gives up), 066 and 042 stay unsolved by every variant. The
-`dialog_unstick` part of `sage_r3u` fired on `unsure_search` only and moved no cell on these ids. This is dev 0..99 again
+`dialog_unstick` part of `sage_r3u` fired only as `unsure_search` on EN 058 and 003 (controls) and moved no cell. This is dev 0..99 again
 (in-sample for the ideas); the fresh slice dev 100..199 is the next confirmation. Containers: started with
 `OLLAMA_NUM_PARALLEL=6`, at most 8 clients, stopped afterwards.

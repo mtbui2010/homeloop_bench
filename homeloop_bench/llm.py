@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Optional, Protocol, runtime_checkable
 
 DEFAULT_MODEL = "qwen3-vl:8b-instruct"
+SHARED_CACHE_ENV = "HOMELOOP_LLM_SHARED_CACHE"      # dir of a read-through prompt-sha cache shared by paired runs
 
 
 class BudgetExceeded(RuntimeError):
@@ -117,12 +118,23 @@ def cache_key(model: str, prompt: str, format, temperature: float, seed: int) ->
 
 
 class CachedLLM:
-    """JSONL cache in front of an LLM: lines ``{sha, model, prompt, format, temperature, seed, response}``."""
+    """JSONL cache in front of an LLM: lines ``{sha, model, prompt, format, temperature, seed, response}``.
 
-    def __init__(self, inner, path):
+    ``shared`` (a second JSONL path) makes it a read-through, write-through cache shared by paired runs (common random
+    numbers): a prompt (by sha) that any run sharing the file has already answered is answered the same way, so two
+    configurations whose code sends the same prompt get the same text and a cell that differs between them must come
+    from a prompt the variant itself changed. The baseline fills the file first; a variant adds what is new. The run's
+    own cache keeps every response it used, so the run stays replayable on its own. The shared file is read again on
+    a miss (another run may have filled it since), under no lock: two runs that miss the same prompt at the same time
+    both call the server, so run the baseline first."""
+
+    def __init__(self, inner, path, shared=None):
         self.inner = inner
         self.model = inner.model
         self.path = Path(path)
+        self.shared = Path(shared) if shared else None
+        self._shared_pos = 0
+        self._smem: dict = {}
         self._mem: dict = {}
         if self.path.exists():
             with self.path.open(encoding="utf-8") as f:
@@ -136,6 +148,27 @@ class CachedLLM:
                         self._mem[rec["sha"]] = rec["response"]
         self.hits = 0
         self.misses = 0
+        self.shared_hits = 0
+        self._scan_shared()
+
+    def _scan_shared(self) -> None:
+        """Read the shared file's new complete lines into the shared memory."""
+        if self.shared is None or not self.shared.exists():
+            return
+        mem = self._smem
+        with self.shared.open("rb") as f:
+            f.seek(self._shared_pos)
+            data = f.read()
+        end = data.rfind(b"\n") + 1                      # a line another run is still writing is left for later
+        for line in data[:end].decode("utf-8").splitlines():
+            line = line.strip()
+            if line:
+                try:
+                    rec = json.loads(line)
+                except ValueError:
+                    continue
+                mem.setdefault(rec["sha"], rec["response"])
+        self._shared_pos += end
 
     def chat(self, prompt: str, format=None, temperature: float = 0.0, seed: int = 0) -> str:
         return self._cached(cache_key(self.model, prompt, format, temperature, seed),
@@ -153,16 +186,31 @@ class CachedLLM:
         if k in self._mem:
             self.hits += 1
             return self._mem[k]
+        if self.shared is not None:
+            self._scan_shared()
+            smem = self._smem
+            if k in smem:
+                self.shared_hits += 1
+                resp = smem[k]
+                self._mem[k] = resp
+                self._append(self.path, _dumps({"sha": k, "model": self.model, **row, "response": resp}) + "\n")
+                return resp
         self.misses += 1
         resp = call()
         self._mem[k] = resp
-        self.path.parent.mkdir(parents=True, exist_ok=True)
         line = _dumps({"sha": k, "model": self.model, **row, "response": resp}) + "\n"
-        with self.path.open("a", encoding="utf-8") as f:
+        self._append(self.path, line)
+        if self.shared is not None:
+            self._append(self.shared, line)
+        return resp
+
+    @staticmethod
+    def _append(path: Path, line: str) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("a", encoding="utf-8") as f:
             _lock(f)                     # parallel workers (run --workers N) share one cache file
             f.write(line)
             f.flush()
-        return resp
 
 
 def _lock(f) -> None:
@@ -227,6 +275,12 @@ def model_digest(url: str, model: Optional[str]) -> Optional[str]:
     return None
 
 
+def shared_cache_path(model: str) -> Optional[Path]:
+    """The shared (paired runs) cache file of ``model`` when HOMELOOP_LLM_SHARED_CACHE names a directory, else None."""
+    d = os.environ.get(SHARED_CACHE_ENV)
+    return Path(d) / (model.replace("/", "_").replace(":", "_") + ".jsonl") if d else None
+
+
 def make_llm(spec: Optional[str], model: Optional[str] = None, cache_dir: Optional[str] = None):
     """``"fake"`` -> FakeLLM; ``"http://..."`` -> OllamaHTTP (cached under ``cache_dir`` when given);
     None -> None."""
@@ -238,7 +292,7 @@ def make_llm(spec: Optional[str], model: Optional[str] = None, cache_dir: Option
         llm = OllamaHTTP(spec, model or DEFAULT_MODEL)
         if cache_dir:
             safe = (model or DEFAULT_MODEL).replace("/", "_").replace(":", "_")
-            llm = CachedLLM(llm, Path(cache_dir) / f"{safe}.jsonl")
+            llm = CachedLLM(llm, Path(cache_dir) / f"{safe}.jsonl", shared=shared_cache_path(model or DEFAULT_MODEL))
         return llm
     raise ValueError(f"--llm must be a URL (http://host:port) or 'fake', got {spec!r}")
 

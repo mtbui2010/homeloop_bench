@@ -274,7 +274,7 @@ class TranslateCounter:
 def translator_inner(env, model: str):
     """The translate model's client on the episode's server and cache dir (None under --llm fake: the fake
     answers translation prompts itself)."""
-    from ..llm import CachedLLM, OllamaHTTP
+    from ..llm import CachedLLM, OllamaHTTP, shared_cache_path
     url = _url(env)
     if not url or not model:
         return None
@@ -289,7 +289,8 @@ def translator_inner(env, model: str):
             break
         x = getattr(x, "inner", None)
     if cache_dir is not None:
-        llm = CachedLLM(llm, Path(cache_dir) / (model.replace("/", "_").replace(":", "_") + ".jsonl"))
+        llm = CachedLLM(llm, Path(cache_dir) / (model.replace("/", "_").replace(":", "_") + ".jsonl"),
+                        shared=shared_cache_path(model))
     return llm
 
 

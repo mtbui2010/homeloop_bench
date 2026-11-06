@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -46,6 +47,9 @@ def cmd_run(a) -> int:
                 print(f"--shard {a.shard!r}: use K/N, e.g. 0/3", file=sys.stderr)
                 return 2
             shard = (k, n)
+        if getattr(a, "shared_cache", None):
+            from .llm import SHARED_CACHE_ENV
+            os.environ[SHARED_CACHE_ENV] = str(Path(a.shared_cache).resolve())     # spawned workers inherit it
         s = run_many(a.planner, a.split, a.limit, prof, a.seeds, a.lang, a.llm, a.out, model=a.model,
                      workers=a.workers, tasks_file=a.tasks, budgets=_budgets(a), progress=True, shard=shard)
     except PlannerConfigError as e:
@@ -271,6 +275,9 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--shard", default=None, metavar="K/N",
                    help="run only the tasks at index i %% N == K (same order, seeds, settings) -> OUT/shard<K>/; "
                         "then `merge OUT`")
+    r.add_argument("--shared-cache", default=None, metavar="DIR",
+                   help="a prompt-sha response cache shared by paired runs (common random numbers): read through, "
+                        "written through, one <model>.jsonl per model; run the baseline first")
     r.add_argument("--max-calls", type=int, default=None)
     r.add_argument("--max-sim-time-s", type=float, default=None)
     r.add_argument("--max-llm-calls", type=int, default=None)

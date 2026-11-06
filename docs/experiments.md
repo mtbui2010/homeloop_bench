@@ -2157,3 +2157,62 @@ example two books on one shelf) the bare class name stays in the object memory, 
 would change what every planner remembers, so it is not done. (2) `llm_cache` counts depend on the order of the configurations, so
 they are not in summary.json. (3) The A/A check needs a live server to be meaningful for SAGE; it was tested with a local server over the
 keyword model only.
+
+## Round 6 understanding loop (2026-11-07)
+
+Question: do the four round-7 understanding variants beat `sage_ground2` in `understand-eval`, and is `no_shared_listener` safe on the
+21 tasks that the tellfix data change re-rendered? Method: `understand-eval`, tasks 0..299 of train then dev, EN and KO, `--text both`
+(clean and asr), `--profile real --seed 0`, model `qwen3-vl:8b-instruct` (translate model as in `run`, qwen3-vl:30b-a3b-instruct), GPU 0
+only, container stopped at the end, at most 8 clients. Baseline = `sage_ground2`, run on the **current** task data (the perf1 cache was the
+seed, so only prompts that changed, the 21 tellfix tasks among them, were asked again). Each variant starts from the cache of the one before
+it (u1 from the baseline, u2 from u1, u3 from u2); an identical prompt gets the identical answer, so a changed cell comes from a prompt the
+variant changed. Headline population: feasible tasks with no refused part (train 964 records, dev 972). Same arguments give identical files.
+Kill rule (brief): more losses than gains, or more confident-wrong readings, kills a variant; a variant is kept only if it wins on train AND
+dev; `asked-on-exact` (readings that are exact and still asked, variant minus baseline, in points of the headline records) may rise by at most 1.5.
+
+### Result (headline, each variant against `sage_ground2`; variants are cumulative)
+
+| split | variant | exact base -> var | atom precision | atom recall | dropped | spurious | confident-wrong | asked | asked-on-exact | gains / losses |
+|---|---|---|---|---|---|---|---|---|---|---|
+| train | sage_u1 | 487 -> 515 (+2.9 pt) | 0.762 -> 0.766 | 0.705 -> 0.734 | 522 -> 471 | 390 -> 398 | 252 -> **259** | 240 -> 205 | +0.00 | +28 / -0 |
+| train | sage_u2 | 487 -> 553 (+6.8) | 0.762 -> 0.792 | 0.705 -> 0.760 | 522 -> 426 | 390 -> 353 | 252 -> 222 | 240 -> 205 | +0.10 | +73 / -7 |
+| train | sage_u3 | 487 -> 516 (+3.0) | 0.762 -> 0.815 | 0.705 -> 0.667 | 522 -> 590 | 390 -> 269 | 252 -> 157 | 240 -> 307 | +0.10 | +61 / -32 |
+| dev | sage_u1 | 570 -> 586 (+1.6) | 0.829 -> 0.827 | 0.748 -> 0.772 | 451 -> 408 | 277 -> 290 | 206 -> **216** | 215 -> 189 | +0.00 | +16 / -0 |
+| dev | sage_u2 | 570 -> 591 (+2.2) | 0.829 -> 0.834 | 0.748 -> 0.779 | 451 -> 396 | 277 -> 278 | 206 -> **207** | 215 -> 189 | -0.41 | +34 / -13 |
+| dev | sage_u3 | 570 -> 548 (-2.3) | 0.829 -> 0.855 | 0.748 -> 0.673 | 451 -> 586 | 277 -> 204 | 206 -> 138 | 215 -> 300 | -0.51 | +28 / -**50** |
+| train, first 75 tasks | sage_u | 122 -> 119 of 236 | 0.757 -> 0.746 | 0.709 -> 0.672 | | | 63 -> 54 | 60 -> 81 | **+2.12** | +22 / -**25** |
+| dev, first 75 tasks | sage_u | 155 -> 139 of 240 | 0.848 -> 0.797 | 0.793 -> 0.707 | | | 40 -> 31 | 52 -> 84 | **+2.92** | +21 / -**37** |
+
+Increment of each flag over the one before (same cache): `no_shared_listener` (u2 over u1) train +45 / -7, dev +18 / -13 (KO dev +19 / -13, EN dev +15 / -0);
+`understand_views` (u3 over u2) train +0 / -37, dev +0 / -43 (it halves the confident-wrong readings, 206 -> 138 on dev, by asking 85 more questions on
+the headline tasks and dropping 190 atoms; no exact reading is gained). `understand_goals_first` (u over u3, first 75 tasks): train +14 / -25, dev +17 / -26.
+EN and KO, clean and asr rows of every comparison are in `lab/r6/all3.md` (all four cells keep the sign of the total, except u2 KO dev: +19 / -13).
+Instrument checks: no record `ended` in any run; the baseline records differ from perf1 only on the 21 tellfix tasks.
+
+### The 21 shared_listener cases (tellfix tasks, `no_shared_listener` = u2 against u1, 84 records)
+
+Tasks (train) 15 24 95 169 208 255 279 and (dev) 15 24 39 59 95 135 161 168 204 208 240 257 277 281. Exact readings 51 -> 36 (gains 0, losses 15),
+dropped atoms 27 -> 43, spurious 29 -> 45, confident-wrong 23 -> 31. The rule is right on exactly the tasks that were re-rendered to test it, so
+`no_shared_listener` is **not** a safe switch-off: its gains in the full set come from other tasks, and the 78 losses of round 5 were not the
+tellfix family alone. Decision: **kill `no_shared_listener` as a blanket flag**; if the rule is to be narrowed, narrow it on the structure (a recipient
+named once and not a speaker), not by removing it.
+
+### Keep / kill
+
+| variant (flag) | verdict | reason |
+|---|---|---|
+| sage_u1 (`reask_anchor`) | **kill by the rule** (near miss) | confident-wrong rises on train (+7) and dev (+10) although exact rises with no loss (+28/-0, +16/-0) and asks fall 35 / 26. The extra confident readings are the goal-less ones turned into goals, a third of them wrong. Needs the end-to-end gate to decide, not this metric |
+| sage_u2 (`no_shared_listener`) | **kill** | dev confident-wrong 206 -> 207; 0 gains / 15 losses on the 21 cases; 13 dev losses |
+| sage_u3 (`understand_views`) | **kill** | dev losses 50 > gains 28, recall -7 pt; asks 85 more questions |
+| sage_u (`understand_goals_first`) | **kill** | more losses than gains in both splits, asked-on-exact +2.1 / +2.9 (limit 1.5) |
+
+None of the four wins on train AND dev under the kill rule. Nothing from round 7 is switched on by default.
+
+### Caveats
+
+- `sage_u` was run on tasks 0..74 of each split only (all four conditions, 236 / 240 headline records), not 0..299: the shared GPU served about 30 LLM calls a
+  minute when eight clients ran, and `sage_u` changes every understand prompt (about 2 hours for the full window). It is killed by inheritance from `sage_u3` and by the numbers of the window; the rest are full windows.
+- Gold atoms compare only the person of a `say`, and the gold place for "bring it here" is the dock; both are limits of the metric (see `understand_eval.md`).
+- A first-reading metric: the read-back and the clarify dialogue are not run. `reask_anchor` and `understand_views` both change what the loop asks, so their end-to-end effect is unknown.
+- `asked-on-exact` is measured as (exact and asked) in the variant minus the same count in the baseline; the brief does not define it more closely.
+- Work files (cache copies, records, shard logs): `lab/r6/` in the scratchpad; not in the repo.

@@ -466,7 +466,8 @@ class _RobotAgentPlanner:
                     e = {k: v for k, v in ev.items() if k not in ("world", "say_audio")}
                     if e.get("event") in ("done", "error"):
                         final = e
-                    if self.until and e.get("event") in self.until:
+                    if self.until and e.get("event") in self.until and not e.get("reask"):
+                        # (an understand_check that only reports a re-ask of the understand step is not the stop)
                         self.reached = e         # a probe (understand-eval) wants the loop up to this event only
                         events.close()
                         break
@@ -582,6 +583,36 @@ class SageLabPlanner(SagePlanner):
     removed. Default off for every other variant; this one differs from ``robot_agent:sage`` in that flag only."""
     name = "robot_agent:sage_lab"
     loop_options = {"person_goals": "1"}
+
+
+class SageGround2Planner(SagePlanner):
+    """robot_agent:sage with grounding chain v2 on (go_steps, kind_anchor, name_canon): deterministic, 0 extra calls."""
+    name = "robot_agent:sage_ground2"
+    loop_options = {"go_steps": "1", "kind_anchor": "1", "name_canon": "1"}
+
+
+class SageGoStepsPlanner(SagePlanner):
+    """Ablation of sage_ground2: go_steps only."""
+    name = "robot_agent:sage_g2_go"
+    loop_options = {"go_steps": "1"}
+
+
+class SageKindAnchorPlanner(SagePlanner):
+    """Ablation of sage_ground2: kind_anchor only."""
+    name = "robot_agent:sage_g2_kind"
+    loop_options = {"kind_anchor": "1"}
+
+
+class SageNameCanonPlanner(SagePlanner):
+    """Ablation of sage_ground2: name_canon only."""
+    name = "robot_agent:sage_g2_name"
+    loop_options = {"name_canon": "1"}
+
+
+class SageReaskPlanner(SagePlanner):
+    """robot_agent:sage with reask_abstain on: one directed re-understand of a goal-less where-is-it reading."""
+    name = "robot_agent:sage_reask"
+    loop_options = {"reask_abstain": "1"}
 
 
 class SageGoldPlanner(SagePlanner):

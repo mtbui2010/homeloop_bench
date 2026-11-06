@@ -1374,3 +1374,164 @@ execution itself (D, 6 per 100 in sage_gold) and the search without a source (G,
   27-point execution loss are far outside it. Offline estimates over-predicted before (the `person_goals` flag: predicted +3, got +1), so a gain in `understand-eval` is a reason to
   run the confirmation, not a result. A change counts only when the paired end-to-end difference is at least 6 tasks of 100 in the same direction in two runs, or when the discordant
   tasks (gain against loss) are clearly one-sided.
+
+
+## Solution lab round 2 (SAGE-v2, understand-eval, 2026-11-06)
+
+Question: do the two prototypes of round 2 (`proposals.md` in the lab folder) raise the quality of the understand step? Both are
+opt-in flags of robot_agent (branch sage-v2/homeloop, default off, tests through the real loop), registered here as variants:
+
+| variant | flags | extra LLM calls |
+|---|---|---|
+| `robot_agent:sage_ground2` | `go_steps` + `kind_anchor` + `name_canon` (grounding chain v2) | 0 |
+| `robot_agent:sage_g2_go`, `sage_g2_kind`, `sage_g2_name` | one option each (ablations) | 0 |
+| `robot_agent:sage_reask` | `reask_abstain` (V1: one directed re-understand of a goal-less "where is it" reading) | +1 on about 8 % of records |
+
+The wild card I1 (understand schema v2) was not in scope. No end-to-end episode was run in this round, and the test split was not
+opened. `understand-eval` stops at the first reading, so it cannot see the read-back, the hazard gate or the clarify dialogue that
+follow. A gain here is a reason to run the end-to-end gate, not a result (see the noise caveat of the R6 section).
+
+### Method
+
+- Instrument check. With every flag off, `records.jsonl` and `summary.json` of the train run are byte-identical to `results/perf1/understand/train`
+  (1200 records), and `dev` 0..299 as well.
+- Pilot: tasks 0..4 of train, EN and KO, both text conditions (20 records). Flag off: identical to perf1. `sage_ground2`: 5 records change, 4 of them
+  an `open` that nobody asked for is dropped (right) and 1 loss (below); `sage_reask` fires on none of them.
+- Pairing. The baseline LLM cache of perf1 is copied into each arm's `--out`. A flag that only post-processes the reading draws nothing new,
+  so every arm is a paired replay on the same model readings (exact counts, no redraw noise). `sage_reask` is the only arm that makes
+  new calls: 96 on train, 98 on dev. The model is `qwen3-vl:8b-instruct`, `--profile real --seed 0`, both text conditions, EN and KO.
+- Fresh slice. dev 300..599 had not been read by anyone in this lab. The baseline was run once on GPU 0 (6 shards, 1200 records,
+  `OLLAMA_NUM_PARALLEL=6`, 8 clients at most, container stopped afterwards), then every arm was replayed from that cache.
+- Disclosure. The `go` rule and the open anchor were refined in the replay lab after reading train AND dev 0..299 losses, so dev 0..299 is not clean
+  for them; only the fresh slice is. After the code review of the flag I widened the Korean open endings (`열 수`, `열지`, `열자`, `열까`, `열래`, `열도록`, ...)
+  from my own grammar knowledge (no reference corpus or analyser was available; `kiwipiepy` and `konlpy` are not installed). It changed no train count.
+  The forms are still unchecked by a native speaker.
+- A bench bug found on the way: `understand-eval` stops at the first `understand_check` event, which it reads as "the loop asked to repeat".
+  The re-ask reports itself with such an event (`reask: true`), so the first `sage_reask` run (both splits) came out as 96 empty "repeat" readings.
+  The adapter now ignores an `understand_check` that carries `reask`. The re-ask calls were cached, so the corrected run re-used them.
+
+### Result 1: grounding chain v2 (`sage_ground2`), headline population (feasible tasks, no refused part), paired
+
+Replay check against the lab's monkeypatch arms (must agree within +-2): train chain +42 / -1 (lab +42 / -2), go_steps +19 / 0 (+19 / 0),
+kind_anchor +11 / -1 (+11 / -2), name_canon +4 / 0 (+4 / 0); dev 0..299 chain +48 / 0 (+48 / -2). All within the bound.
+
+Train (300 tasks, 964 headline records):
+
+| condition | n | exact b -> a | gains/losses | precision b -> a | recall b -> a | dropped b -> a | spurious b -> a | confident wrong b -> a | asked-on-exact b -> a |
+|---|---|---|---|---|---|---|---|---|---|
+| EN clean | 241 | 137 -> 151 (+5.8 pt) | +14 / -0 | 0.759 -> 0.818 | 0.819 -> 0.819 | 80 -> 80 | 115 -> 81 | 67 -> 54 | 3 -> 4 |
+| EN asr | 241 | 110 -> 121 (+4.6 pt) | +12 / -1 | 0.723 -> 0.786 | 0.677 -> 0.673 | 143 -> 145 | 115 -> 81 | 67 -> 58 | 2 -> 5 |
+| KO clean | 241 | 112 -> 121 (+3.7 pt) | +9 / -0 | 0.694 -> 0.759 | 0.716 -> 0.725 | 126 -> 122 | 140 -> 102 | 74 -> 65 | 9 -> 10 |
+| KO asr | 241 | 88 -> 95 (+2.9 pt) | +7 / -0 | 0.627 -> 0.681 | 0.600 -> 0.603 | 177 -> 176 | 158 -> 125 | 84 -> 77 | 7 -> 12 |
+| EN | 482 | 247 -> 272 (+5.2 pt) | +26 / -1 | 0.742 -> 0.803 | 0.748 -> 0.746 | 223 -> 225 | 230 -> 162 | 134 -> 112 | 5 -> 9 |
+| KO | 482 | 200 -> 216 (+3.3 pt) | +16 / -0 | 0.662 -> 0.721 | 0.658 -> 0.664 | 303 -> 298 | 298 -> 227 | 158 -> 142 | 16 -> 22 |
+| all 4 | 964 | 447 -> 488 (+4.3 pt) | +42 / -1 | 0.702 -> 0.763 | 0.703 -> 0.705 | 526 -> 523 | 528 -> 389 | 292 -> 254 | 21 -> 31 |
+
+Dev 0..299 (972 headline records; not clean for the go rule and the open anchor, see Disclosure):
+
+| condition | n | exact b -> a | gains/losses | precision b -> a | recall b -> a | dropped b -> a | spurious b -> a | confident wrong b -> a | asked-on-exact b -> a |
+|---|---|---|---|---|---|---|---|---|---|
+| EN clean | 243 | 155 -> 173 (+7.4 pt) | +18 / -0 | 0.803 -> 0.880 | 0.848 -> 0.848 | 68 -> 68 | 93 -> 52 | 62 -> 44 | 5 -> 5 |
+| EN asr | 243 | 133 -> 144 (+4.5 pt) | +11 / -0 | 0.800 -> 0.870 | 0.734 -> 0.734 | 119 -> 119 | 82 -> 49 | 49 -> 38 | 2 -> 4 |
+| KO clean | 243 | 130 -> 142 (+4.9 pt) | +12 / -0 | 0.724 -> 0.790 | 0.748 -> 0.754 | 113 -> 110 | 128 -> 90 | 74 -> 62 | 9 -> 9 |
+| KO asr | 243 | 101 -> 108 (+2.9 pt) | +7 / -0 | 0.698 -> 0.760 | 0.634 -> 0.643 | 164 -> 160 | 123 -> 91 | 73 -> 64 | 9 -> 10 |
+| EN | 486 | 288 -> 317 (+6.0 pt) | +29 / -0 | 0.802 -> 0.875 | 0.791 -> 0.791 | 187 -> 187 | 175 -> 101 | 111 -> 82 | 7 -> 9 |
+| KO | 486 | 231 -> 250 (+3.9 pt) | +19 / -0 | 0.711 -> 0.776 | 0.691 -> 0.699 | 277 -> 270 | 251 -> 181 | 147 -> 126 | 18 -> 19 |
+| all 4 | 972 | 519 -> 567 (+4.9 pt) | +48 / -0 | 0.757 -> 0.826 | 0.741 -> 0.745 | 464 -> 457 | 426 -> 282 | 258 -> 208 | 25 -> 28 |
+
+Fresh slice, dev 300..599 (952 headline records; the clean test of generalisation):
+
+| condition | n | exact b -> a | gains/losses | precision b -> a | recall b -> a | dropped b -> a | spurious b -> a | confident wrong b -> a | asked-on-exact b -> a |
+|---|---|---|---|---|---|---|---|---|---|
+| EN clean | 238 | 137 -> 151 (+5.9 pt) | +14 / -0 | 0.776 -> 0.844 | 0.807 -> 0.807 | 85 -> 85 | 103 -> 66 | 57 -> 45 | 9 -> 11 |
+| EN asr | 238 | 107 -> 114 (+2.9 pt) | +7 / -0 | 0.755 -> 0.813 | 0.651 -> 0.651 | 154 -> 154 | 93 -> 66 | 45 -> 39 | 7 -> 9 |
+| KO clean | 238 | 128 -> 141 (+5.5 pt) | +13 / -0 | 0.747 -> 0.803 | 0.741 -> 0.748 | 114 -> 111 | 111 -> 81 | 62 -> 51 | 17 -> 20 |
+| KO asr | 238 | 99 -> 108 (+3.8 pt) | +9 / -0 | 0.692 -> 0.746 | 0.596 -> 0.599 | 178 -> 177 | 117 -> 90 | 65 -> 56 | 14 -> 18 |
+| EN | 476 | 244 -> 265 (+4.4 pt) | +21 / -0 | 0.766 -> 0.830 | 0.729 -> 0.729 | 239 -> 239 | 196 -> 132 | 102 -> 84 | 16 -> 20 |
+| KO | 476 | 227 -> 249 (+4.6 pt) | +22 / -0 | 0.721 -> 0.776 | 0.669 -> 0.673 | 292 -> 288 | 228 -> 171 | 127 -> 107 | 31 -> 38 |
+| all 4 | 952 | 471 -> 514 (+4.5 pt) | +43 / -0 | 0.744 -> 0.803 | 0.699 -> 0.701 | 531 -> 527 | 424 -> 303 | 229 -> 191 | 47 -> 58 |
+
+"b" is the baseline `robot_agent:sage`, "a" the arm. Precision is matched / (matched + spurious), recall matched / (matched + dropped), both micro over atoms.
+"Confident wrong" is a reading the robot would act on without asking that is not exact; the asked-on-exact column counts exact readings that the model still turned into a question.
+
+Sub-options (exact gains / losses, headline, pooled over the four conditions):
+
+| option | train | dev 0..299 | fresh dev 300..599 |
+|---|---|---|---|
+| `go_steps` | +19 / -0 | +29 / -0 | +34 / -0 |
+| `kind_anchor` (open only) | +11 / -1 | +7 / -0 | +5 / -0 |
+| `name_canon` | +4 / -0 | +6 / -0 | +4 / -0 |
+| chain (all three) | +42 / -1 | +48 / -0 | +43 / -0 |
+
+Clarify (ask) and refuse tasks, chain vs baseline:
+
+| set | confident readings b -> a | confident wrong b -> a | asked b -> a | refused b -> a |
+|---|---|---|---|---|
+| ask, train (164) | 99 -> 60 | 47 -> 39 | 54 -> 94 | 18 -> 18 |
+| ask, dev 0..299 (164) | 78 -> 50 | 44 -> 39 | 78 -> 106 | 29 -> 29 |
+| ask, fresh (168) | 72 -> 44 | 44 -> 35 | 76 -> 104 | 32 -> 32 |
+| refuse, train / dev / fresh (52 / 56 / 52) | 33 -> 33 / 32 -> 32 / 24 -> 23 | same | 17 -> 17 / 20 -> 20 / 26 -> 27 | 16 -> 16 / 22 -> 22 / 24 -> 24 |
+
+Every difference was read (a script splits the changed records by which option changed them; a worse or lost record is printed with the heard text, base, arm and gold):
+
+- **go_steps** (train 39 + 19, dev 49 + 29, fresh 39 + 34 changed head records): in every changed record the base set had one or more steps as end states
+  (a `go` to the person who is addressed, to the speaker, to the source of a later move); all become `better` or `exact`. One worse record in train
+  (`hl-train-000205`, EN asr): the model wrote `go(dock)` BEFORE a `give` and the rule read the dock as the source of that move; the base set was not exact either (the dock was in the wrong place).
+  Fresh slice: none. The rule never fires on a set with only `go` goals.
+- **kind_anchor** (open): drops an `open` end state the words carry no open verb for. In ask and refuse tasks the same drop makes the set smaller (refuse spurious atoms 79 -> 63 on train)
+  without changing a status. One loss in train (`hl-train-000001`, EN asr): ASR turned "open" into "one", the open verb is gone from the heard text, the gold set has the `open` and the rule removes it.
+  One fresh record gets worse by one atom (`hl-dev-000341`, KO asr: ASR "열곰" for "열고"; the base was already not exact). This is the cost of anchoring on heard words, and the reason the rule needs another goal to remain.
+  The `close` half is not in the chain (a policy decision: a fridge is left open).
+- **name_canon**: 4 / 6 / 4 gains and, in train, 11 same-error records: a name was renamed onto a memory name and the set is still wrong for another reason (the most visible: "bottle" -> "juice" in one KO record, the head noun matched a different object).
+  The which-one question fires on ask tasks: the ask rows lose 28 to 40 confident readings and gain as many questions, and the chain does not add a question to the clean tasks beyond 8 / 5 / 6 asked records (asked-on-exact +7 on train from this option).
+- Interaction: in train 130 head records change, in dev 126, in fresh 119; no record changes by a third option's interaction alone.
+
+Kill criteria of `proposals.md` (3.1), all passed:
+
+| criterion | train | dev 0..299 | fresh |
+|---|---|---|---|
+| flag off byte-identical to perf1 | yes | yes | n/a (baseline is this run) |
+| replay within +-2 of the lab arms | yes | yes | n/a |
+| sub-option net >= +3 and losses <= a third of gains | go +19, kind +10, name +4 | go +29, kind +7, name +6 | go +34, kind +5, name +4 |
+| pooled net >= +25 (train), >= +2 points (fresh), no sub-option below 0 | +41 | +48 | +4.5 points (+43), none below 0 |
+| asked-on-exact rises by <= 1.5 points | +1.0 | +0.3 | +1.2 |
+| ask-task confident readings do not rise, refuse rows do not change | 99 -> 60, refuse confident unchanged (refuse atom counts fall) | 78 -> 50, unchanged | 72 -> 44, 24 -> 23 |
+
+Not killed. `name_canon` is the smallest option and gets its gain only on KO in this catalog; it is also the one most favoured by catalog-derived memory names (critique 0 and 1),
+so a real detector with free-form labels would give less. Report it with and without.
+
+### Result 2: abstention re-ask (`sage_reask`)
+
+Train, 300 tasks: the re-ask fired on 96 records (75 headline, 17 clarify, 4 refuse). Headline population, paired:
+
+| | exact b -> a | gains / losses | precision | recall | dropped | spurious | confident wrong |
+|---|---|---|---|---|---|---|---|
+| train all 4 | 447 -> 479 (+3.3 pt) | +32 / -0 | 0.702 -> 0.708 | 0.703 -> 0.743 | 526 -> 455 | 528 -> 544 | 292 -> 301 |
+| dev 0..299 all 4 (informational) | 519 -> 539 (+2.1 pt) | +20 / -0 | 0.757 -> 0.751 | 0.741 -> 0.773 | 464 -> 407 | 426 -> 458 | 258 -> 272 |
+
+Of the 75 headline triggers, 47 re-readings were taken (32 exact, 15 wrong) and 28 kept the first question. That passes the first three kill criteria
+(accepted-and-exact 32 >= 19; exact more often than wrong). It fails the fourth: **on the 17 clarify triggers the re-reading was taken for 10 (limit 5)**, so the
+ask-task confident readings rise from 99 to 109 and the confident-wrong ones from 47 to 53. Examples (heard text, in short): "put the wallet away somewhere" becomes
+`put_in(wallet, drawer@kitchen)` (the gold place is another room, and the person had left the place open); "bring grandpa the mug" becomes `go(grandpa)`;
+"put the socks in the closet and grab my book" loses the `put_in(socks, ...)` of the first clause. Three of the ten are exact, but they are
+tasks where a question was wanted. The criterion is the one written down before the run, so the verdict is a kill.
+
+Informational only (a killed arm is not confirmed on dev): on dev 0..299 the same trigger fires on 98 records and 15 of 42 clarify triggers are taken (limit 8); ask-task confident readings rise 78 -> 92.
+The noise-isolated replicate of the triggered records was not run, because the arm is already dead on the ask set. The fresh slice was not run for the same reason.
+
+The finding stands as a mechanism, though: 32 of 75 goal-less "where is it" readings turn into an exact set when the model is told the robot finds objects itself, with no loss, so
+the abstention is a real fault. What failed is the acceptance rule (b) (it accepts a re-reading that never asked about an open destination). A narrower trigger (no re-ask where the
+task also leaves the destination open) or a check that the first question named only an object, never a destination, is the repair to try; it needs a new offline check before any run.
+
+### Verdict
+
+- `sage_ground2` (go_steps + kind_anchor + name_canon): survives understand-eval on all three sets: exact +4.3 / +4.9 / +4.5 points, no loss on the fresh slice,
+  confident-wrong 292 -> 254, 258 -> 208, 229 -> 191, atom precision +6 to +7 points, recall flat. The gain is in precision: fewer spurious atoms (steps and unrequested opens).
+  Recall does not move, so dropped atoms (the main error of the 8B model) are untouched.
+- `sage_reask`: KILL (clarify tasks become confident readings).
+- Expected end-to-end effect is small: the lab's join of these gains to the perf1 episodes gave 0 to +2 successes per language per 100. The next step is the planned no-harm gate (dev 0..99,
+  `sage` vs `sage_ground2`, EN and KO, two runs, paired; kill if success is lower by >= 3 in a language in both runs, or false successes rise by more than 2) and a 5-task base_robot pilot. Neither was run here.
+- Do not read the 4-5 points as a new headline: they are measured on the first reading, with the 8B model, before the read-back, which in KO decides most episodes (round 2 lab section 2.4).
+
+Artifacts: `lab/r2/val/` in the lab folder (scripts `ue.sh`, `cmp2.py`, `classify.py`, `md.py`; arms `tr_*`, `dv_*`, `fr_*`; `*_BAD` is the first, wrong `sage_reask` run).
+Commits: robot_agent worktree 8d65426, a90080b, 24ecb36 (Korean open endings). Bench: variants in `planners/`, adapter ignore of the re-ask event.

@@ -100,3 +100,14 @@ def test_episode_has_lab_events_only_for_variants_with_options(tmp_path):
     assert e["lab_events"] == [] or all("flag" in x for x in e["lab_events"])
     e2 = run_episode(TASKS["fx-feas-000"], "robot_agent:sage_exec", "ideal", 0, "en", "fake")
     assert json.dumps(e, sort_keys=True) == json.dumps(e2, sort_keys=True)
+
+
+def test_unstick_variant_is_registered_and_recorded():
+    from homeloop_bench.planners import planner_class
+    cfg = planner_class("robot_agent:sage_unstick").run_config()
+    assert cfg["loop_options"] == {"dialog_unstick": "1"} and cfg["dialog_unstick"] == 1
+
+
+def test_unstick_variant_runs_and_logs_nothing_on_a_clean_task():
+    e = run_episode(TASKS["fx-feas-000"], "robot_agent:sage_unstick", "ideal", 0, "en", "fake")
+    assert e["success"] and e["lab_events"] == []

@@ -43,6 +43,7 @@ REGISTRY = {
     "robot_agent:sage_g2_kind": ("robot_agent_adapter", "SageKindAnchorPlanner", "ablation: kind_anchor only", True),
     "robot_agent:sage_g2_name": ("robot_agent_adapter", "SageNameCanonPlanner", "ablation: name_canon only", True),
     "robot_agent:sage_reask": ("robot_agent_adapter", "SageReaskPlanner", "robot_agent:sage with reask_abstain on (one directed re-understand of a goal-less where-is-it reading)", True),
+    "robot_agent:sage_unstick": ("robot_agent_adapter", "SageUnstickPlanner", "robot_agent:sage with dialog_unstick on (restated refused reading read back again, not-sure where-is answer searches, no stacked apology)", True),
     "robot_agent:sage_exec": ("robot_agent_adapter", "SageExecPlanner", "robot_agent:sage with execution integrity on (exec_integrity: gate_strict, endstate_check, reset_container, wait_on_robot)", True),
     "robot_agent:sage_inv": ("robot_agent_adapter", "SageInventoryPlanner", "robot_agent:sage with inventory_ask on (which instance of the robot's own object memory)", True),
     "robot_agent:sage_ei_gate": ("robot_agent_adapter", "SageEiGatePlanner", "ablation of sage_exec: gate_strict only", True),

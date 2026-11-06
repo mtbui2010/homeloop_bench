@@ -391,7 +391,7 @@ class _RobotAgentPlanner:
     people_tracking = True       # the ENV gives people's last-seen positions (False: the robot must ask)
     loop_options: dict = {}      # AssistLoop options of the variant (hazard_rules, gate_complete)
     _LAB_FLAGS = ("exec_integrity", "gate_strict", "endstate_check", "reset_container", "wait_on_robot",
-                  "inventory_ask")      # lab round 3 (round 2's flags were never recorded: their summary.json stay as they were)
+                  "inventory_ask", "dialog_unstick")      # lab round 3 (and 4: dialog_unstick) (round 2's flags were never recorded: their summary.json stay as they were)
     # every option the loop reads from the variant: the episodes of a variant that sets one carry ``lab_events``
     _ALL_LAB_FLAGS = _LAB_FLAGS + ("person_goals", "go_steps", "kind_anchor", "name_canon", "reask_abstain")
     # Data the variant adds to the robot pack's manifest for this run (a dict merged key by key into the loop's
@@ -671,6 +671,14 @@ class SageInventoryPlanner(SagePlanner):
     instance in the robot's own object memory is narrowed by the person's words, else asked once (closed choice)."""
     name = "robot_agent:sage_inv"
     loop_options = {"inventory_ask": "1"}
+
+
+class SageUnstickPlanner(SagePlanner):
+    """robot_agent:sage with ``dialog_unstick`` on (lab round 4): a restatement that reproduces a refused reading is read
+    back once more instead of ending the run; a not-sure answer to a where-is question makes the robot search (one more
+    understand call, once); a question with its own apology is not prefixed with the silence apology. A prototype."""
+    name = "robot_agent:sage_unstick"
+    loop_options = {"dialog_unstick": "1"}
 
 
 class SageEiGatePlanner(SagePlanner):

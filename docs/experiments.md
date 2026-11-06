@@ -1535,3 +1535,220 @@ task also leaves the destination open) or a check that the first question named 
 
 Artifacts: `lab/r2/val/` in the lab folder (scripts `ue.sh`, `cmp2.py`, `classify.py`, `md.py`; arms `tr_*`, `dv_*`, `fr_*`; `*_BAD` is the first, wrong `sage_reask` run).
 Commits: robot_agent worktree 8d65426, a90080b, 24ecb36 (Korean open endings). Bench: variants in `planners/`, adapter ignore of the re-ask event.
+
+## Solution lab round 3 (planning and replan, SAGE-v2, 2026-11-06)
+
+Question (from the user): planning (turning the request into a correct plan) and replanning from feedback (what the robot does after a
+skill fails or the world is not as expected) matter most. Find better solutions with a deep lab, then run the 5 -> 10 -> 50 loop.
+
+Code: robot_agent worktree `hl_wt/sagev2/robot_agent` (branch `sage-v2/homeloop`) ab47bfe, 28c3c80, 18c7872; bench 70a2b49, f50ee44, bbafd77.
+Every new behaviour is an opt-in flag, default off; with the flags off the events are byte-identical (`tests/test_sage_lab_r3.py`). Model
+`qwen3-vl:8b-instruct`, profile `real`, seed 0, speech-recognition noise off (`--set asr.en.app_wer=0,asr.ko.app_cer=0,asr.p_partial=0`).
+The simulated user can still answer wrongly, be unsure, or stay silent. Lab files: `lab/r3/` in the scratchpad (`problem_brief.md`, `ideas_0..3.md`,
+`critique_0..1.md`, `proposals.md`, `off/` for the offline replay, `m5/`, `gate5/`). Raw runs: `results/r3/{n5_a1,n5_a2,m5}/`.
+
+### What the lab found
+
+The brief splits the failures of dev 0..99 (perf1) into planning (A), replanning (B), understanding and dialogue (U) and persistent hardware faults (X).
+Each failing episode gets one class (`classify.py`):
+
+| class (failures, of which the oracle succeeds) | sage EN | sage KO | sage_gold EN | sage_gold KO |
+|---|---|---|---|---|
+| A: first plan from the goals | 5 (5) | 5 (5) | 5 (4) | 4 (4) |
+| B: replanning from feedback | 21 (14) | 23 (17) | 23 (16) | 20 (15) |
+| U: understanding, dialogue, hazard refusal | 15 (15) | 35 (31) | 0 | 2 (2) |
+| X: persistent hardware fault | 9 (3) | 7 (2) | 8 (3) | 10 (3) |
+| bench artifact (gold `deliver` goal) | 0 | 0 | 8 (7) | 8 (7) |
+
+- **Planning (A).** About half of the first plans fail the robot's own gate (sage_gold 49 / 95 EN, 50 / 95 KO). The 8B planner opens or closes
+  while holding, leaves a reach delivery unachieved, adds a Close nobody asked for, and repeats steps. The symbolic repair closes most of these. Three
+  deterministic causes stop it on the rest: the score counts all unmet goals as one finding, plan names are canonicalised only from one-word names,
+  and one edit is made per call.
+- **Replanning (B).** Several recoveries a robot can do with its own signals are missing: waiting out a transient camera fault (SAGE recovered 0 of
+  7 in EN, the oracle 2 of 2); a PutIn BLOCKED into a container the robot thinks is open; the final return to the dock whose failure is ignored; an
+  object the user located but the detector missed again. The silent-failure events (`partial_open`, `fall`, ...) exist only in the simulator truth
+  and are not shown to the robot, so a fix must use only codes, messages, `health()` and later Find / Look results (clean room).
+- **Where the headline loss really is.** On the headline `sage` the A+B failures the oracle solves are EN 19 / KO 22 of 100, but deterministic
+  levers convert about 1 of them (offline, below). The larger and more frequent loss is in understanding and dialogue: on the 14 clarify
+  (which-object) tasks of dev 0..99 the oracle asks a which-object question in 11 and succeeds in 11, while SAGE asks it in 0 of 28 episodes
+  and reaches several false successes by taking "some book" after a "yes" to its read-back.
+- **A new offline instrument.** `off/replay_perf1.py` replays the real bench and the real AssistLoop on the cached LLM answers of perf1. The control
+  replay reproduces perf1 on 96 / 98 / 96 / 98 of 100 task-runs with 0 cache misses; 4 x 100 task-runs take about 26 s of CPU. An episode with 0
+  misses gives an exact outcome even with new skill calls (draws are keyed per call).
+
+Offline result (exact replay, dev 0..99, 400 task-runs, in-sample: the ideas were built from these ids):
+
+| arm | sage EN | sage KO | gold EN | gold KO | F* change | losses |
+|---|---|---|---|---|---|---|
+| gate_strict (strict + bind) | 49 -> 49 | 30 -> 31 | 53 -> 54 | 54 -> 55 | 0 | 0 |
+| wait 2, 4, 8 s | 49 -> 49 | 30 -> 30 | 53 -> 54 | 54 -> 55 | 0 | 0 |
+| wait 1, 2, 4 s | no change | no change | no change | no change | 0 | 0 |
+| reset_container | no change | no change | no change | no change | 0 | 0 |
+| endstate_check | 49 -> 49 | 30 -> 30 | 53 -> 54 | 54 -> 55 | gold -1 / -1 | 0 |
+| all A+B together | 49 -> 49 | 30 -> 31 | 53 -> 56 | 54 -> 57 | gold -1 / -1 | 0 |
+
+The wait gain exists only with waits of at least 5 s, which is exactly the simulator's undeclared clearing threshold (`skills.py:78, 1139`); it
+is reported as a sweep, not tuned. `inventory_ask` cannot be scored offline: its question needs a new understand call.
+
+### Flags built
+
+| flag (robot_agent option, env `ROBOT_AGENT_<NAME>`, manifest `planner.<name>`) | bench variant | what it does |
+|---|---|---|
+| `exec_integrity` family | `robot_agent:sage_exec` | the four below together |
+| `gate_strict` | `sage_ei_gate` | if the symbolic repair leaves a critical finding, repeat it with a per-goal score and keep it only if it certifies; bind a plan object to the one goal object whose word tokens strictly contain it |
+| `endstate_check` | `sage_ei_end` | the return to the last `go` goal (often the dock) becomes a checked, retried step; if it still fails the run does not say done |
+| `reset_container` | `sage_ei_reset` | a PutIn BLOCKED into a believed-open container: put the object down where it was picked, Close, Open, fetch, PutIn (once per container) |
+| `wait_on_robot` | `sage_ei_wait` | while health is bad, run the pack's declared wait action on a declared schedule (`planner.recovery.wait: {action, schedule_s}`); no declaration = the old poll. The bench variant declares 2, 4, 8 s, marked `assumed` |
+| `inventory_ask` | `robot_agent:sage_inv` | `name_canon` made general: when more than one remembered instance fits the goal's bare name and the user's words do not pick one, ask ONE closed which-question from the robot's own memory |
+| all of round 3 + round 2 grounding | `robot_agent:sage_r3` | `sage_ground2` + `sage_exec` + `sage_inv` |
+| `dialog_unstick` (lab round 4, built after the gate) | `robot_agent:sage_unstick` | a restatement that reproduces the refused reading is read back once more; a not-sure where-is answer makes the robot search; no stacked apology. **Not run in any wave yet** |
+
+Also `AssistLoop.lab_log` (28c3c80): what each flag did in a run, copied by the adapter into `episodes.jsonl` as `lab_events`, so every claim
+below that a flag "fired" is read from the episode, not inferred.
+
+Generalisation:
+- Robot. Actions, Open / Close and their effects come from the action model; the wait action and schedule from a manifest key (no key, rung off);
+  the end-state goal is the robot's own last `go`. On base_robot: `gate_strict` is inert (template plans skip the repair), `endstate_check`
+  applies to its dock goals, `reset_container` never fires (no containers), `wait_on_robot` is off unless its pack declares a wait,
+  `inventory_ask` is inert (no on / in goals). A pack with no object memory has `inventory_ask` off.
+- Language. The gate and the execution flags read no user text. `bind` uses whitespace tokens of the canonical labels, with the hook
+  `planner.label_tokens: none` (exact match) for unsegmented labels. `inventory_ask` takes the label language from `planner.canonical_lang`
+  (`en` default, `none` skips, other codes use the pack's i18n `plural_fold`); its question is the i18n key `q_which_known`, which falls back to
+  the language layer's translate-out for a third language (Vietnamese: test with two "mug" instances, "Đặt cái cốc lên tủ đầu giường", answer
+  "cái màu xanh"). `dialog_unstick` reads "not sure" from core English phrases plus the pack's i18n `answer_unsure`, with a structural
+  fallback (a short answer that names no ENV place); the core English list is a debt to move into data.
+
+### Milestone 5, gate slice (dev 0..4, `results/r3/n5_a2`, repeat of `n5_a1`)
+
+Cells per task are run a | run b. S = success, H = give-up (status not `done`), F = false success. Counts are [run a, run b].
+
+| variant | EN t0 t1 t2 t3 t4 | EN success | KO t0 t1 t2 t3 t4 | KO success |
+|---|---|---|---|---|
+| oracle | S\|S S\|S H\|H S\|S S\|S | [4, 4] | S\|S S\|S H\|H S\|S S\|S | [4, 4] |
+| sage | S\|S H\|H H\|H H\|H S\|S | [2, 2] | H\|H S\|S H\|H S\|S S\|S | [3, 3] |
+| sage_ground2, sage_exec, sage_inv, sage_r3, sage_ei_gate, sage_ei_end, sage_ei_reset, sage_ei_wait | same as sage on every cell | [2, 2] | same as sage on every cell | [3, 3] |
+
+False success 0 and `n_error` 0 everywhere; all 44 logs end with EXIT=0. The two runs are identical to each other and to `n5_a1`.
+
+Every task where SAGE differs from the oracle:
+- t2 (`hl-dev-000002`, EN and KO, oracle too): an injected persistent hardware fault on `dock`. `wait_on_robot` waited 2, 4 and 8 s; health
+  stayed bad. Correct give-up, not a SAGE failure.
+- t1 EN and t0 KO: dialogue convergence (class C1). The read-back was right, the simulated user's answer was drawn as `wrong` ("No.",
+  `p_wrong` = 0.173), the user restated the request, the restatement gave the same reading, and SAGE gave up after the which-part question
+  (`say_not_confirmed`). The oracle does not read back, so it never meets this draw. This is the target of `dialog_unstick`.
+- t3 EN (clarify): SAGE asked 9 questions against a patience of 7, with a compound where-is question ("Where is the milk, and where would you like me
+  to put it away?") and stacked apologies ("Sorry, I didn't hear you. Sorry, I may have misheard you. ..."; `understand.py:609-610` plus the
+  silence retry), then gave up on patience timeouts. The same trace shows a simulator bug (below).
+
+Why nothing changed: dev 0..4 contains none of the tasks the proposals target. Over 200 variant episodes the only flag that fired was
+`wait_on_robot` on t2. `gate_strict`, `endstate_check`, `reset_container`, `inventory_ask`, `go_steps`, `kind_anchor` and `name_canon` fired 0 times.
+The flags are live (`planner_config.loop_options` is recorded; the wait changes the t2 trace). The trace differences elsewhere (e.g. one extra
+`find microwave -> absent` in EN t0) come from LLM-server nondeterminism and changed no outcome.
+
+### Milestone 5, proposal tasks (`results/r3/m5`)
+
+The 5 tasks each proposal declared (P1 `sage_exec`: 008, 014, 015, 065, 074; P2 `sage_inv`: 014, 021, 027, 062, 089), two runs, same settings.
+`x` = failure that is not a false success, `.` = task not in that variant's list.
+
+| variant | EN 008 014 015 021 027 062 065 074 089 | KO 008 014 015 021 027 062 065 074 089 |
+|---|---|---|
+| oracle | S\|S S\|S S\|S S\|S S\|S S\|S S\|S S\|S S\|S | S\|S S\|S S\|S S\|S S\|S S\|S S\|S S\|S S\|S |
+| sage | S\|S x\|x S\|S x\|x F\|F F\|F F\|F x\|x x\|x | x\|x x\|x x\|S F\|x F\|F F\|F F\|F x\|x x\|x |
+| sage_exec | S\|S x\|x S\|x . . . S\|S x\|x . | x\|x x\|x S\|S . . . S\|S x\|x . |
+| sage_inv | . x\|x . x\|x S\|S S\|S . . x\|x | . x\|x . F\|F S\|S S\|S . . x\|x |
+
+| on its 5 tasks, [run a, run b] | EN success | EN F* | KO success | KO F* | skill calls per task, questions included (oracle: P1 / P2 tasks) | questions per task (oracle: P1 / P2 tasks) |
+|---|---|---|---|---|---|---|
+| oracle | [5, 5] | [0, 0] | [5, 5] | [0, 0] | 11.8 / 11.0 | 0.2 / 1.0 |
+| sage (P1 tasks) | [2, 2] | [1, 1] | [0, 1] | [1, 1] | EN 25.4, KO 18.2 | EN 1.0-2.0, KO 2.6 |
+| sage_exec | [3, 2] | [0, 0] | [2, 2] | [0, 0] | EN 34.0, KO 21.6 | EN 1.4-2.8, KO 2.6 |
+| sage (P2 tasks) | [0, 0] | [2, 2] | [0, 0] | [3, 2] | EN 27.0, KO 26.2-30.2 | EN 1.8, KO 1.8-2.0 |
+| sage_inv | [2, 2] | [0, 0] | [2, 2] | [1, 1] | EN 22.0-22.4, KO 24.2 | EN 3.8-4.6, KO 2.4 |
+
+0 errors, every log EXIT=0, no traceback. Every differing cell, read from the episodes and their `lab_events`:
+
+`sage_exec` (P1):
+- **065 EN and KO, F|F -> S|S (4 wins).** `endstate_check` fired. The last `dock` hit an injected transient `hw_fault`; baseline ignores
+  the result and says "Task completed" with `docked()` false. With the flag the dock is retried, succeeds, and all three goals are met. As predicted offline.
+- **015 KO run a, x -> S (1 win).** Baseline gave up with "I could not make a plan I can check" (0 skill calls); with the flag `gate_strict`
+  (`per_goal_repair`) certified the plan and the run succeeded. In run b the baseline plan certified anyway (server nondeterminism), so both succeed.
+  This matches the offline prediction (015 KO).
+- **015 EN run b, S -> x (1 loss, not caused by the flag).** The run ended in the dialogue: 9 questions, three of them injected timeouts, give-up
+  "I did not hear an answer". No plan was made, so no flag could act (no `lab_events`). The same task succeeded in run a with `gate_strict` firing.
+- 014 EN and KO (no outcome change): `wait_on_robot` fired in EN after a `perception_unavailable`; the task still failed, now with status `budget`
+  after 60 calls instead of a give-up after 28. That is more motion for no gain and needs a cap. In KO `gate_strict` fired; same failure.
+- 074 EN and KO (no outcome change): `reset_container` fired as designed (put down, Close, Open, fetch), then the next PutIn hit an injected
+  `hw_fault`. Mechanism shown; the outcome is decided by the next fault, as offline.
+- 008: same outcomes; run a and b swap traces (one extra Find), server nondeterminism.
+
+`sage_inv` (P2):
+- **027 and 062, EN and KO, F|F -> S|S (8 wins).** Baseline took "some book" / "some mug" and said done (false success). With the flag the robot asked
+  once ("I know of more than one book: the red book or the blue book. Which one do you mean?"), read the answer, and succeeded in 13-17 calls.
+- 021 EN (no outcome change, worse path): baseline failed in execution (glass pick blocked). With the flag the which-question was answered
+  ("The green one, please."), but the user then drew `wrong` twice on the read-back ("No, the white glass."), SAGE alternated green / white,
+  asked for a restatement, and asked the which-question again 3 more times (5 firings in one episode), got "I don't know." twice and gave up
+  on timeouts. Two defects of the flag: it does not remember that it already asked, and its option list repeats synonyms of the same objects
+  ("the green glass or the white glass or the green drinking glass or the white drinking glass"; the KO mug question has the same problem).
+- **021 KO run b, x -> F (1 loss, not caused by the flag).** `inventory_ask` did not fire (no `lab_events`). Baseline run a and the flag's two
+  runs give the same false success (keys put away, glass not delivered); baseline run b took another path. Server nondeterminism.
+- 014 EN and KO, 089 EN and KO (no outcome change): the flag fired on 014 (both) and 089 KO, the tasks still failed (grasp faults, red mug not
+  found). In KO 014 and 089 the final sentence is "죄송해요, 지금은 그 말씀을 드리기 어려워요." ("Sorry, it is hard for me to say that now"), which
+  reads like a translator refusal, not a task report. Not traced further.
+
+### Milestones 10 and 50: not run
+
+The loop stopped at milestone 5. The gate on dev 0..4 did not pass, for two reasons, and no milestone-10 or milestone-50 run exists:
+1. It found a simulator bug (below) that also touches the oracle and naive baselines; it must be fixed and those baselines rerun first.
+2. dev 0..4 cannot test the flags (they fired 0 times), and the declared proposal tasks (m5) were run as a separate wave whose result the gate
+   decision did not take into account.
+The milestone lists are written down in `proposals.md` (P1 m10: m5 + 024, 066, 042, 058, 003; P2 m10: m5 + 096, 017, 066, 003, 041; m50: all
+A / B ids plus harm controls, and all 14 clarify tasks plus controls). A confirmation on the never-run slice dev 100..199 comes after m50.
+
+### Verdict against the kill criteria of `proposals.md` (milestone 5 only)
+
+| proposal | criterion | m5 result | verdict |
+|---|---|---|---|
+| P1 `exec_integrity` | losses greater than wins on changed episodes | 5 wins (065 x 4, 015 KO a), 1 loss where no flag acted | pass |
+| | F* of newly certified plans > 1 per language | 0 | pass |
+| | a control task lost where a sub-flag fired | no control task in m5 | not tested |
+| P2 `inventory_ask` | < 2 net flips per language over both runs | EN +4, KO +4 (027, 062), KO 021 b -1 without the flag acting | pass |
+| | a control lost where the rule fired; questions on non-clarify tasks +0.3 | no control or non-clarify task in m5 | not tested |
+| | KO which-answers misread in more than half of the KO firings | 027 and 062 read right; 014 and 089 not traced | not decided |
+
+Nothing is killed. Nothing is kept as a default either: milestone 5 on 5 hand-picked dev tasks is a mechanism check, not a result, and the R6 keep
+rule (>= 6 / 100 paired in the same direction in two runs) cannot be met by 5 tasks. Kept for milestone 10: `endstate_check` (clean 4 / 4 wins, no
+extra LLM call), `gate_strict` (1 win, matches offline), `inventory_ask` (8 / 8 wins on its two target tasks, after the two repairs below).
+Kept but weak: `reset_container` (mechanism shown, 0 outcome flips offline and online), `wait_on_robot` (gain depends on a hidden simulator
+constant; on 014 EN it ran into the call budget).
+
+### Harness findings (bench and simulator, never SAGE gains)
+
+- **Simulated user forgets what it knows.** `homeloop_robot/homeloop_robot/user.py:470` draws `knows = rng.random() >= p_location_unknown` once per
+  question, while `docs/user_model.md` and the profile note describe it as a state of the user. In t3 EN the user says "I don't know." (ask 4) and then
+  "It's on the dining table." (ask 6) about the same milk. It rewards planners that ask again. It is rare (1 of 800 perf1 episodes flips; 11 of 800
+  contain the answer). Fix: draw it once per (episode, entity), with a test over seeds 0..199 that no episode has both answers for one object, and
+  rerun oracle and naive. **Not fixed yet** (homeloop_robot is at f5497b3).
+- Known from the brief, still open: `refresh_person_spot` drops a person's spot once it is full (021 EN gold), the adapter's `health_wait_s=0`
+  makes a waiting robot pass no simulated time, and the gold `deliver` artifact of `sage_gold`.
+
+### Caveats
+
+- **Dev tuning.** All target ids come from dev 0..99, where the ideas were built and the offline replay was scored. The m5 wins are in-sample. Only
+  dev 100..199 (never run end to end) can confirm them.
+- **Noise.** Run-to-run noise measured earlier is about 3 tasks in 50. Here runs a and b share seed 0, so they measure LLM-server nondeterminism only:
+  2 of 40 paired P1 / P2 baseline-vs-flag cells flipped without a flag acting (015 EN b, 021 KO b), both against the flag arm. 015 KO a (a win)
+  had the flag acting, but its baseline succeeded in run b, so a part of it may be noise too.
+- **Understanding vs end to end.** Round 2 gave `sage_ground2` +4.5 points of exact readings in `understand-eval`; on the e2e gate slice it changed nothing.
+  A gain on the first reading does not carry through the read-back, the dialogue and the execution by itself.
+- **Speech noise off.** These tables are the sensitivity setting with speech-recognition noise off; with it on, the dialogue failures (C1) grow.
+
+### Next steps (in order)
+
+1. Fix the simulated-user knowledge bug in homeloop_robot with its test; rerun oracle and naive on the slices used here.
+2. Repair `inventory_ask`: ask at most once per object class per run (remember the answer), and list one name per remembered instance (no synonyms).
+   Both are data-free changes in the core. Add `wait_on_robot` and the check tour to the call budget accounting.
+3. Run milestone 10 for `sage_exec`, `sage_inv` and `sage_unstick` (the last targets C1, the most common give-up in the gate slice) on the
+   declared ids, two runs, oracle and `sage` paired; then milestone 50 with the harm controls; then dev 100..199 as confirmation.
+
+Artifacts: `lab/r3/` (scripts `table.py`, `m5/table.py`, `m5/why.py`, `gate5/*.py`, `off/replay_perf1.py`, `off/diff.py`). Commits: robot_agent ab47bfe, 28c3c80,
+18c7872; bench 70a2b49, f50ee44, bbafd77.

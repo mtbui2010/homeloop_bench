@@ -790,6 +790,13 @@ paired and repeated). Stages 1-5 used only cached episodes and needed no GPU. Th
 The user asked to switch off speech-recognition noise for the validation, so every validation table below is the sensitivity
 condition `asr_off`, never a headline.
 
+**Definition of `asr_off`** (sensitivity condition, never a headline): profile `real` with
+`--set asr.en.app_wer=0,asr.ko.app_cer=0,asr.p_partial=0,asr.p_not_heard=0`. All four speech-recognition parameters are zero, so the
+instruction and every later utterance is heard exactly. Wrong or unsure answers, silence, interruptions and device faults stay.
+**The rounds before Round 7 step 5 (every `asr_off` table in this file up to that section) set only the first three. `asr.p_not_heard`
+(0.027 per utterance, "not heard", the user repeats or asks again) stayed on in them,** so an utterance could still be lost. Where a
+section below writes the three-parameter form, it means that older condition. Test: `tests/test_asr_off_definition.py`.
+
 ### Problem brief (summary)
 
 SAGE-v2 (`robot_agent:sage`, branch `sage-v2/homeloop`) scores about 44-50 % EN and 32 % KO on the fresh dev slice 51-100
@@ -838,7 +845,7 @@ with the flag off, and `sage_lab` (EN 6 of 12 each; KO 6 of 12 each; the same ta
 ### Pilot results
 
 Setup: dev tasks 50-59 (the first ten of the fresh slice), profile `real` with `asr_off`
-(`asr.en.app_wer=0, asr.ko.app_cer=0, asr.p_partial=0`; wrong or unsure answers, silence, interruptions and device faults stay), qwen3-vl:8b-instruct,
+(`asr.en.app_wer=0, asr.ko.app_cer=0, asr.p_partial=0`, the three-parameter form, `asr.p_not_heard` still on (see the definition of `asr_off`); wrong or unsure answers, silence, interruptions and device faults stay), qwen3-vl:8b-instruct,
 two runs per configuration. S = success, F* = false success (said done, goals not met), f = other failure. Results are in `results/lab1/`.
 The first five tasks were the pilot gate (same outcome pattern as the first five rows below).
 
@@ -908,7 +915,7 @@ any number of this section as a headline.
 Question: does the lab flag `person_goals` (`robot_agent:sage_lab`) help on the tasks where it should fire? The 10-task pilot above held
 almost no trigger, so its verdict was open. This round runs 59 tasks per language: 49 tasks chosen for a mixed request (a spoken message
 or a delivery to a named person plus other steps) or a person destination, and 10 control tasks where the flag has nothing to do.
-Same conditions as the pilot: profile `real` with the sensitivity condition `asr_off` (`asr.en.app_wer=0, asr.ko.app_cer=0, asr.p_partial=0`),
+Same conditions as the pilot: profile `real` with the sensitivity condition `asr_off` (`asr.en.app_wer=0, asr.ko.app_cer=0, asr.p_partial=0`, the three-parameter form, `asr.p_not_heard` still on (see the definition of `asr_off`)),
 qwen3-vl:8b-instruct, one seed, two runs per configuration, paired by task. Everything below is `asr_off`, never a headline. Results in
 `results/lab1/trigger/`. 8 configurations, 3 shards each; all 24 shard logs and all 8 merge logs end with EXIT=0 and `n_error` is 0 in all 8 summaries.
 
@@ -1038,7 +1045,7 @@ Lesson: a unit test with a stub hides a missing capability on a wrapper. Every f
 
 Question: with the fixed template sub-goals wired (round 1b, Finding 1 and its fix), does `person_goals` (`robot_agent:sage_lab`) turn failures of the
 trigger tasks into successes? Same 59 tasks per language, same conditions (profile `real` plus the sensitivity condition `asr_off`:
-`asr.en.app_wer=0, asr.ko.app_cer=0, asr.p_partial=0`; qwen3-vl:8b-instruct; one seed). Everything below is `asr_off`, never a headline.
+`asr.en.app_wer=0, asr.ko.app_cer=0, asr.p_partial=0`, the three-parameter form, `asr.p_not_heard` still on (see the definition of `asr_off`); qwen3-vl:8b-instruct; one seed). Everything below is `asr_off`, never a headline.
 The new arm ran once per language (run 1) in `results/lab1/trigger_fixed/`; the baseline (run 1, 2) and the lab arm before the fix (run 1, 2) are the
 unchanged runs of round 1b in `results/lab1/trigger/`. All 6 shard-sets merged with EXIT=0; `n_error` is 0 in both new runs.
 
@@ -1543,7 +1550,7 @@ skill fails or the world is not as expected) matter most. Find better solutions 
 
 Code: robot_agent worktree `hl_wt/sagev2/robot_agent` (branch `sage-v2/homeloop`) ab47bfe, 28c3c80, 18c7872; bench 70a2b49, f50ee44, bbafd77.
 Every new behaviour is an opt-in flag, default off; with the flags off the events are byte-identical (`tests/test_sage_lab_r3.py`). Model
-`qwen3-vl:8b-instruct`, profile `real`, seed 0, speech-recognition noise off (`--set asr.en.app_wer=0,asr.ko.app_cer=0,asr.p_partial=0`).
+`qwen3-vl:8b-instruct`, profile `real`, seed 0, speech-recognition noise off (`--set asr.en.app_wer=0,asr.ko.app_cer=0,asr.p_partial=0`, `asr.p_not_heard` still on; see the definition of `asr_off`).
 The simulated user can still answer wrongly, be unsure, or stay silent. Lab files: `lab/r3/` in the scratchpad (`problem_brief.md`, `ideas_0..3.md`,
 `critique_0..1.md`, `proposals.md`, `off/` for the offline replay, `m5/`, `gate5/`). Raw runs: `results/r3/{n5_a1,n5_a2,m5}/`.
 
@@ -1756,7 +1763,7 @@ Artifacts: `lab/r3/` (scripts `table.py`, `m5/table.py`, `m5/why.py`, `gate5/*.p
 ## Solution lab round 3: fixes found by the review, m5 and m10 rerun with a shared cache (2026-11-06)
 
 Six fixes first (no rate or scoring is tuned; each has a test), then the m5 and m10 gates again. Condition for every
-run: profile `real`, seed 0, `asr_off` (`asr.en.app_wer=0, asr.ko.app_cer=0, asr.p_partial=0`; a sensitivity condition,
+run: profile `real`, seed 0, `asr_off` (`asr.en.app_wer=0, asr.ko.app_cer=0, asr.p_partial=0`, the three-parameter form, `asr.p_not_heard` still on (see the definition of `asr_off`); a sensitivity condition,
 never the headline), `qwen3-vl:8b-instruct` with `qwen3-vl:30b-a3b-instruct` as translator, repeats a and b, one shared
 read-through cache. Raw runs: `results/r3/m5s`, `results/r3/m10s` (not in git); `table.py` there prints the tables below.
 
@@ -1816,7 +1823,7 @@ unsolved by `sage_inv` (the question is asked, the run still gives up), 066 and 
 Four harness defects that round 3 found were fixed first. These are consistency fixes. No rate, no scoring rule and no task was
 changed, and the random streams do not shift. After that, the milestone-5 gate was run again on the fixed code. Code of the run:
 homeloop_robot 1d7e4eb, robot_agent `sage-v2/homeloop` 7bd0ee4, embodiplan 4080017, bench 798e642 (later commits are docs only).
-Condition: profile `real`, seed 0, `asr_off` (`asr.en.app_wer=0, asr.ko.app_cer=0, asr.p_partial=0`; a sensitivity condition, never
+Condition: profile `real`, seed 0, `asr_off` (`asr.en.app_wer=0, asr.ko.app_cer=0, asr.p_partial=0`, the three-parameter form, `asr.p_not_heard` still on (see the definition of `asr_off`); a sensitivity condition, never
 the headline), planner `qwen3-vl:8b-instruct`, translator `qwen3-vl:30b-a3b-instruct` (read from `planner_config.translate_model`).
 Repeats a and b, paired by task. There is **no shared cache** in this run, so a and b measure LLM-server nondeterminism. Raw run:
 `results/r4/n5_a2` (not in git). The table script is `lab/r3/t_r4a2.py` in the scratchpad.
@@ -2388,3 +2395,103 @@ the increments themselves, the 30B-only variants on tasks 90..149, `sage_m2` on 
   records (the loop maps it to `on` before the event).
 - Not built (later, one at a time): the `withdrawn` list (corrections), the `condition` field, the structural go / duplicate drop and the
   evidence check.
+
+## Round 7 understanding with a larger model (2026-11-07)
+
+Step 4 of the round: `understand-eval` on train 0..299 and dev 0..299, EN and KO, clean and ASR text (2400 records per variant, 1936
+headline records = feasible, no refused part), profile real, seed 0, one shared read-through cache, paired by record against
+`robot_agent:sage_ground2` (8B plans and reads; M1 / M2 metric fixes applied to every row; the baseline was rescored from its round-6
+cache with no LLM call). Variants: the 30B (`qwen3-vl:30b-a3b-instruct`) reads, the 8B is the guard's fallback. All runs ended 0, no
+record `ended`. `sage_um` and `sage_m1` are the same configuration and gave identical records (0 differing). First reading only, not
+end to end. The 30B is not exactly repeatable (round 7 step 3: about 15 % of readings differ on a fresh cache), so differences of a few
+records are inside the noise.
+
+### Headline numbers (exact: 8B -> variant; confident wrong = confident readings that are not exact; asked-on-exact in pt of headline records)
+| variant | split | exact | prec / rec (8B -> var) | dropped | spurious | confident wrong | asked-on-exact | gains / losses | clarify tasks read confidently (of 164) | fallbacks of understand calls |
+|---|---|---|---|---|---|---|---|---|---|---|
+| sage_um (= m1) | train (n 964) | 496 -> 587 | .772/.714 -> .796/.799 | 506 -> 356 | 374 -> 364 | 248 -> 222 | +1.97 | +148 / -57 | 60 -> 67 | 10.0 % |
+| | dev (n 972) | 573 -> 611 | .831/.750 -> .801/.804 | 448 -> 351 | 274 -> 358 | 203 -> 240 | +1.03 | +119 / -81 | 50 -> 78 | 11.7 % |
+| sage_um_ko | train | 496 -> 544 | | 506 -> 423 | 374 -> 376 | 248 -> 238 | +1.66 | +75 / -27 | 60 -> 69 | 13.3 % (KO) |
+| | dev | 573 -> 603 | | 448 -> 387 | 274 -> 313 | 203 -> 215 | +0.82 | +73 / -43 | 50 -> 67 | 12.7 % (KO) |
+| sage_um_verdict | train | 496 -> 622 | .811/.818 | 506 -> 322 | 374 -> 337 | 248 -> 218 | +1.76 | +178 / -52 | 60 -> 72 | 8.1 % |
+| | dev | 573 -> 649 | .827/.815 | 448 -> 331 | 274 -> 306 | 203 -> 215 | +0.62 | +141 / -65 | 50 -> 73 | 11.5 % |
+| sage_um_strict | train | 496 -> 600 | .800/.809 | 506 -> 338 | 374 -> 358 | 248 -> 224 | +2.18 | +170 / -66 | 60 -> 75 | 10.7 % |
+| | dev | 573 -> 627 | .827/.812 | 448 -> 336 | 274 -> 304 | 203 -> 228 | +1.03 | +125 / -71 | 50 -> 66 | 14.4 % |
+| sage_um_give | train | 496 -> 596 | .797/.806 | 506 -> 343 | 374 -> 364 | 248 -> 230 | +1.24 | +165 / -65 | 60 -> 72 | 9.1 % |
+| | dev | 573 -> 625 | .824/.807 | 448 -> 346 | 274 -> 309 | 203 -> 212 | +0.82 | +129 / -77 | 50 -> 76 | 13.3 % |
+| sage_m2 (strict + give + verdict) | train | 496 -> 631 | .815/.832 | 506 -> 298 | 374 -> 334 | 248 -> 225 | +0.10 | +191 / -56 | 60 -> 73 | 5.1 % |
+| | dev | 573 -> 648 | .830/.838 | 448 -> 290 | 274 -> 308 | 203 -> 237 | -0.10 | +140 / -65 | 50 -> 83 | 7.9 % |
+
+### The kill rule (losses > gains; confident wrong above the 8B; asked-on-exact above +1.5 pt), by split and language
+| variant | train all | dev all | EN train / dev | KO train / dev | result |
+|---|---|---|---|---|---|
+| sage_um | fails: asked-on-exact +1.97 | fails: confident wrong 203 -> 240 | pass / fails (75 -> 100) | fails (+3.32) / fails (cw 128 -> 140, +1.65) | **killed** |
+| sage_um_ko | fails (+1.66) | fails (cw 203 -> 215) | = baseline | fails / fails | killed |
+| sage_um_verdict | fails (+1.76) | fails (cw 203 -> 215) | pass / pass | fails (+3.53) / fails (cw 128 -> 140) | killed overall; EN passes both splits |
+| sage_um_strict | fails (+2.18) | fails (cw 203 -> 228) | pass / fails (cw 75 -> 76) | fails / fails | killed |
+| sage_um_give | pass | fails (cw 203 -> 212) | pass / fails (cw 75 -> 84) | fails (+2.9) / pass | killed |
+| sage_m2 | pass | fails (cw 203 -> 237) | pass / fails (cw 75 -> 84) | pass / fails (cw 128 -> 153) | killed |
+
+Losses never exceed gains anywhere (gains exceed losses in every row above (smallest margin: sage_um dev EN, 46 against 38)). The two failing criteria are the 30B's
+confident-wrong rise on dev (spurious atoms: dev 274 -> 358 for `sage_um`; extra `go`, `close`, `say`) and the asked-on-exact rise in KO
+on train.
+
+Per language, `sage_um`: EN passes train and fails dev; KO fails both. Neither language passes both splits, so
+`understand_model_lang {ko: ...}` is not kept as data and the option stays off (worth_it false). The extra guard also fails: the clarify
+tasks read confidently rise 60 -> 67 (train) and 50 -> 78 (dev) of 164, about +4 and +17 points of the clarify tasks, against a limit
+of 1.5; the fallback rate (8 to 14 %) is inside the 15 % limit, apart from `sage_um_strict` on dev KO (15.5 %).
+
+### What the flags do on top of the 30B (increments over `sage_um`, same rule on exact and confident wrong)
+Exact, train / dev, `sage_um` 587 / 611: verdict 622 / 649 (+35 / +38), strict 600 / 627 (+13 / +16), give 596 / 625 (+9 / +14), all three
+631 / 648 (+44 / +37). Every flag is above `sage_um` on both splits; verdict is the largest. Confident wrong, train / dev, `sage_um` 222 / 240:
+verdict 218 / 215, strict 224 / 228, give 230 / 212, all three 225 / 237. Fallbacks fall from about 11 % to 5 to 8 % with all three.
+`sage_um_verdict` is the only flag that is below the 8B on confident wrong in EN on both splits (EN: 109 -> 85, 75 -> 75).
+
+### Decision
+- **Kill `sage_um`** (and `sage_um_ko`, and the 30B with any of the flags): the option stays off by default; no end-to-end m5/m10 gate
+  was run, because the offline gate fails (the rule says gate only a kept variant).
+- **Keep the 8B.** The shared remedies (verdict check, `give` kind with the echo filter, strict schema, metric fixes M1 / M2) are
+  independent of the model, but the variants run here all read with the 30B, so they are measured here only as increments over the 30B.
+  Whether they win with the 8B reading (train AND dev) was NOT measured in this step: no planner variant of the registry puts a flag on
+  the 8B alone. Next step: an 8B + flag variant, one flag at a time, verdict first (largest gain; fewer refusals with goals dropped).
+- Caveats: first reading only; the 30B is not deterministic; 8B baseline of this step is the round-6 cache (a replicate of it was not run);
+  the `give` effect on the model's own use of `give` is invisible in the records; tasks 0..29 (offline status) are inside these windows.
+- Cost: with the shared GPU, about 35 to 50 30B calls per minute; one 4-run wave of 2400 records took 55 to 95 minutes; the 8B
+  baseline rerun from cache took 2 minutes.
+- Raw: scratchpad `homeloop/lab/r7/s4/out/<variant>/<split>.<lang>/` (records.jsonl, summary.json), script `homeloop/lab/r7/cmp4.py`.
+  Test split not touched.
+
+## Round 7 step 5: n=5 gate with the 8B flags, corrections and decision (2026-11-07)
+
+Gate: dev 065, 008, 015, 014, 074, EN and KO, profile `real`, one seed, two replicates, planners `sage_ground2` (baseline), `sage`,
+`sage_r3u` and the three 8B flags (`sage_g2_verdict`, `sage_g2_give`, `sage_g2_strict`), `asr_off`. Raw: `results/r7/n5_a1/` (not in git).
+
+### The asr_off check
+The gate used the three-parameter `asr_off` and so left `asr.p_not_heard` on (see the definition of `asr_off` in the Solution lab round 1
+section). The harness now sets all four. Task 014, all 7 configurations, EN and KO, replicate 1, rerun with the four-parameter condition
+(`results/r7/n5_a1_p0/`, the cache of the gate copied, 14 cells, all EXIT=0): **status, success and false success are identical in 14 of 14
+cells** (oracle and `sage_r3u` succeed; the baseline and the three flags give up, as before). One cell changed its path, not its outcome:
+`sage` KO, a give-up in both runs, with 7 asks and 20 LLM calls before and 0 asks and 24 calls after (the timeouts of the lost utterances
+are gone). Replicate 2 was not rerun (shared GPU, about 30 calls per minute). The gate table above this section stays valid for outcomes.
+
+### Corrections to the gate report
+| Item | What the report said or implied | What it is |
+|---|---|---|
+| 014, all configs but `sage_r3u` | a dialogue or refusal failure | A transient `camera_down` (`perception_unavailable`). SAGE has no wait or retry for it. The clarify was resolved and the user confirmed. `sage_r3u` waits (`wait_on_robot`) and succeeds. |
+| 014 KO: '죄송해요, 지금은 그 말씀을 드리기 어려워요.' | a refusal | Not a refusal. It is SAGE's `say_untranslated` fallback, said when `translate_budget` 8 had run out and the final report could not be translated. |
+| 074 | an understanding failure | A `partial_open` silent failure (the drawer reports success, it is only partly open). SAGE does not recover from it; `sage_r3u` does (`reset_container`), and then meets a persistent `hw_fault` (r3u ends with 'something is wrong with my hardware'). |
+| 015 EN, a false success of a flag | the flag caused it | An 8B re-reading error, confirmed by a calibrated wrong 'yes' (`p_wrong`, reply_kind `wrong`). Not a property of the flag. |
+| 015 KO verdict | a verdict problem | A duplicate reach/hand goal (same object, differing only in the hand) blocks the plan gate. |
+
+### Decision
+- **Adopt none of the three 8B flags** (`verdict`, `give`, `strict`). On 5 tasks and two replicates: `verdict` and `give` add a false
+  success (EN 015) and lose the KO 008 success the baseline has; `strict` gains KO 015 in both replicates but loses KO 008 in one and also adds
+  the EN 015 false success. Five tasks cannot separate this from the noise, and the false successes are the cost the flags must not carry.
+- For later SAGE-v2 work (robot side; flags default off; robot-agnostic; any fact declared as data with a fail-open default):
+  1. dedupe goals on the same object that differ only in the hand;
+  2. keep one translation call for the final report (`translate_budget` must not be spent before it);
+  3. after a successful Dock, do not leave the dock for end-state checks, or verify that the final Dock succeeded before saying done;
+  4. keep `sage_r3u`'s `endstate_check`, `wait_on_robot` and `reset_container`.
+- Not run yet, the natural next arm: the 30B as understand reader inside an end-to-end gate (the user asked for a larger model for the
+  understanding step: 'dùng model lớn hơn nếu cần thiết'). The offline `understand-eval` of the 30B is in the previous section; it was killed
+  there, so an end-to-end arm needs a new reason (for example with the guard) before it spends GPU time.

@@ -1036,133 +1036,15 @@ class SageM2Planner(SagePlanner):
     manifest_overlay = UM_GUARD
 
 
-# Lab round 8 (user decision 2026-11-07): Qwen3.5 9B reads the request and repairs the plan gate's findings, HyperCLOVAX-SEED-
-# Think-14B writes the Korean. ASSUMED guard values, not tuned on any outcome: 512 tokens / 8 goals as for the 30B reader; a
-# repair answer (a block's steps or one plan) 1024 tokens; one spoken sentence 128 tokens. ``think`` is off for the 9B (a
-# thinking model answers EMPTY when its reasoning uses the cap: smoke test 2026-11-07). The Korean model's name is the tag the
-# server registers it under, and its server comes from $HOMELOOP_DIALOG_URL (Ollama 0.35 and 0.40 cannot load it; without a server
-# every Korean sentence falls back to the translator after one failed call).
-M9_MODEL = "qwen3.5:9b"
-KO_DIALOG_MODEL = "hyperclovax-seed-think-14b"
-M9_OVERLAY = {"planner": {"understand_max_tokens": 512, "understand_max_goals": 8, "understand_think": 0,
-                          "repair_max_tokens": 1024, "repair_think": 0},
-              "assumed": True,
-              "note": "assumed: guards of 512 tokens / 8 goals (understand) and 1024 tokens (repair), think off for the 9B (lab round 8)"}
-MK_OVERLAY = {"planner": {**M9_OVERLAY["planner"], "dialog_model_lang": {"ko": KO_DIALOG_MODEL}, "dialog_max_tokens": 128},
-              "assumed": True, "note": M9_OVERLAY["note"] + "; dialog guard of 128 tokens (one sentence)"}
-
-
-class SageM9Planner(SagePlanner):
-    """Lab round 8: sage_ground2 + Qwen3.5 9B for ``understand_model`` and ``repair_model`` (the plan gate's repair prompts); the
-    translator is unchanged. Guards fall back to the baseline model once (events ``understand_fallback``, lab_events
-    ``repair_model``). Calls of both roles are counted on the episode cap and apart (``llm_calls_understand`` /
-    ``llm_calls_repair``). A prototype."""
-    name = "robot_agent:sage_m9"
-    loop_options = {**SageGround2Planner.loop_options, "understand_model": M9_MODEL, "repair_model": M9_MODEL}
-    manifest_overlay = M9_OVERLAY
-
-
-class SageMkPlanner(SagePlanner):
-    """sage_m9 + a Korean dialog model (``dialog_model_lang`` {ko: HyperCLOVAX-SEED-Think-14B}): the Korean questions, read-backs
-    and translations are written by it, English by the translator as before. Needs a server for it
-    (``$HOMELOOP_DIALOG_URL``); without one the guard falls back to the translator on every sentence."""
-    name = "robot_agent:sage_mk"
-    loop_options = dict(SageM9Planner.loop_options)
-    manifest_overlay = MK_OVERLAY
-
-
-# Round 8b: the 9B reader was worse than the 8B in Korean (dev KO exact 202 vs 251; the runs used input_pivot none). Three ways to
-# measure it fairly: the Korean request goes to the 9B as its English translation (input_pivot translate) or as both texts
-# (both), or the Korean request is read by the planner's own 8B model (``understand_model_lang`` {ko: the 8B}; a language whose
-# model is the planner's keeps the planner as reader) while English stays with the 9B. The 8B tag is the one of the lab runs.
-PLANNER_8B = "qwen3-vl:8b-instruct"
-M9_KO8_LANG = {"ko": PLANNER_8B}
-
-
-class SageM9TranslatePlanner(SagePlanner):
-    """sage_m9 with ``input_pivot=translate``: the 9B reads the English translation of what the user said."""
-    name = "robot_agent:sage_m9t"
-    loop_options = {**SageM9Planner.loop_options, "input_pivot": "translate"}
-    manifest_overlay = M9_OVERLAY
-
-
-class SageM9BothPlanner(SagePlanner):
-    """sage_m9 with ``input_pivot=both``: the 9B reads the user's words and their English translation."""
-    name = "robot_agent:sage_m9b"
-    loop_options = {**SageM9Planner.loop_options, "input_pivot": "both"}
-    manifest_overlay = M9_OVERLAY
-
-
-class SageM9Ko8Planner(SagePlanner):
-    """sage_m9 with the reader chosen by language: English requests by the 9B, Korean ones by the planner's 8B
-    (``understand_model_lang`` {ko: 8B}); the 9B still repairs plans in both languages."""
-    name = "robot_agent:sage_m9k8"
-    loop_options = dict(SageM9Planner.loop_options)
-    manifest_overlay = {"planner": {**M9_OVERLAY["planner"], "understand_model_lang": M9_KO8_LANG},
-                        "assumed": True, "note": M9_OVERLAY["note"] + "; Korean requests read by the planner's 8B"}
-
-
-# Steps 4 and 5 of the earlier design as flag bundles (all default off in robot_agent; ``reask_anchor`` needs the round-7 build).
-S4_FLAGS = {"dialog_unstick": "1", "inventory_ask": "1", "reask_anchor": "1", "request_coverage": "1"}
-
-
-class SageS4Planner(SagePlanner):
-    """Step 4: sage_ground2 + dialog_unstick + inventory_ask + reask_anchor + request_coverage (one extra LLM call before
-    done; a named part of the request with no goal or no executed step is asked about instead of claimed)."""
-    name = "robot_agent:sage_s4"
-    loop_options = {**SageGround2Planner.loop_options, **S4_FLAGS}
-    manifest_overlay = UNSTICK_OVERLAY
-
-
+# Lab round 8: the exec / recovery bundle. (The Qwen3.5 9B and HyperCLOVAX variants and the step 4 / 5 request_coverage bundles
+# were removed after the round: see docs/experiments.md. repair_model, dialog_model and understand_model stay in robot_agent as
+# generic options, default off.)
 class SageS5Planner(SagePlanner):
     """Step 5: the sage_r3u bundle (grounding chain v2, exec_integrity = endstate_check + wait_on_robot + reset_container +
     gate_strict, inventory_ask, dialog_unstick) with the same pack declarations."""
     name = "robot_agent:sage_s5"
     loop_options = dict(SageR3uPlanner.loop_options)
     manifest_overlay = EXEC_UNSTICK_OVERLAY
-
-
-class SageS45Planner(SagePlanner):
-    """Steps 4 and 5 together."""
-    name = "robot_agent:sage_s45"
-    loop_options = {**SageS5Planner.loop_options, **S4_FLAGS}
-    manifest_overlay = EXEC_UNSTICK_OVERLAY
-
-
-class SageS45mPlanner(SagePlanner):
-    """sage_s45 flags + Qwen3.5 9B for ``understand_model`` and ``repair_model`` (the sage_m9 models and guards, lab round 8).
-    The Korean dialog model is not part of it (no server; see sage_mk)."""
-    name = "robot_agent:sage_s45m"
-    loop_options = {**SageS45Planner.loop_options, "understand_model": M9_MODEL, "repair_model": M9_MODEL}
-    manifest_overlay = {"planner": {**EXEC_UNSTICK_OVERLAY["planner"], **M9_OVERLAY["planner"]},
-                        "assumed": True, "note": EXEC_UNSTICK_OVERLAY["note"] + "; " + M9_OVERLAY["note"]}
-
-
-class SageS45m8Planner(SagePlanner):
-    """sage_s45m with the Korean request read by the planner's 8B (``understand_model_lang`` {ko: 8B}); English by the 9B."""
-    name = "robot_agent:sage_s45m8"
-    loop_options = dict(SageS45mPlanner.loop_options)
-    manifest_overlay = {"planner": {**SageS45mPlanner.manifest_overlay["planner"], "understand_model_lang": M9_KO8_LANG},
-                        "assumed": True, "note": SageS45mPlanner.manifest_overlay["note"] + "; Korean requests read by the planner's 8B"}
-
-
-class SageS45mkPlanner(SagePlanner):
-    """sage_s45m + a Korean dialog model (``dialog_model_lang`` {ko: HyperCLOVAX-SEED-Think-14B}, server at
-    ``$HOMELOOP_DIALOG_URL``; as sage_mk)."""
-    name = "robot_agent:sage_s45mk"
-    loop_options = dict(SageS45mPlanner.loop_options, **{"understand_model": M9_MODEL, "repair_model": M9_MODEL})
-    manifest_overlay = {"planner": {**SageS45mPlanner.manifest_overlay["planner"], "dialog_model_lang": {"ko": KO_DIALOG_MODEL},
-                                    "dialog_max_tokens": 128},
-                        "assumed": True, "note": SageS45mPlanner.manifest_overlay["note"] + "; dialog guard of 128 tokens (one sentence)"}
-
-
-class SageS45m8kPlanner(SagePlanner):
-    """sage_s45m8 (English read by the 9B, Korean by the planner's 8B) + the Korean dialog model (as sage_s45mk). The Hyper effect
-    without the 9B's Korean reading in the way."""
-    name = "robot_agent:sage_s45m8k"
-    loop_options = dict(SageS45mkPlanner.loop_options)
-    manifest_overlay = {"planner": {**SageS45mkPlanner.manifest_overlay["planner"], "understand_model_lang": M9_KO8_LANG},
-                        "assumed": True, "note": SageS45mkPlanner.manifest_overlay["note"] + "; Korean requests read by the planner's 8B"}
 
 
 class SageGoldPlanner(SagePlanner):

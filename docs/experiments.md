@@ -2786,3 +2786,13 @@ Every task that differs:
 **Caveats:** n=5 on tuned dev ids (dev tuning); run-to-run noise is about 3 tasks per 50, so n=5 cannot rank close variants; `p_not_heard` on in
 this gate and off in r8b, so the two gates differ on 015; guard values (512 / 8 / 1024 / 128 tokens) are assumed, not tuned; outside benchmark
 evidence for the new models is thin, so only our own tests count; wall-clock times are not comparable (shared cache).
+
+## Variants removed after round 8 (2026-11-07)
+
+User decision: Qwen3.5 9B and HyperCLOVAX are dropped (understand-eval: the 9B is worse than the 8B on both splits; Korean dialog stays on the
+30B translator), the 8B reads English and Korean, the verdict / give / strict flags are killed, and `request_coverage` adds only calls. The
+planner variants `sage_m9`, `sage_mk`, `sage_m9t`, `sage_m9b`, `sage_m9k8`, `sage_s45m`, `sage_s45m8`, `sage_s45mk`, `sage_s45m8k`, `sage_s4`,
+`sage_s45` were removed from `homeloop_bench` with their classes and the constants `M9_MODEL`, `KO_DIALOG_MODEL` (and the guard overlays), and
+`tools/ollama_shim_vllm.py` with its test (nothing else used the shim: it only served HyperCLOVAX). Kept: `sage_s5`, `sage_ground2`, `sage`,
+and in robot_agent the generic options `repair_model`, `dialog_model`, `understand_model` (default off). The sections above stay as the record;
+the variant names in them no longer run. `sage_v1`..`sage_vs` (round 8c, killed) stay registered as the record of that round.

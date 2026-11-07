@@ -10,9 +10,19 @@ rc = pytest.importorskip("robot_agent.core.planning.request_coverage")
 
 from fixtures import fixture_tasks  # noqa: E402
 from homeloop_bench.planners import robot_agent_fake as F  # noqa: E402
+from homeloop_bench.planners.robot_agent_adapter import UNSTICK_OVERLAY, SageGround2Planner, SagePlanner  # noqa: E402
 from homeloop_bench.runner import run_episode  # noqa: E402
 
 TASKS = {t["id"]: t for t in fixture_tasks()}
+
+
+class CoveragePlanner(SagePlanner):
+    """sage_ground2 + dialog_unstick + inventory_ask + reask_anchor + request_coverage (the removed sage_s4 bundle, kept here as the
+    test double of the generic option)."""
+    name = "robot_agent:test_coverage"
+    loop_options = {**SageGround2Planner.loop_options, "dialog_unstick": "1", "inventory_ask": "1", "reask_anchor": "1",
+                    "request_coverage": "1"}
+    manifest_overlay = UNSTICK_OVERLAY
 
 
 @pytest.mark.parametrize("lang", ["en", "ko"])
@@ -30,7 +40,7 @@ def test_the_coverage_question_is_a_structured_confirm_and_a_done_part_gets_no(m
 
     monkeypatch.setattr(F.FakeUnderstandLLM, "chat", chat)
     monkeypatch.setattr(rc, "covered_names", lambda *a, **k: [])
-    e = run_episode(TASKS["fx-feas-000"], "robot_agent:sage_s4", "ideal", 0, lang, "fake")
+    e = run_episode(TASKS["fx-feas-000"], "test_coverage_real_loop:CoveragePlanner", "ideal", 0, lang, "fake")
     assert seen, "the coverage call was made"
     asks = [c for c in e["calls"] if c["skill"] == "ask"]
     assert len(asks) == 1, e["calls"]

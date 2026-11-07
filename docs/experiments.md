@@ -2692,3 +2692,97 @@ different call index get different noise, so a paired difference on 014 / 015 pa
 noise by question ordinal would remove that; it changes every seeded result, so it is NOT done here (a decision for the next data
 version).
 
+
+## Round 8c: model-independent understanding remedies on the 8B alone
+
+`understand-eval`, planner qwen3-vl:8b-instruct reads (no `understand_model`), train and dev tasks 0..299, EN and KO, clean and ASR text
+(`--text both`, `--profile real`, seed 0), paired against `sage_ground2`, one shared cache. Headline records only (feasible, not mixed);
+about 480 per split and language. Variants (all on top of sage_ground2): `sage_v1` = verdict (`understand_verify_verdict`), `sage_vg` = give
+(`understand_give_kind`), `sage_vs` = strict (`understand_schema_strict`), `sage_v3` = all three. (`sage_v2` = verdict+give is registered but was not
+run.) Kill rule: train AND dev, losses not above gains, confident-wrong not higher, asked-on-exact within +1.5 pt. Exact is baseline -> variant.
+
+| variant | split | EN exact (gains/losses) | EN conf-wrong | KO exact (gains/losses) | KO conf-wrong | asked-on-exact pt | verdict |
+|---|---|---|---|---|---|---|---|
+| verdict | train | 279 -> 294 (+15) | 109 -> 105 | 217 -> 231 (+14) | 139 -> 147 | -1.1 | fails KO conf-wrong |
+| verdict | dev | 322 -> 321 | 75 -> 87 | 251 -> 256 | 128 -> 124 | -0.9 | fails EN: losses 23 > gains 22, conf-wrong up |
+| give | train | 279 -> 279 | 109 -> 98 | 217 -> 221 | 139 -> 144 | -0.3 | fails KO conf-wrong |
+| give | dev | 322 -> 311 | 75 -> 87 | 251 -> 251 | 128 -> 120 | +0.3 | fails EN: losses 30 > gains 19 |
+| strict | train | 279 -> 277 | 109 -> 94 | 217 -> 225 | 139 -> 138 | +2.1 | fails asked-on-exact (KO +3.3) |
+| strict | dev | 322 -> 313 | 75 -> 77 | 251 -> 239 | 128 -> 129 | +0.9 | fails losses > gains in EN and KO |
+| verdict+give+strict | train | 279 -> 283 | 109 -> 105 | 217 -> 224 | 139 -> 142 | 0.0 | fails KO conf-wrong |
+| verdict+give+strict | dev | 322 -> 318 | 75 -> 80 | 251 -> 253 | 128 -> 119 | -0.2 | fails EN: losses 25 > gains 21, conf-wrong up |
+
+Result: all four are KILLED. Verdict with the 8B passes EN on train (+15 exact) but not on dev (322 -> 321, confident wrong 75 -> 87), so the
+30B result of round 7 (EN passes on both splits) does not carry over to the 8B reader. The three flags lower dropped atoms (recall up by
+1 to 3 pt) but add spurious atoms and confident-wrong readings, and give/strict lose exact readings on dev EN. Run notes:
+scratchpad `lab/r8/um8` (cmp.py, per-run logs). GPU 0 only, 6 to 7 clients, container stopped at the end.
+
+## Round 8: models and steps 4-5 (summary, 2026-11-07)
+
+This section sums up round 8 (sections "Round 8 models", "Round 8b", "Round 8c" above) and adds the last n=5 gate (`results/r8/n5_a2`).
+
+**Models fetched** (store `<NAS>/homeloop_models`, Ollama layout, read-only mount, about 31 GB; `MODELS.md` there):
+- `qwen3.5:9b` (Q4_K_M, 5.6 GB + 0.9 GB projector): loads on the pinned Ollama 0.35.0. JSON-schema `format` works. It needs `think: false`,
+  otherwise the reasoning fills the token cap and the content is empty.
+- HyperCLOVAX-SEED-Think-14B: the Q4_K_M GGUF (8.9 GB, sha256 checked, `staging/hcx/`) does not load in Ollama 0.35.0 or 0.40.15 (architecture
+  `hcx-seed-think`, only the vendor llama.cpp fork has it). It was served by vLLM 0.32.0 instead (fp8 from the bf16 HF checkpoint, 0.38 of GPU 0)
+  with `tools/ollama_shim_vllm.py` in front (round 8b). Licence: research use and publishing outputs allowed. The acceptable-use policy excludes
+  heavy machinery, military and critical infrastructure; a home robot is not listed. The paper should mention it in one line.
+- `qwen3-vl:30b-a3b-instruct` stays as the reference; `qwen3-vl:8b-instruct` is the planner.
+
+**Understand-eval** (tasks 0..299 train and dev, EN+KO, clean+ASR, paired vs `sage_ground2`, exact base 496 / 573): 30B 587 / 611 (killed in
+round 7, confident wrong up on dev); Qwen3.5 9B 484 / 485 (killed: losses > gains on both splits, confident wrong 326 / 333 vs 248 / 203); 9B in
+Korean with any pivot stays below the 8B (round 8b); s4 = s45 523 / 592 with zero losses but confident wrong +5 / +7 (killed by the rule, inside
+noise); s5 identical to the baseline (its flags act after the reading). Round 8c: the verdict / give / strict flags on the 8B are all killed.
+
+**Korean generation.** Only the free sentences change; read-backs and coverage questions come from the pack phrases. In `results/r8b/n5_a2`
+rep1, `sage_s45m8` (translator) vs `sage_s45m8k` (HyperCLOVAX): the translator writes "한 개 이상의 머그잔을 알고 있어요. 검은 머그잔이든 흰
+머그잔이든요. 어느 것을 말씀하시는 건가요?" (stiff), Hyper writes "저는 검은 머그잔과 흰색 머그잔을 알고 있어요: 어떤 것을 말씀하시는
+건가요?"; the translator writes "빨간책", Hyper "빨간 책". Translator calls per KO episode go from 6-8 to 0-1, the dialog calls replace them; the
+total stays the same. 5 of 62 Hyper calls fell back (answer over the 128-token guard). Outcomes are identical task by task (3/2 KO). The planned
+round-trip comparison against the 30B (translate back, compare slots) was not run, so naturalness is an observation on a few sentences.
+
+**Last n=5 gate** (`results/r8/n5_a2`): dev ids 065 008 015 014 074, `--profile real`, seed 0, `asr.en.app_wer=0, asr.ko.app_cer=0,
+asr.p_partial=0` (unlike r8b, `asr.p_not_heard` is left at the real value, so "not heard" silences stay), 2 replicates with a shared cache each,
+A/A check ok, n_error 0. Sensitivity condition, not the headline. Success r1/r2 out of 5; letters per task in the order above (S success, F false
+success, g give-up).
+
+| config | EN success | EN letters r1 / r2 | KO success | KO letters r1 / r2 | LLM calls EN / KO | sim s EN / KO |
+|---|---|---|---|---|---|---|
+| oracle | 5/5 | SSSSS / SSSSS | 5/5 | SSSSS / SSSSS | 0 / 0 | 124 / 124 |
+| sage | 2/1 | FSSgg / FSggg | 1/1 | FSggg / FSggg | 8.1 / 13.2 | 150 / 147 |
+| sage_ground2 | 2/1 | FSSgg / FSFgg | 1/1 | FSggg / FSggg | 8.2 / 14.3 | 170 / 155 |
+| sage_s4 | 2/1 | FSSgg / FSggg | 1/1 | FSggg / FSggg | 8.5 / 14.7 | 158 / 155 |
+| sage_s5 | 4/3 | SSSSg / SSgSg | 3/3 | SSgSg / SSgSg | 7.0 / 13.8 | 198 / 189 |
+| sage_s45 | 4/3 | SSSSg / SSgSg | 3/3 | SSgSg / SSgSg | 7.7 / 14.4 | 206 / 195 |
+
+Every task that differs:
+- 065 (F -> S in s5 / s45, EN and KO, both reps): the plan ends with MoveTo dock but no docking, so `docked()` is false and the robot says done.
+  `endstate_check` re-checks the end state and docks (2 tries). `request_coverage` (s4) does not catch it: the goal "go to dock" exists and a
+  step acted on it, so the LLM lists nothing (parts dropped 2, none asked).
+- 014 (g -> S in s5 / s45, EN and KO, both reps): an injected perception outage (`perception_unavailable`) after a failed pick; the baseline stops
+  ("something is wrong with my hardware"). `wait_on_robot` waits 2 + 4 + 8 s, the camera comes back, the mug is handed over. `inventory_ask`
+  fires in s4 too but does not change the outcome, so the win is `wait_on_robot`. In s45 `request_coverage` then asks about "get me my mug"
+  although the mug was handed over (a false alarm the round 8b filter misses); the user says "already done", the run ends done, 2 extra questions.
+- 015 EN rep2 (sage_ground2 F; sage, s4, s5, s45 g): not a flag effect. In rep1 every config succeeds. In rep2 an injected silence and the
+  noise draws keyed by call index send the dialogue another way: ground2 reads "No, I asked you to tell grandpa" as a correction and hands the
+  book to grandpa (F); the others ask "where should I put the red book?", get a "No" to the read-back and give up after 5 questions.
+- 015 KO (g everywhere, both reps): silence loop, 9 questions, "답을 듣지 못해서 여기서 멈출게요". Same in all configs.
+- 074 (g everywhere): PutIn into the fridge is blocked twice. In s5 / s45 `reset_container` closes and reopens the fridge and retries, then an
+  injected `hw_fault` comes; `wait_on_robot` waits but the robot still stops. The oracle meets other fault draws.
+- `request_coverage` fired 7 (EN) / 6 (KO) times in s45 and never added a goal; it never caused a give-up after the 8b fix.
+
+**Holdout:** not run. No fresh slice and no test split were used in round 8; every number above is on dev ids used for tuning.
+
+**Kept / killed:**
+- Kept: the 8B as reader for both languages; `sage_s5` (exec integrity bundle: endstate_check, wait_on_robot, reset_container, gate_strict +
+  inventory_ask + dialog_unstick) as the candidate for the next larger paired gate (EN +2 / +2, KO +2 / +2 over sage_ground2, false successes 1-2 -> 0,
+  both gains explained by one flag each).
+- Not kept: `sage_s4` (identical to the baseline task by task on the gate; confident wrong up in understand-eval); `sage_s45` (equal to s5 task by
+  task, `request_coverage` adds about 0.7 calls and needless questions); `sage_m9` / `sage_mk` (9B reader); the 30B reader (reference only).
+- Open: the 9B as repair model (`sage_s45m8` equals `sage_s45` on n=5, no win seen); HyperCLOVAX for Korean words (works, no measured change,
+  slightly better wording in a few sentences).
+
+**Caveats:** n=5 on tuned dev ids (dev tuning); run-to-run noise is about 3 tasks per 50, so n=5 cannot rank close variants; `p_not_heard` on in
+this gate and off in r8b, so the two gates differ on 015; guard values (512 / 8 / 1024 / 128 tokens) are assumed, not tuned; outside benchmark
+evidence for the new models is thin, so only our own tests count; wall-clock times are not comparable (shared cache).

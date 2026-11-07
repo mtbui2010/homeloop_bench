@@ -1261,3 +1261,14 @@ def built_prompt(task, planner_name: str = "robot_agent:sage", lang: str = "en",
     out["n_prompts"] = len(ps)
     out["prompts_with_examples"] = sum(1 for p in ps if "RETRIEVED EXAMPLE" in p)
     return out
+
+def _v8(name, flags, doc):
+    return type("SageV" + name[-1], (SagePlanner,), {"name": "robot_agent:" + name, "__doc__": doc,
+                "loop_options": {**SageGround2Planner.loop_options, **flags}})
+
+
+SageV1Planner = _v8("sage_v1", {"understand_verify_verdict": "1"}, "robot_agent:sage_ground2 + understand_verify_verdict (the planner's own model reads; lab round 8)")
+SageV2Planner = _v8("sage_v2", {"understand_verify_verdict": "1", "understand_give_kind": "1"}, "robot_agent:sage_v1 + understand_give_kind")
+SageV3Planner = _v8("sage_v3", {"understand_verify_verdict": "1", "understand_give_kind": "1", "understand_schema_strict": "1"}, "robot_agent:sage_v2 + understand_schema_strict")
+SageVgPlanner = _v8("sage_vg", {"understand_give_kind": "1"}, "robot_agent:sage_ground2 + understand_give_kind alone")
+SageVsPlanner = _v8("sage_vs", {"understand_schema_strict": "1"}, "robot_agent:sage_ground2 + understand_schema_strict alone")

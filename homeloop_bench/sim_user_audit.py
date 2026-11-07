@@ -296,6 +296,44 @@ def score(rows: list, judges: list, reads: list) -> dict:
     }
 
 
+# ---- template cases: questions of SAGE's fixed templates that the labelled set (real runs) does not hold ------------------
+# One case per template and language: the English question of the template, and the Korean text the user hears (the pack's
+# phrase, homeloop_robot configs/adapter.py). Checked: the structured meaning derives, the heard text reads as the same
+# meaning (the heard-text check, both languages), and the answer is the one the design says (from the true world).
+COVERAGE_EN = "You also asked me for this, but I have not done it: {part}. Should I do it now?"
+
+
+def template_cases(split: str = "dev") -> list:
+    """The coverage template (request_coverage, clarify kind 'coverage') in EN and KO on the first feasible task of ``split``
+    with two or more goals: the part is the task's own words. Each case: {template, lang, question, meaning, path, qtype, rule,
+    kind, answer, ok}."""
+    from homeloop_robot.configs.adapter import PHRASES
+    from homeloop_robot.configs.ra_dialog import derive
+    from homeloop_robot.dialog import GoalView
+
+    from .env import EpisodeEnv, task_dict
+    from .tasks import load_split
+    task = next(t for t in load_split(split) if task_dict(t).get("kind") == "feasible"
+                and len(((task_dict(t).get("goal") or {}).get("all")) or []) >= 2)
+    out = []
+    for lang in ("en", "ko"):
+        env = EpisodeEnv(task, "ideal", 0, lang)
+        u = env.user
+        part = str(task_dict(task)["text"][lang]).rstrip(".")
+        q_en = COVERAGE_EN.format(part=part)
+        heard = q_en if lang == "en" else PHRASES["q_coverage"]["ko"].format(what=part)
+        gv = GoalView(u.world, u.wants, u.user_id, lambda pid: u.place_of(pid, 0.0)[0]) if u.wants else None
+        kw = dict(knows_location=True, other_place=None, user_place=None, goal=gv, request=u.request, last_answer=None)
+        meaning = derive(q_en)
+        u.last_reading = None
+        c, path, qtype = u._content(heard, lang, meaning, kw)
+        ok = bool(meaning) and meaning.get("ask") == "coverage" and path == "structured" and qtype == "confirm" \
+            and c.rule == "coverage" and c.kind == "yes"          # nothing of the request holds at the start: do it
+        out.append({"template": "coverage", "lang": lang, "question": heard, "meaning": meaning, "path": path,
+                    "qtype": qtype, "rule": c.rule, "kind": c.kind, "answer": c.text, "ok": ok})
+    return out
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="python -m homeloop_bench.sim_user_audit")
     ap.add_argument("--set", default=str(SET_DIR))
@@ -324,6 +362,7 @@ def main(argv=None) -> int:
     if clf is not None and clf.failed is not None:
         raise clf.failed
     res = score(rows, judges, reads)
+    res["template_cases"] = template_cases()
     res["classifier"] = ({"kind": "llm", "model": a.model, "prompt_version": PROMPT_VERSION}
                          if clf is not None else {"kind": "rules"})
     base = d / "baseline.json"
@@ -333,6 +372,8 @@ def main(argv=None) -> int:
     Path(a.out).write_text(json.dumps(res, ensure_ascii=False, indent=1, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps({k: res[k] for k in ("n", "n_en", "n_ko", "accuracy", "accuracy_en", "accuracy_ko",
                                          "n_disagree_excluded")}), file=sys.stderr)
+    bad = [c for c in res["template_cases"] if not c["ok"]]
+    print(f"  template cases: {len(res['template_cases']) - len(bad)}/{len(res['template_cases'])} ok", file=sys.stderr)
     for c in res["confusions"][:12]:
         print(f"  {c['count']:3d}  gold={c['gold']:<14} sim={c['sim']:<20} path={c['path']}", file=sys.stderr)
     return 0

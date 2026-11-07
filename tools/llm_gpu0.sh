@@ -8,6 +8,8 @@
 #   OLLAMA_MODELS_DIR=/path      a host directory holding an Ollama model store (mounted read-only)
 #   OLLAMA_VOLUME=name           a docker volume holding one (mounted read-only)
 #   the volume of an existing container named `ollama` (the authors' lab setup; read-only, never touched)
+#   (a writable store of your own, e.g. on a NAS, works the same way: OLLAMA_MODELS_DIR=/path/to/store; fill it with a
+#    separate temporary ollama container mounted read-write, then mount it here read-only)
 #   otherwise the helper's own named volume `homeloop_ollama_models` (read-write): fill it with
 #   `tools/llm_gpu0.sh pull qwen3-vl:8b-instruct` (and the other models of docs/generation.md)
 # GPU: HOMELOOP_GPU (default 0) -> --gpus device=$HOMELOOP_GPU. Port: HOMELOOP_LLM_PORT (default 11536).

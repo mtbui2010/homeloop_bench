@@ -1071,6 +1071,37 @@ class SageMkPlanner(SagePlanner):
     manifest_overlay = MK_OVERLAY
 
 
+# Round 8b: the 9B reader was worse than the 8B in Korean (dev KO exact 202 vs 251; the runs used input_pivot none). Three ways to
+# measure it fairly: the Korean request goes to the 9B as its English translation (input_pivot translate) or as both texts
+# (both), or the Korean request is read by the planner's own 8B model (``understand_model_lang`` {ko: the 8B}; a language whose
+# model is the planner's keeps the planner as reader) while English stays with the 9B. The 8B tag is the one of the lab runs.
+PLANNER_8B = "qwen3-vl:8b-instruct"
+M9_KO8_LANG = {"ko": PLANNER_8B}
+
+
+class SageM9TranslatePlanner(SagePlanner):
+    """sage_m9 with ``input_pivot=translate``: the 9B reads the English translation of what the user said."""
+    name = "robot_agent:sage_m9t"
+    loop_options = {**SageM9Planner.loop_options, "input_pivot": "translate"}
+    manifest_overlay = M9_OVERLAY
+
+
+class SageM9BothPlanner(SagePlanner):
+    """sage_m9 with ``input_pivot=both``: the 9B reads the user's words and their English translation."""
+    name = "robot_agent:sage_m9b"
+    loop_options = {**SageM9Planner.loop_options, "input_pivot": "both"}
+    manifest_overlay = M9_OVERLAY
+
+
+class SageM9Ko8Planner(SagePlanner):
+    """sage_m9 with the reader chosen by language: English requests by the 9B, Korean ones by the planner's 8B
+    (``understand_model_lang`` {ko: 8B}); the 9B still repairs plans in both languages."""
+    name = "robot_agent:sage_m9k8"
+    loop_options = dict(SageM9Planner.loop_options)
+    manifest_overlay = {"planner": {**M9_OVERLAY["planner"], "understand_model_lang": M9_KO8_LANG},
+                        "assumed": True, "note": M9_OVERLAY["note"] + "; Korean requests read by the planner's 8B"}
+
+
 # Steps 4 and 5 of the earlier design as flag bundles (all default off in robot_agent; ``reask_anchor`` needs the round-7 build).
 S4_FLAGS = {"dialog_unstick": "1", "inventory_ask": "1", "reask_anchor": "1", "request_coverage": "1"}
 
@@ -1105,6 +1136,24 @@ class SageS45mPlanner(SagePlanner):
     loop_options = {**SageS45Planner.loop_options, "understand_model": M9_MODEL, "repair_model": M9_MODEL}
     manifest_overlay = {"planner": {**EXEC_UNSTICK_OVERLAY["planner"], **M9_OVERLAY["planner"]},
                         "assumed": True, "note": EXEC_UNSTICK_OVERLAY["note"] + "; " + M9_OVERLAY["note"]}
+
+
+class SageS45m8Planner(SagePlanner):
+    """sage_s45m with the Korean request read by the planner's 8B (``understand_model_lang`` {ko: 8B}); English by the 9B."""
+    name = "robot_agent:sage_s45m8"
+    loop_options = dict(SageS45mPlanner.loop_options)
+    manifest_overlay = {"planner": {**SageS45mPlanner.manifest_overlay["planner"], "understand_model_lang": M9_KO8_LANG},
+                        "assumed": True, "note": SageS45mPlanner.manifest_overlay["note"] + "; Korean requests read by the planner's 8B"}
+
+
+class SageS45mkPlanner(SagePlanner):
+    """sage_s45m + a Korean dialog model (``dialog_model_lang`` {ko: HyperCLOVAX-SEED-Think-14B}, server at
+    ``$HOMELOOP_DIALOG_URL``; as sage_mk)."""
+    name = "robot_agent:sage_s45mk"
+    loop_options = dict(SageS45mPlanner.loop_options, **{"understand_model": M9_MODEL, "repair_model": M9_MODEL})
+    manifest_overlay = {"planner": {**SageS45mPlanner.manifest_overlay["planner"], "dialog_model_lang": {"ko": KO_DIALOG_MODEL},
+                                    "dialog_max_tokens": 128},
+                        "assumed": True, "note": SageS45mPlanner.manifest_overlay["note"] + "; dialog guard of 128 tokens (one sentence)"}
 
 
 class SageGoldPlanner(SagePlanner):

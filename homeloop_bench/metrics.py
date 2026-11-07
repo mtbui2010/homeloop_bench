@@ -89,8 +89,12 @@ def _atom_args(atom: str) -> list:
     return out
 
 
+USER_WRONG = "user_wrong_answer"        # the call event homeloop_robot sets on an ask whose reply is a wrong one
+
+
 def failure_events(calls: list, held_before: list, final_atoms: list) -> list:
-    """One entry per failed call: ``{"k", "code", "injected", "recovered"}``.
+    """One entry per failed call: ``{"k", "code", "injected", "recovered"}``, and one per injected wrong user reply (an ok
+    ``ask`` whose event is ``user_wrong_answer``; code ``user_wrong_answer``, injected True).
 
     Recovered: a later call of the same skill with the same primary argument returns ok; or, for codes
     where retrying is not the remedy (absent, unreachable, dropped, grasp_failed, blocked), every final
@@ -99,6 +103,11 @@ def failure_events(calls: list, held_before: list, final_atoms: list) -> list:
     out = []
     for i, c in enumerate(calls):
         code = c.get("code")
+        if c.get("ok") and c.get("skill") == "ask" and c.get("event") == USER_WRONG:
+            # an injected user error (a wrong reply, ``user.p_wrong``): recovered when every final goal atom holds
+            out.append({"k": c["k"], "code": USER_WRONG, "injected": True,
+                        "recovered": bool(final_atoms) and all(h for _a, h in final_atoms)})
+            continue
         if c.get("ok") or not code:
             continue
         prim = _primary(c.get("args") or {})

@@ -94,3 +94,15 @@ def test_percentile():
     assert percentile([], 5) is None
     assert percentile([3.0, 1.0, 2.0], 5) == 1.0
     assert percentile(list(range(1, 101)), 5) == 5
+
+
+def test_a_wrong_user_reply_is_an_injected_user_error_in_the_failures():
+    """homeloop_robot marks an injected wrong reply with the event user_wrong_answer on an ok ask: the episode's failures
+    list holds it (injected, recovered when every final atom holds), so the failure analysis can see it."""
+    ask = _call(0, "ask", {"question": "q"}, True)
+    ask["event"] = "user_wrong_answer"
+    calls = [ask, _call(1, "move", {"target": "a@x"}, True)]
+    ev = failure_events(calls, [None, None], [["on(a, b)", False]])
+    assert ev == [{"k": 0, "code": "user_wrong_answer", "injected": True, "recovered": False}]
+    assert failure_events(calls, [None, None], [["on(a, b)", True]])[0]["recovered"] is True
+    assert failure_events([_call(0, "ask", {"question": "q"}, True)], [None], [["on(a, b)", False]]) == []

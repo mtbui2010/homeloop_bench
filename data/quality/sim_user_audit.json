@@ -160,19 +160,19 @@
   },
   "structured": {
    "accuracy": 0.9878,
-   "correct": 323,
+   "correct": 325,
    "en": 184,
-   "ko": 143,
-   "n": 327,
-   "share": 0.6217
+   "ko": 145,
+   "n": 329,
+   "share": 0.6255
   },
   "structured_mismatch": {
-   "accuracy": 0.9459,
-   "correct": 35,
+   "accuracy": 0.9429,
+   "correct": 33,
    "en": 0,
-   "ko": 37,
-   "n": 37,
-   "share": 0.0703
+   "ko": 35,
+   "n": 35,
+   "share": 0.0665
   }
  },
  "classifier": {
@@ -973,6 +973,46 @@
  "n_questions": 533,
  "n_untranslated_ko_excluded": 3,
  "set": "data/quality/sim_user_audit",
+ "template_cases": [
+  {
+   "answer": "Yes, please do that too.",
+   "kind": "yes",
+   "lang": "en",
+   "meaning": {
+    "ask": "coverage",
+    "goal": "Please open the fridge and slide the plate in there, and leave it open",
+    "qtype": "confirm",
+    "template": [
+     "coverage"
+    ]
+   },
+   "ok": true,
+   "path": "structured",
+   "qtype": "confirm",
+   "question": "You also asked me for this, but I have not done it: Please open the fridge and slide the plate in there, and leave it open. Should I do it now?",
+   "rule": "coverage",
+   "template": "coverage"
+  },
+  {
+   "answer": "네, 그것도 해 주세요.",
+   "kind": "yes",
+   "lang": "ko",
+   "meaning": {
+    "ask": "coverage",
+    "goal": "공용 냉장고 문 열어서 접시를 안에 넣어 주세요. 문은 그냥 열어 둬도 돼요",
+    "qtype": "confirm",
+    "template": [
+     "coverage"
+    ]
+   },
+   "ok": true,
+   "path": "structured",
+   "qtype": "confirm",
+   "question": "\"공용 냉장고 문 열어서 접시를 안에 넣어 주세요. 문은 그냥 열어 둬도 돼요\"도 부탁하셨는데 아직 못 했어요. 지금 할까요?",
+   "rule": "coverage",
+   "template": "coverage"
+  }
+ ],
  "untranslated_ko": [
   {
    "answer": "무슨 말씀인지 잘 모르겠어요.",

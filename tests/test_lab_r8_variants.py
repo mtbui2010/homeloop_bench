@@ -11,7 +11,8 @@ from fixtures import fixture_tasks  # noqa: E402
 from homeloop_bench.llm import OllamaHTTP  # noqa: E402
 from homeloop_bench.planners import REGISTRY, planner_class  # noqa: E402
 
-NAMES = ("sage_m9", "sage_mk", "sage_s4", "sage_s5", "sage_s45", "sage_s45m")
+NAMES = ("sage_m9", "sage_mk", "sage_s4", "sage_s5", "sage_s45", "sage_s45m", "sage_m9t", "sage_m9b", "sage_m9k8", "sage_s45m8",
+         "sage_s45mk")
 
 
 def test_registered_and_the_reference_is_kept():
@@ -29,6 +30,23 @@ def test_m9_and_mk_say_what_they_set():
     assert mk["repair_model"] == "qwen3.5:9b"
     ref = planner_class("robot_agent:sage_m1").run_config()
     assert ref["understand_model"] == "qwen3-vl:30b-a3b-instruct" and "repair_model" not in ref and "dialog_model" not in ref
+
+
+def test_the_korean_reader_variants_of_the_9b():
+    """Round 8b: the 9B's Korean reading measured with the pivot or with the 8B reading Korean; nothing else differs from sage_m9."""
+    m9 = planner_class("robot_agent:sage_m9")
+    for n, pivot in (("sage_m9t", "translate"), ("sage_m9b", "both")):
+        c = planner_class(f"robot_agent:{n}")
+        assert c.loop_options == {**m9.loop_options, "input_pivot": pivot} and c.run_config()["input_pivot"] == pivot
+    k8 = planner_class("robot_agent:sage_m9k8")
+    assert k8.loop_options == m9.loop_options and k8.run_config()["understand_model_lang"] == {"ko": "qwen3-vl:8b-instruct"}
+    assert k8.run_config()["understand_model"] == "qwen3.5:9b" and m9.run_config()["understand_model_lang"] is None
+    s45 = planner_class("robot_agent:sage_s45m")
+    assert planner_class("robot_agent:sage_s45m8").loop_options == s45.loop_options
+    assert planner_class("robot_agent:sage_s45m8").run_config()["understand_model_lang"] == {"ko": "qwen3-vl:8b-instruct"}
+    mk = planner_class("robot_agent:sage_s45mk").run_config()
+    assert mk["dialog_model_lang"] == {"ko": "hyperclovax-seed-think-14b"} and mk["understand_model"] == "qwen3.5:9b"
+    assert mk["request_coverage"] == 1 and mk["repair_model"] == "qwen3.5:9b"
 
 
 def test_the_step_bundles():
@@ -65,10 +83,10 @@ def test_episodes_of_the_role_variants_under_fake(tmp_path, lang):
         s = run_many(f"robot_agent:{n}", None, None, "ideal", 1, lang, "fake", tmp_path / n, tasks=tasks)
         eps = [json.loads(l) for l in (tmp_path / n / "episodes.jsonl").read_text().splitlines()]
         assert len(eps) == 3 and s["n_episodes"] == 3
-        if n in ("sage_m9", "sage_mk", "sage_s45m"):
+        if n in ("sage_m9", "sage_mk", "sage_s45m", "sage_m9t", "sage_m9b", "sage_m9k8", "sage_s45m8", "sage_s45mk"):
             assert all("llm_calls_understand" in e and e["llm_calls_understand"] <= e["llm_calls"] for e in eps)
             assert all("llm_calls_repair" in e for e in eps)
-            assert all(("llm_calls_dialog" in e) == (n == "sage_mk") for e in eps)
+            assert all(("llm_calls_dialog" in e) == (n in ("sage_mk", "sage_s45mk")) for e in eps)
         else:
             assert all("llm_calls_repair" not in e and "llm_calls_dialog" not in e for e in eps)
     base = run_many("robot_agent:sage_ground2", None, None, "ideal", 1, lang, "fake", tmp_path / "base", tasks=tasks)

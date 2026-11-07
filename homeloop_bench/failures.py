@@ -27,6 +27,7 @@ CAUSES = (
     ("robot_failure", "an injected robot failure was not recovered"),
     ("not_found", "a search ended without the object (absent / not found) and was not recovered"),
     ("other_skill_failure", "another failed skill call that was not recovered"),
+    ("user_error", "an injected wrong user reply was not recovered (the user told the robot something wrong)"),
     ("delivery_wrong", "a delivered(obj, person) atom failed: set down out of reach, on a seat, or no handover"),
     ("claimed_unmet", "claimed done but goal atoms do not hold (false success)"),
     ("gave_up_after_acting", "acted, then gave up with goal atoms unmet and no unrecovered failure"),
@@ -70,6 +71,8 @@ def cause(e: dict) -> str:
         return "not_found"
     if fails:
         return "other_skill_failure"
+    if any(f.get("code") == "user_wrong_answer" and not f.get("recovered") for f in (e.get("failures") or [])):
+        return "user_error"
     if any(not d.get("ok") for d in (e.get("delivery_atoms") or [])) and (moved or st == "done"):
         return "delivery_wrong"
     atoms_ok = all(h for _, h in (e.get("goal_atoms") or []))

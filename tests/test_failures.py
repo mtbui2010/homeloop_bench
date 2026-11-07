@@ -53,3 +53,17 @@ def test_analyse_counts_only_failed_and_known_causes():
     assert r["n"] == 3 and r["n_failed"] == 2
     assert set(r["causes"]) <= {c for c, _ in CAUSES}
     assert r["causes"]["crash"]["examples"] == ["x"]
+
+
+def test_unrecovered_wrong_user_reply_is_the_user_error_cause():
+    """An injected wrong reply (event user_wrong_answer on an ok ask) that was not recovered is its own cause (gate cause b),
+    not 'gave_up_after_acting' / 'claimed_unmet'; with a real robot failure the robot failure stays first."""
+    mv = [call(0, "ask", reply_kind="wrong", event="user_wrong_answer"), call(1, "move"), call(2, "pick")]
+    wrong = {"k": 0, "code": "user_wrong_answer", "injected": True, "recovered": False}
+    assert cause(ep(calls=mv, failures=[wrong])) == "user_error"
+    assert cause(ep(calls=mv, status="done", claimed=True, failures=[wrong])) == "user_error"
+    assert cause(ep(calls=mv, failures=[{**wrong, "recovered": True}])) == "gave_up_after_acting"
+    fail = {"k": 2, "code": "grasp_failed", "injected": True, "recovered": False}
+    mv2 = mv[:2] + [call(2, "pick", ok=False, code="grasp_failed", injected=True)]
+    assert cause(ep(calls=mv2, failures=[wrong, fail])) == "robot_failure"
+    assert "user_error" in dict(CAUSES)

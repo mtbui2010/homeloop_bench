@@ -328,6 +328,42 @@ class TranslateCounter:
         return out
 
 
+class RoleCounter:
+    """The client of one robot_agent ROLE model (``understand_model`` / ``repair_model`` / ``dialog_model``; lab rounds 7 and
+    8): its own model on the same server, counted on the episode's call counter (the one cap) and apart in
+    ``env.llm_calls_<role>``. A failed call does not abort the episode (robot_agent's guard falls back to the baseline model); a
+    budget that is used up refuses it. See UnderstandCounter for the routing rule."""
+    role = ""
+
+    def __init__(self, env, model: str, inner=None):
+        self.env, self.model, self.inner = env, model, inner
+
+    def chat(self, prompt: str, format=None, temperature: float = 0.0, seed: int = 0, num_predict=None) -> str:
+        counter = self.env.llm()
+        inner = self.inner if self.inner is not None else counter.inner
+        if counter.max_calls is not None and counter.calls >= counter.max_calls:
+            counter.refused += 1
+            raise BudgetExceeded(f"LLM budget of {counter.max_calls} calls exhausted")
+        counter.calls += 1
+        attr = "llm_calls_" + self.role
+        setattr(self.env, attr, getattr(self.env, attr, 0) + 1)
+        extra = {"num_predict": num_predict} if num_predict else {}
+        return inner.chat(prompt, format=format, temperature=temperature, seed=seed, **extra)
+
+
+class RepairCounter(RoleCounter):
+    """Role ``repair``: the plan gate's repair prompts (lab round 8)."""
+    role = "repair"
+
+
+class DialogCounter(RoleCounter):
+    """Role ``dialog``: what the robot says in the user's language (lab round 8)."""
+    role = "dialog"
+
+
+ROLE_COUNTERS = {"repair": RepairCounter, "dialog": DialogCounter}
+
+
 class UnderstandCounter:
     """The client of robot_agent's ``understand_model`` (role ``understand``): its own model on the same server, its own cache
     (``llm_cache/<model>.jsonl``), counted on the EPISODE's call counter (the one cap) and apart in
@@ -350,14 +386,17 @@ class UnderstandCounter:
         return inner.chat(prompt, format=format, temperature=temperature, seed=seed, **extra)
 
 
-def translator_inner(env, model: str):
+def translator_inner(env, model: str, think=None, url=None):
     """The translate model's client on the episode's server and cache dir (None under --llm fake: the fake
-    answers translation prompts itself)."""
+    answers translation prompts itself). ``think``: Ollama's switch for a role client (None = not sent); ``url``: another
+    server for this model (the dialog role: ``$HOMELOOP_DIALOG_URL``)."""
     from ..llm import CachedLLM, OllamaHTTP, shared_cache_path
-    url = _url(env)
+    url = url or _url(env)
     if not url or not model:
         return None
     llm = OllamaHTTP(url, model)
+    if think is not None:
+        llm.think = bool(think)
     x = getattr(env, "_llm_inner", None)
     cache_dir = None
     for _ in range(4):
@@ -490,6 +529,13 @@ def _status(final: dict | None) -> str:
     return "give_up"
 
 
+def _roles_apart(loop_options: dict, overlay: dict) -> list:
+    """The lab-round-8 roles (repair, dialog) a variant gives a model of its own (option or manifest overlay)."""
+    ov = (overlay or {}).get("planner") or {}
+    has = lambda *ks: any((loop_options or {}).get(k) or ov.get(k) for k in ks)      # noqa: E731
+    return [r for r, ks in (("repair", ("repair_model",)), ("dialog", ("dialog_model", "dialog_model_lang"))) if has(*ks)]
+
+
 def _understands_apart(loop_options: dict, overlay: dict) -> bool:
     ov = (overlay or {}).get("planner") or {}
     return any((loop_options or {}).get(k) or ov.get(k) for k in ("understand_model", "understand_model_lang"))
@@ -511,11 +557,12 @@ class _RobotAgentPlanner:
     _LAB_FLAGS = ("exec_integrity", "gate_strict", "endstate_check", "reset_container", "wait_on_robot",
                   "inventory_ask", "dialog_unstick",       # lab round 3 (and 4: dialog_unstick)
                   "reask_anchor", "no_shared_listener", "understand_views", "understand_goals_first",   # round 7
-                  "understand_schema_strict", "understand_give_kind", "understand_verify_verdict")
+                  "understand_schema_strict", "understand_give_kind", "understand_verify_verdict",
+                  "request_coverage")                       # round 8
     # (round 2's flags were never recorded: their summary.json stay as they were)
     # every option the loop reads from the variant: the episodes of a variant that sets one carry ``lab_events``
     _ALL_LAB_FLAGS = _LAB_FLAGS + ("person_goals", "go_steps", "kind_anchor", "name_canon", "reask_abstain",
-                                   "understand_model")
+                                   "understand_model", "repair_model", "dialog_model", "request_coverage")
     # Data the variant adds to the robot pack's manifest for this run (a dict merged key by key into the loop's
     # ``robot.manifest.planner``), declared apart from the pack: the pack stays as it is, the summary records the overlay.
     manifest_overlay: dict = {}
@@ -554,6 +601,15 @@ class _RobotAgentPlanner:
                     "understand_model_lang": cls.loop_options.get("understand_model_lang")
                     or ((cls.manifest_overlay or {}).get("planner") or {}).get("understand_model_lang")}
                    if cls.loop_kind == "assist" and cls.understands_apart() else {}),
+                # lab round 8: the models of the repair and dialog roles, where the variant sets them
+                **({"repair_model": cls.loop_options.get("repair_model")
+                    or ((cls.manifest_overlay or {}).get("planner") or {}).get("repair_model")}
+                   if cls.loop_kind == "assist" and "repair" in _roles_apart(cls.loop_options, cls.manifest_overlay) else {}),
+                **({"dialog_model": cls.loop_options.get("dialog_model")
+                    or ((cls.manifest_overlay or {}).get("planner") or {}).get("dialog_model"),
+                    "dialog_model_lang": cls.loop_options.get("dialog_model_lang")
+                    or ((cls.manifest_overlay or {}).get("planner") or {}).get("dialog_model_lang")}
+                   if cls.loop_kind == "assist" and "dialog" in _roles_apart(cls.loop_options, cls.manifest_overlay) else {}),
                 # the language layer (robot_agent core/planning/language.py): what a Korean user says reaches the
                 # understand prompt as the original (none), its English (translate) or both
                 "input_pivot": str(cls.loop_options.get("input_pivot", mp.get("input_pivot", "none"))
@@ -593,15 +649,25 @@ class _RobotAgentPlanner:
         um_clients: dict = {}
         if self.loop_kind == "assist" and _understands_apart(self.loop_options, self.manifest_overlay):
             env.llm_calls_understand = 0
+        if self.loop_kind == "assist":
+            for role in _roles_apart(self.loop_options, self.manifest_overlay):
+                setattr(env, "llm_calls_" + role, 0)
 
         def init_client(cfg=None, **k):
             """robot_agent's LLM client: by ROLE ``understand`` (its own model, counted apart), else by model: the
             translator's own (counted apart), else the planner's."""
             m = (cfg or {}).get("model")
-            if (cfg or {}).get("role") == "understand" and m and m != client.model:
+            role, th = (cfg or {}).get("role"), (cfg or {}).get("think")
+            if role == "understand" and m and m != client.model:
                 if m not in um_clients:
-                    um_clients[m] = RAClient(UnderstandCounter(env, m, None if fake else translator_inner(env, m)))
+                    um_clients[m] = RAClient(UnderstandCounter(env, m, None if fake else translator_inner(env, m, th)))
                 return um_clients[m]
+            if role in ROLE_COUNTERS and m and m != client.model:        # lab round 8: repair / dialog role models
+                if (role, m) not in um_clients:
+                    url = os.environ.get("HOMELOOP_DIALOG_URL") if role == "dialog" else None
+                    um_clients[(role, m)] = RAClient(ROLE_COUNTERS[role](
+                        env, m, None if fake else translator_inner(env, m, th, url)))
+                return um_clients[(role, m)]
             return tr_client if tr_client is not None and m == tm and m != client.model else client
         tmp = Path(tempfile.mkdtemp(prefix="homeloop_ra_"))
         node = FakeNode()
@@ -715,6 +781,8 @@ class _RobotAgentPlanner:
             apply_overlay(loop, self.manifest_overlay)
             if self.manifest_overlay and hasattr(loop, "_um_cfg"):      # the keys robot_agent reads once, at construction
                 loop.cfg.update(loop._um_cfg(dict(self.loop_options)))
+                if hasattr(loop, "_rm_cfg"):                            # lab round 8 (role models, request_coverage)
+                    loop.cfg.update(loop._rm_cfg(dict(self.loop_options)))
             return loop
         from robot_agent.core.planning.loop import ClosedLoop
         planner = self.ra_planner
@@ -966,6 +1034,68 @@ class SageM2Planner(SagePlanner):
     loop_options = {**SageUmPlanner.loop_options, "understand_schema_strict": "1", "understand_give_kind": "1",
                     "understand_verify_verdict": "1"}
     manifest_overlay = UM_GUARD
+
+
+# Lab round 8 (user decision 2026-11-07): Qwen3.5 9B reads the request and repairs the plan gate's findings, HyperCLOVAX-SEED-
+# Think-14B writes the Korean. ASSUMED guard values, not tuned on any outcome: 512 tokens / 8 goals as for the 30B reader; a
+# repair answer (a block's steps or one plan) 1024 tokens; one spoken sentence 128 tokens. ``think`` is off for the 9B (a
+# thinking model answers EMPTY when its reasoning uses the cap: smoke test 2026-11-07). The Korean model's name is the tag the
+# server registers it under, and its server comes from $HOMELOOP_DIALOG_URL (Ollama 0.35 and 0.40 cannot load it; without a server
+# every Korean sentence falls back to the translator after one failed call).
+M9_MODEL = "qwen3.5:9b"
+KO_DIALOG_MODEL = "hyperclovax-seed-think-14b"
+M9_OVERLAY = {"planner": {"understand_max_tokens": 512, "understand_max_goals": 8, "understand_think": 0,
+                          "repair_max_tokens": 1024, "repair_think": 0},
+              "assumed": True,
+              "note": "assumed: guards of 512 tokens / 8 goals (understand) and 1024 tokens (repair), think off for the 9B (lab round 8)"}
+MK_OVERLAY = {"planner": {**M9_OVERLAY["planner"], "dialog_model_lang": {"ko": KO_DIALOG_MODEL}, "dialog_max_tokens": 128},
+              "assumed": True, "note": M9_OVERLAY["note"] + "; dialog guard of 128 tokens (one sentence)"}
+
+
+class SageM9Planner(SagePlanner):
+    """Lab round 8: sage_ground2 + Qwen3.5 9B for ``understand_model`` and ``repair_model`` (the plan gate's repair prompts); the
+    translator is unchanged. Guards fall back to the baseline model once (events ``understand_fallback``, lab_events
+    ``repair_model``). Calls of both roles are counted on the episode cap and apart (``llm_calls_understand`` /
+    ``llm_calls_repair``). A prototype."""
+    name = "robot_agent:sage_m9"
+    loop_options = {**SageGround2Planner.loop_options, "understand_model": M9_MODEL, "repair_model": M9_MODEL}
+    manifest_overlay = M9_OVERLAY
+
+
+class SageMkPlanner(SagePlanner):
+    """sage_m9 + a Korean dialog model (``dialog_model_lang`` {ko: HyperCLOVAX-SEED-Think-14B}): the Korean questions, read-backs
+    and translations are written by it, English by the translator as before. Needs a server for it
+    (``$HOMELOOP_DIALOG_URL``); without one the guard falls back to the translator on every sentence."""
+    name = "robot_agent:sage_mk"
+    loop_options = dict(SageM9Planner.loop_options)
+    manifest_overlay = MK_OVERLAY
+
+
+# Steps 4 and 5 of the earlier design as flag bundles (all default off in robot_agent; ``reask_anchor`` needs the round-7 build).
+S4_FLAGS = {"dialog_unstick": "1", "inventory_ask": "1", "reask_anchor": "1", "request_coverage": "1"}
+
+
+class SageS4Planner(SagePlanner):
+    """Step 4: sage_ground2 + dialog_unstick + inventory_ask + reask_anchor + request_coverage (one extra LLM call before
+    done; a named part of the request with no goal or no executed step is asked about instead of claimed)."""
+    name = "robot_agent:sage_s4"
+    loop_options = {**SageGround2Planner.loop_options, **S4_FLAGS}
+    manifest_overlay = UNSTICK_OVERLAY
+
+
+class SageS5Planner(SagePlanner):
+    """Step 5: the sage_r3u bundle (grounding chain v2, exec_integrity = endstate_check + wait_on_robot + reset_container +
+    gate_strict, inventory_ask, dialog_unstick) with the same pack declarations."""
+    name = "robot_agent:sage_s5"
+    loop_options = dict(SageR3uPlanner.loop_options)
+    manifest_overlay = EXEC_UNSTICK_OVERLAY
+
+
+class SageS45Planner(SagePlanner):
+    """Steps 4 and 5 together."""
+    name = "robot_agent:sage_s45"
+    loop_options = {**SageS5Planner.loop_options, **S4_FLAGS}
+    manifest_overlay = EXEC_UNSTICK_OVERLAY
 
 
 class SageGoldPlanner(SagePlanner):

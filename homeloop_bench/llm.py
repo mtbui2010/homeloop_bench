@@ -58,6 +58,9 @@ class OllamaHTTP:
         self.retries = int(os.environ.get("HOMELOOP_LLM_RETRIES", "3")) if retries is None else int(retries)
         self.backoff_s = float(backoff_s)
         self.n_calls = 0
+        # Ollama's ``think`` switch, sent only when set (a thinking model such as qwen3.5 answers EMPTY when its reasoning uses
+        # the whole token cap, so its role clients set False). Not part of any cache key: a model is used with one setting.
+        self.think: Optional[bool] = None
 
     def body(self, prompt: str, format=None, temperature: float = 0.0, seed: int = 0, messages=None,
              num_predict=None) -> dict:
@@ -68,6 +71,8 @@ class OllamaHTTP:
             b["options"]["num_predict"] = int(num_predict)
         if format is not None:
             b["format"] = format
+        if self.think is not None:
+            b["think"] = bool(self.think)
         return b
 
     def chat(self, prompt: str, format=None, temperature: float = 0.0, seed: int = 0, num_predict=None) -> str:

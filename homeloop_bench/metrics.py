@@ -289,6 +289,9 @@ def summarize(episodes: list, config: dict, split_shares: Optional[dict] = None)
             "understand_fallbacks_by_reason": {k: v for k, v in sorted(_count(
                 r for e in episodes for r in (e.get("understand_fallbacks") or [])).items())}}
            if n and any("llm_calls_understand" in e for e in episodes) else {}),
+        # lab round 8: the repair and dialog role models' calls (counted on the same cap), only for a variant that has one
+        **{f"llm_calls_{r}_mean": _mean(e.get(f"llm_calls_{r}", 0) for e in episodes)
+           for r in ("repair", "dialog") if n and any(f"llm_calls_{r}" in e for e in episodes)},
         # episodes whose LLM budget ran out (a refused call), also when the planner caught it and went on
         "llm_budget_hit_rate": _share(sum(1 for e in episodes if e.get("llm_budget_hit")), n),
         # how the simulated user read the robot's questions (homeloop_robot docs/user_model.md): share per path

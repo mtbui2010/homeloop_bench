@@ -635,6 +635,9 @@ class EpisodeEnv:
         if getattr(self, "llm_calls_understand", None) is not None:      # a variant with its own understand model
             rec["llm_calls_understand"] = int(self.llm_calls_understand)
             rec["understand_fallbacks"] = list(getattr(self, "understand_fallbacks", None) or [])
+        for role in ("repair", "dialog"):                               # lab round 8: a variant with a model for the role
+            if getattr(self, "llm_calls_" + role, None) is not None:
+                rec["llm_calls_" + role] = int(getattr(self, "llm_calls_" + role))
         lab = getattr(self, "lab_events", None)
         if lab is not None:             # a planner variant with opt-in options: what they did (planner's own log)
             rec["lab_events"] = [dict(e) for e in lab]

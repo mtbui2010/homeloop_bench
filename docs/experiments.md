@@ -2825,3 +2825,87 @@ After the fix, `aa-check --concurrent` on a cold shared cache (same planner, ids
 
 The r9 episodes in `results/r9/n5_a1` ran before the fix. Their `sim_time_s` and the outcome of episodes with a health wait may differ from a
 rerun; read them with that in mind.
+
+## Round 9: cleanup and gates (2026-11-08)
+
+User decisions applied: Qwen3.5 9B and HyperCLOVAX dropped, the 8B reads English and Korean, the 30B reader and the verdict / give /
+strict flags killed, `sage_s4` / `sage_s45` dropped. Kept for the gates: `robot_agent:sage_s5` (exec / recovery bundle) against
+`robot_agent:sage_ground2` and `robot_agent:sage`, `oracle` as reference.
+
+**Cleanup** (details in "Variants removed after round 8"): 11 variants removed with their classes and constants, the vLLM shim and its
+test removed, `tests/test_lab_r8_variants.py` and `tests/test_coverage_real_loop.py` moved to local test planner classes so the generic
+role options (role routing, `request_coverage`) are still tested through the real loop. Pending work committed locally in small commits
+(231688a, 3b98818, d061977, then c857f11 for H1), no push. A private path name in this file from the earlier uncommitted work was
+replaced by `<NAS>/homeloop_models` and amended into its commit; older commits before this round may still hold it (no history scrub).
+`sage_v1`..`sage_vs` stay registered as the record of round 8c.
+
+**Cache race** (details in "Shared-cache race fixed"): lock mode is write-once per key (`--cache-lock` / `HOMELOOP_CACHE_LOCK=1`, a
+per-key-bucket flock, re-read, call the server only if the key is still absent); a run on a shared cache registers in `DIR/.runs/` and a
+second live run without lock mode is refused (exit 2); `aa-check --concurrent` runs two passes at once on a cold cache with strict
+`aa_compare`. 11 new tests (`tests/test_cache_lock.py`). The wait on another run's call has no timeout. **H1** (section "Round 9 (2026-11-08)"
+above): `SimTime` let the wall clock into robot_agent's health-wait loop; fixed by a frozen base, after which `aa-check --concurrent` is
+`ok=true` (5 of 5 identical, 0 touched). Test suites: homeloop_bench 482 passed after H1; robot_agent (sagev2 worktree, with embodiplan on
+`PYTHONPATH`) 1428 passed, 3 skipped.
+
+### n=5 gate (`results/r9/n5_a2`, after H1)
+
+Dev ids 065 008 015 014 074, profile `real`, seed 0, the 3-parameter `asr_off` (`asr.en.app_wer=0,asr.ko.app_cer=0,asr.p_partial=0`,
+`p_not_heard` on), planner `qwen3-vl:8b-instruct`, Korean speech through the 30B translator, one shared cache per replicate with
+`--cache-lock`, 2 replicates (10 episodes per cell). aa-check `--concurrent` ok; 16 of 16 runs EXIT=0, `n_error` 0; `say` / dialog / final
+`not_in_lang` and raw ids 0 in every episode. Sensitivity condition on tuned dev ids, not the headline.
+
+| config | EN S / F / g | KO S / F / g | EN letters r1 / r2 | KO letters r1 / r2 | LLM calls EN / KO | sim s EN / KO |
+|---|---|---|---|---|---|---|
+| oracle | 10 / 0 / 0 | 10 / 0 / 0 | SSSSS / SSSSS | SSSSS / SSSSS | 0 / 0 | 124 / 124 |
+| sage_s5 | 7 / 0 / 3 | 6 / 0 / 4 | SSSSg / SSgSg | SSgSg / SSgSg | 6.9 / 13.9 | 197 / 189 |
+| sage_ground2 | 3 / 2 / 5 | 2 / 2 / 6 | FSSgg / FSggg | FSggg / FSggg | 7.9 / 14.6 | 158 / 155 |
+| sage | 3 / 2 / 5 | 2 / 2 / 6 | FSSgg / FSggg | FSggg / FSggg | 8.1 / 13.2 | 150 / 147 |
+
+Letters in task order 065 008 015 014 074. Success counts per cell equal `results/r9/n5_a1` (before H1). `sage_ground2` equals `sage` on
+every letter; it differs only on the 014 path (`name_canon`), calls and sim time.
+
+Every task that differs, or fails while the oracle succeeds (step = the SAGE-v2 step whose option changes the outcome):
+- **065** (EN and KO, both reps; sage / ground2 F, s5 S). Step 5, recovery: `endstate_check`. The first Dock (k=26) succeeds; the 8B plan then
+  goes back to the sink and docks again, and that second Dock draws an injected transient `hw_fault` (k=31). sage ignores the failed last step
+  and says the task is done while `docked()` is false. `endstate_check` re-checks the end state and docks again (k=32-33, ok). `gate_strict`
+  fired on KO rep1 (kept=false, no effect). Genuine: sage does not verify its end state; the second trip is a needless plan step.
+- **014** (EN and KO, both reps; sage / ground2 g, s5 S).
+  - s5 vs ground2: step 5, `wait_on_robot`. Both runs are identical up to an injected `camera_down` on Find(black mug) (k=31); ground2 stops
+    ("something is wrong with my hardware"), s5 waits 2 + 4 + 8 s, the camera comes back, it re-finds, picks and hands over.
+    `inventory_ask` (s5) and `name_canon` (ground2) ask the same "which mug" question, so they do not explain this difference.
+  - sage vs ground2 / s5 (path only, all g): step 4, dialogue (`name_canon` / `inventory_ask` ask "which mug" first). Without it, sage EN reads
+    back "the mug", gets a yes, plans Find(bowl) at the user and stops at the camera fault (k=27): a genuine 8B planning weakness.
+  - sage KO never executes: 9 questions, then "답을 듣지 못해서 여기서 멈출게요". Causes: (a) **robot-side language bug**: the read-back
+    sends the bare object name "mug" alone to the 30B translator, which answers "미안해요." ("sorry"), so the user hears "그릇 냉장고 안에
+    넣을게요, 그다음 미안해요. 손에 건네드릴게요" (`structured_mismatch`; first seen in round 4, still open); (b) the 8B then reads the goal
+    as "put the bowl in the user" ("그릇 사용자 안에 넣을게요"), genuine; (c) the user's silence draws (0.023, 0.011, 0.045 on asks 2, 4, 6)
+    and the patience limit of 7 (replayed through `EpisodeEnv`: silent x3, patience x2; the draw rate over 1800 draws is 0.044, so bad luck
+    on this task, not a simulator bug). Without (a), sage KO would most likely stop at the camera fault as sage EN does, so the s5 gain still
+    rests on `wait_on_robot`.
+- **074** (all sage configs g, oracle S; no variant difference in outcome). Open(fridge) gives the silent `partial_open`; PutIn fails
+  BLOCKED with the robot-visible reason "fridge@kitchen is only partly open". sage / ground2: the 8B repair answers Wait + PutIn, then
+  Open while holding, and gives up (genuine). s5: step 5, `reset_container` puts the plate down, closes and reopens (ok), fetches and puts
+  in; the second put_in draws an injected `hw_fault_persistent` (k=29); `wait_on_robot` waits 14 s with `health_ok=false` and the robot stops
+  honestly (genuine injected device fault). The oracle succeeds because it reads the true `partial_open` state (privileged, not a ceiling).
+- **015** (no flag effect). EN rep1 S and EN rep2 g in every sage config: the 8B gave a different first reading per replicate (configs within a
+  replicate are paired by the cache, so this is replicate LLM noise). In rep2 an injected silence, then an injected wrong "No." to a correct
+  read-back, a 5-question confirm loop and a give-up. KO both reps: an injected wrong "아니요", then the 8B reads "bring that red book here" as
+  "hand it to grandpa", patience runs out. Same in all three configs; `dialog_unstick` does not help. Genuine dialogue fragility under the
+  intended user noise.
+- **008**: S everywhere.
+
+**Decision: FAIL at n=5.** No variant is worse than the baseline, and `sage_s5` beats `sage` / `sage_ground2` (EN 7 vs 3 of 10, KO 6 vs 2,
+false success 0 vs 2 + 2), each gain explained by one step-5 flag. The gate rule "every failure explained and no open robot-side bug" is not
+met: the KO read-back translation of a bare object name (014) is a robot-side fidelity bug. Suggested fix, not done in this round: take the
+object's Korean name from declared data (ENV aliases / the language pack) and translate a bare name only as a fallback, failing open to the
+English name when the result is not a noun phrase (generalisation rule: facts as data, fail open).
+
+**n=10 and n=50 gates: not run** (the n=5 gate failed; the milestone order is 5 -> 10 -> 50, each passing). **Holdout: not run** (no fresh
+slice, no test split). **ASR-on drop: not measured** in this round; every number above has `asr_off`.
+
+**Kept / killed:** kept `sage_s5` as the candidate for the next paired gate, `sage_ground2` and `sage` as baselines, `oracle` as reference.
+Killed (removed): the 9B and HyperCLOVAX variants, the 30B reader, verdict / give / strict, `sage_s4`, `sage_s45`.
+
+**Caveats:** n=5 on dev ids used for tuning; run-to-run noise is about 3 tasks per 50, so n=5 cannot rank close variants and the size of
+the s5 gain is not established; user-noise draws are keyed by call index, so on 015 / 074 a paired difference partly shows where the noise
+landed; the r8 / r8b gates ran in parallel on a cold cache before the lock and are only partly paired.

@@ -11,7 +11,7 @@ from fixtures import fixture_tasks  # noqa: E402
 from homeloop_bench.llm import OllamaHTTP  # noqa: E402
 from homeloop_bench.planners import REGISTRY, planner_class  # noqa: E402
 
-NAMES = ("sage_m9", "sage_mk", "sage_s4", "sage_s5", "sage_s45")
+NAMES = ("sage_m9", "sage_mk", "sage_s4", "sage_s5", "sage_s45", "sage_s45m")
 
 
 def test_registered_and_the_reference_is_kept():
@@ -65,7 +65,7 @@ def test_episodes_of_the_role_variants_under_fake(tmp_path, lang):
         s = run_many(f"robot_agent:{n}", None, None, "ideal", 1, lang, "fake", tmp_path / n, tasks=tasks)
         eps = [json.loads(l) for l in (tmp_path / n / "episodes.jsonl").read_text().splitlines()]
         assert len(eps) == 3 and s["n_episodes"] == 3
-        if n in ("sage_m9", "sage_mk"):
+        if n in ("sage_m9", "sage_mk", "sage_s45m"):
             assert all("llm_calls_understand" in e and e["llm_calls_understand"] <= e["llm_calls"] for e in eps)
             assert all("llm_calls_repair" in e for e in eps)
             assert all(("llm_calls_dialog" in e) == (n == "sage_mk") for e in eps)

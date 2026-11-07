@@ -1098,6 +1098,15 @@ class SageS45Planner(SagePlanner):
     manifest_overlay = EXEC_UNSTICK_OVERLAY
 
 
+class SageS45mPlanner(SagePlanner):
+    """sage_s45 flags + Qwen3.5 9B for ``understand_model`` and ``repair_model`` (the sage_m9 models and guards, lab round 8).
+    The Korean dialog model is not part of it (no server; see sage_mk)."""
+    name = "robot_agent:sage_s45m"
+    loop_options = {**SageS45Planner.loop_options, "understand_model": M9_MODEL, "repair_model": M9_MODEL}
+    manifest_overlay = {"planner": {**EXEC_UNSTICK_OVERLAY["planner"], **M9_OVERLAY["planner"]},
+                        "assumed": True, "note": EXEC_UNSTICK_OVERLAY["note"] + "; " + M9_OVERLAY["note"]}
+
+
 class SageGoldPlanner(SagePlanner):
     """DIAGNOSTIC, PRIVILEGED: ``robot_agent:sage`` that does not understand the request. The task's gold goals, converted
     to robot_agent goals (``homeloop_bench.gold_goals``: no source location, the robot searches), are handed to

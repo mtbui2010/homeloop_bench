@@ -68,6 +68,7 @@ REGISTRY = {
     "robot_agent:sage_s4": ("robot_agent_adapter", "SageS4Planner", "robot_agent:sage_ground2 + dialog_unstick + inventory_ask + reask_anchor + request_coverage (step 4)", True),
     "robot_agent:sage_s5": ("robot_agent_adapter", "SageS5Planner", "the sage_r3u bundle (ground2 + exec_integrity: endstate_check, wait_on_robot, reset_container, gate_strict + inventory_ask + dialog_unstick; step 5)", True),
     "robot_agent:sage_s45": ("robot_agent_adapter", "SageS45Planner", "sage_s5 + reask_anchor + request_coverage (steps 4 and 5 together)", True),
+    "robot_agent:sage_s45m": ("robot_agent_adapter", "SageS45mPlanner", "sage_s45 flags + Qwen3.5 9B for understand_model and repair_model (lab round 8)", True),
     "robot_agent:sage_gold": ("robot_agent_adapter", "SageGoldPlanner",
                               "DIAGNOSTIC, PRIVILEGED: robot_agent:sage started from the task's gold goals (understand step skipped): the execution-only ceiling", True),
     "robot_agent:grace": ("robot_agent_adapter", "GracePlanner",

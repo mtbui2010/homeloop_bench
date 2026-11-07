@@ -241,17 +241,18 @@ HEALTH_WAIT_S = 0.5     # robot_agent's own default wait for a sensor to recover
 
 class SimTime:
     """The ``time`` module as robot_agent's loops see it in an episode: ``sleep(dt)`` is the robot waiting, so the
-    episode's simulated clock advances by ``dt`` (``Robot.idle``) and no wall-clock time is spent; ``time()`` is the
-    wall clock plus the time slept, so a deadline loop (``while time.time() < t_end``) ends after the simulated wait.
+    episode's simulated clock advances by ``dt`` (``Robot.idle``) and no wall-clock time is spent; ``time()`` is a base frozen at
+    construction plus the time slept (the wall clock never enters, so the episode is reproducible), so a deadline loop (``while time.time() < t_end``) ends after the simulated wait.
     The same for every robot_agent planner (consistency fix, not tuning: before, a robot that waited, polling its
     sensor health, never let simulated time pass because the adapter set ``health_wait_s=0``)."""
 
     def __init__(self, robot):
         import time as _t
         self._t, self._robot, self._slept = _t, robot, 0.0
+        self._t0 = _t.time()      # frozen base: time() depends on the time slept only, never on the wall clock
 
     def time(self) -> float:
-        return self._t.time() + self._slept
+        return self._t0 + self._slept
 
     def sleep(self, seconds: float) -> None:
         dt = max(0.0, float(seconds))

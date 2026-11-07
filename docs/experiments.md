@@ -2804,3 +2804,24 @@ runs took the first-written one, so the configurations were not paired. Fix: loc
 refusal of parallel runs on one shared cache without it; sequential per replicate stays the default. `aa-check --concurrent` runs two
 passes at the same time on a cold cache and requires identical episodes. See docs/runner.md "Shared cache and parallel configurations".
 Earlier results from parallel cold-cache runs (r8 and r8b gates) are therefore only partly paired; they stay in the record as they are.
+
+## Round 9 (2026-11-08): n=5 gate of `sage_s5` against `sage_ground2` and `sage`, and the aa-check failure
+
+Condition label: **the 3-parameter `asr_off`** (`asr.en.app_wer=0,asr.ko.app_cer=0,asr.p_partial=0`, profile `real`, `asr.p_not_heard` left on), as in
+the rounds before Round 7 step 5 (see "The rounds before Round 7 step 5" above). It is not the 4-parameter definition. Setup: 5 dev tasks
+(hl-dev-000065, 008, 015, 014, 074), EN and KO, 2 replicates, the 8B planner, `--cache-lock`, results in `results/r9/n5_a1`.
+
+**Correction to the run report.** The first `aa-check --concurrent` of this round (`sage_ground2`, EN, the 5 ids) failed with
+`n_differ_untouched=1` (hl-dev-000014#0). The report blamed the `llm_cache` counters. That was wrong: the cause was **H1**. `SimTime.time()` returned
+`time.time() + slept`, so the wall clock entered the health-wait loop of robot_agent (`while time.time() < t_end: sleep(min(0.1, ...))`). The loop
+ran 5 or 6 sleeps of 0.1 s depending on how the wall clock moved between two calls, and two identical runs ended with different `sim_time_s`
+(and a different decision after the wait). The `llm_cache` counters were consistent (`n_touched=0`, same prompts, same answers).
+
+**Fix (H1).** `SimTime` freezes its base once (`self._t0 = time.time()` in `__init__`) and `time()` returns `self._t0 + self._slept`; the health wait
+takes exactly 5 x 0.1 s of simulated time whatever the wall clock does. robot_agent is unchanged. Test: `tests/test_sim_time_frozen_base.py` (an
+episode through the real adapter with a camera fault, run twice with a wall clock that advances by different amounts per call; the episode
+records, `sim_time_s` included, are byte-identical; both tests fail on the old code). Test suite: 482 passed.
+After the fix, `aa-check --concurrent` on a cold shared cache (same planner, ids and `--set`): `ok=true`, 5 of 5 identical, 0 touched.
+
+The r9 episodes in `results/r9/n5_a1` ran before the fix. Their `sim_time_s` and the outcome of episodes with a health wait may differ from a
+rerun; read them with that in mind.

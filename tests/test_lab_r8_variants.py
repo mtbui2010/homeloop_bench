@@ -12,7 +12,7 @@ from homeloop_bench.llm import OllamaHTTP  # noqa: E402
 from homeloop_bench.planners import REGISTRY, planner_class  # noqa: E402
 
 NAMES = ("sage_m9", "sage_mk", "sage_s4", "sage_s5", "sage_s45", "sage_s45m", "sage_m9t", "sage_m9b", "sage_m9k8", "sage_s45m8",
-         "sage_s45mk")
+         "sage_s45mk", "sage_s45m8k")
 
 
 def test_registered_and_the_reference_is_kept():
@@ -47,6 +47,8 @@ def test_the_korean_reader_variants_of_the_9b():
     mk = planner_class("robot_agent:sage_s45mk").run_config()
     assert mk["dialog_model_lang"] == {"ko": "hyperclovax-seed-think-14b"} and mk["understand_model"] == "qwen3.5:9b"
     assert mk["request_coverage"] == 1 and mk["repair_model"] == "qwen3.5:9b"
+    k8 = planner_class("robot_agent:sage_s45m8k").run_config()
+    assert k8["dialog_model_lang"] == mk["dialog_model_lang"] and k8["understand_model_lang"] == {"ko": "qwen3-vl:8b-instruct"}
 
 
 def test_the_step_bundles():
@@ -83,10 +85,10 @@ def test_episodes_of_the_role_variants_under_fake(tmp_path, lang):
         s = run_many(f"robot_agent:{n}", None, None, "ideal", 1, lang, "fake", tmp_path / n, tasks=tasks)
         eps = [json.loads(l) for l in (tmp_path / n / "episodes.jsonl").read_text().splitlines()]
         assert len(eps) == 3 and s["n_episodes"] == 3
-        if n in ("sage_m9", "sage_mk", "sage_s45m", "sage_m9t", "sage_m9b", "sage_m9k8", "sage_s45m8", "sage_s45mk"):
+        if n in ("sage_m9", "sage_mk", "sage_s45m", "sage_m9t", "sage_m9b", "sage_m9k8", "sage_s45m8", "sage_s45mk", "sage_s45m8k"):
             assert all("llm_calls_understand" in e and e["llm_calls_understand"] <= e["llm_calls"] for e in eps)
             assert all("llm_calls_repair" in e for e in eps)
-            assert all(("llm_calls_dialog" in e) == (n in ("sage_mk", "sage_s45mk")) for e in eps)
+            assert all(("llm_calls_dialog" in e) == (n in ("sage_mk", "sage_s45mk", "sage_s45m8k")) for e in eps)
         else:
             assert all("llm_calls_repair" not in e and "llm_calls_dialog" not in e for e in eps)
     base = run_many("robot_agent:sage_ground2", None, None, "ideal", 1, lang, "fake", tmp_path / "base", tasks=tasks)

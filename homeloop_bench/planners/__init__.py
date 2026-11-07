@@ -70,6 +70,7 @@ REGISTRY = {
     "robot_agent:sage_m9k8": ("robot_agent_adapter", "SageM9Ko8Planner", "robot_agent:sage_m9 with understand_model_lang {ko: the planner's 8B}: English read by the 9B, Korean by the 8B (lab round 8b)", True),
     "robot_agent:sage_s45m8": ("robot_agent_adapter", "SageS45m8Planner", "robot_agent:sage_s45m with the Korean request read by the planner's 8B (lab round 8b)", True),
     "robot_agent:sage_s45mk": ("robot_agent_adapter", "SageS45mkPlanner", "robot_agent:sage_s45m + the Korean dialog model HyperCLOVAX-SEED-Think-14B at $HOMELOOP_DIALOG_URL (lab round 8b)", True),
+    "robot_agent:sage_s45m8k": ("robot_agent_adapter", "SageS45m8kPlanner", "robot_agent:sage_s45m8 + the Korean dialog model HyperCLOVAX-SEED-Think-14B at $HOMELOOP_DIALOG_URL (lab round 8b)", True),
     "robot_agent:sage_s4": ("robot_agent_adapter", "SageS4Planner", "robot_agent:sage_ground2 + dialog_unstick + inventory_ask + reask_anchor + request_coverage (step 4)", True),
     "robot_agent:sage_s5": ("robot_agent_adapter", "SageS5Planner", "the sage_r3u bundle (ground2 + exec_integrity: endstate_check, wait_on_robot, reset_container, gate_strict + inventory_ask + dialog_unstick; step 5)", True),
     "robot_agent:sage_s45": ("robot_agent_adapter", "SageS45Planner", "sage_s5 + reask_anchor + request_coverage (steps 4 and 5 together)", True),

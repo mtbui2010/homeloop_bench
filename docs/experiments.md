@@ -2627,3 +2627,68 @@ Not measured (stated limits):
 - The 30B reference was run in round 7 with an older build of the same code; the 8B cache is shared.
 
 Container `homeloop_ollama_gpu0` stopped at the end (store mounted read-only from the NAS copy; the shared `ollama` container untouched).
+
+## Round 8b (2026-11-07): proven-bug fixes, the 9B in Korean, the Korean dialog model, n=5 gate again
+
+Code (all default off in robot_agent; the simulator and harness changes touch no rate or scoring):
+- homeloop_robot: a plan read-back that names the intended candidate is now confirmed only when the whole plan matches (wrong
+  destination, missing atom or an extra Say gets "no, ..."); the EN entries of `catalog.MESSAGES` take every verb the KO ones accept
+  (`go to the kitchen`, `dinner is served`, ... audited for all ten keys); the coverage question is a structured `confirm` with
+  `ask: coverage` and the part as the goal slot (KO heard-text check, answer from the TRUE state); a wrong user reply carries the call
+  event `user_wrong_answer`.
+- homeloop_bench: that event is an injected user error in the episode's `failures` list (`code user_wrong_answer`, `injected`),
+  failure-analysis cause `user_error`; the coverage template is in the sim-user audit (`template_cases`) and goes through the real
+  AssistLoop in EN and KO (`tests/test_coverage_real_loop.py`); variants `sage_m9t`, `sage_m9b`, `sage_m9k8`, `sage_s45m8`, `sage_s45mk`,
+  `sage_s45m8k`; `tools/ollama_shim_vllm.py` (Ollama chat API in front of vLLM).
+- robot_agent (branch sage-v2/homeloop): `request_coverage` drops parts that name what the run covered, asks about the first part that
+  survives with the pack phrase `q_coverage` (no mixed-language text to the translator), fails open on no answer, not understood, or a
+  yes whose part cannot become a goal (never `_finish failed`); `go_steps` turns a `go` goal with an object into a delivery.
+  Cause of the old give-ups (065 KO, 014 EN): the question was asked about a part the run had done, the sim user did not answer it
+  (mixed EN/KO text, `missing[0]` taken blindly) and the option ended the run `failed: no answer to ...` although every goal held.
+
+9B reader in Korean (`understand-eval`, train KO, tasks 0..99, clean and ASR text, 158 headline records; baseline 8B reader exact 73):
+
+| reader | exact | gains / losses vs 8B | confident wrong (8B: 48) |
+|---|---|---|---|
+| sage_m9 (9B, pivot none; same 100 tasks) | 69 | 16 / 20 | 64 |
+| sage_m9t (9B, input_pivot translate) | 67 | 19 / 25 | 40 |
+| sage_m9b (9B, input_pivot both) | 54 | 15 / 34 | 62 |
+| sage_m9k8 (8B reads Korean) | 73 | identical to the 8B by construction | 48 |
+
+No pivot setting brings the 9B up to the 8B in Korean (translate lowers confident wrong but loses exact readings). Decision for the
+gate: Korean is read by the planner's 8B (`understand_model_lang {ko: 8B}`); the 9B reads English and repairs both languages.
+
+HyperCLOVAX-SEED-Think-14B: served by vLLM 0.32.0 (cu129 build, the host driver is 570), fp8 weights from the bf16 cast of the HF
+checkpoint, context 4096, 0.38 of GPU 0 (about 17 GB); the Ollama chat API in front of it by `tools/ollama_shim_vllm.py`
+(`think: false` -> the template's `skip_reasoning`); `HOMELOOP_DIALOG_URL=http://127.0.0.1:11540`. Weights and environments live on the NAS
+(`homeloop_models/staging/hcx_hf`, `vllm_env129`). Korean sentences read natural in a smoke test; in the gate 5 of 62 dialog calls
+fell back (answer over the 128-token guard) and 1 to 3 were rejected by the guard.
+
+n=5 gate again (dev ids 065 008 015 014 074, `--profile real`, asr off, 2 replicates, fresh shared cache, `results/r8b/n5_a2`,
+A/A check ok). Success r1/r2 out of 5; per-task letters in the scratchpad table.
+
+| config | EN success | EN false success | KO success | KO false success |
+|---|---|---|---|---|
+| oracle | 5/5 | 0/0 | 5/5 | 0/0 |
+| sage_ground2 | 2/2 | 1/1 | 1/0 | 1/1 |
+| sage | 2/2 | 1/1 | 1/1 | 1/1 |
+| sage_s4 | 2/2 | 1/1 | 1/1 | 1/1 |
+| sage_s5 | 4/4 | 0/0 | 3/2 | 0/0 |
+| sage_s45 | 4/4 | 0/0 | 3/2 | 0/0 |
+| sage_s45m (9B both languages) | 4/4 | 0/0 | 2/2 | 0/0 |
+| sage_s45m8 (9B EN, 8B KO) | 4/4 | 0/0 | 3/2 | 0/0 |
+| sage_mk (9B + Hyper KO) | 2/2 | 1/1 | 1/1 | 2/2 |
+| sage_s45mk (s45m + Hyper KO) | 4/4 | 0/0 | 2/2 | 1/1 |
+| sage_s45m8k (s45m8 + Hyper KO) | 4/4 | 0/0 | 3/2 | 0/0 |
+
+Against the earlier n=5 gate (`n5_a1`): s45 EN 3/3 -> 4/4, KO 1/2 -> 3/2; s45m EN 3/2 -> 4/4, KO 0/0 -> 2/2. Every episode in which the coverage
+question was asked (16 of them, all on 014) ended `done` with all goals true; the option made no give-up. Hyper changes nothing
+measurable on this slice once the 8B reads Korean (s45m8k equals s45m8 task by task); `sage_mk` and `sage_s45mk` differ from their
+references on 014 KO because they keep the 9B Korean reader and the Hyper-written clarification takes the dialogue another way
+(a longer question; the user answers a place instead of the mug). n=5 cannot rank them.
+
+For the paired analysis: the user-noise draws are keyed by the global call index k. Two variants that reach the same question at a
+different call index get different noise, so a paired difference on 014 / 015 partly shows where the noise landed. Keying the dialog
+noise by question ordinal would remove that; it changes every seeded result, so it is NOT done here (a decision for the next data
+version).
+

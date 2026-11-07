@@ -1156,6 +1156,15 @@ class SageS45mkPlanner(SagePlanner):
                         "assumed": True, "note": SageS45mPlanner.manifest_overlay["note"] + "; dialog guard of 128 tokens (one sentence)"}
 
 
+class SageS45m8kPlanner(SagePlanner):
+    """sage_s45m8 (English read by the 9B, Korean by the planner's 8B) + the Korean dialog model (as sage_s45mk). The Hyper effect
+    without the 9B's Korean reading in the way."""
+    name = "robot_agent:sage_s45m8k"
+    loop_options = dict(SageS45mkPlanner.loop_options)
+    manifest_overlay = {"planner": {**SageS45mkPlanner.manifest_overlay["planner"], "understand_model_lang": M9_KO8_LANG},
+                        "assumed": True, "note": SageS45mkPlanner.manifest_overlay["note"] + "; Korean requests read by the planner's 8B"}
+
+
 class SageGoldPlanner(SagePlanner):
     """DIAGNOSTIC, PRIVILEGED: ``robot_agent:sage`` that does not understand the request. The task's gold goals, converted
     to robot_agent goals (``homeloop_bench.gold_goals``: no source location, the robot searches), are handed to

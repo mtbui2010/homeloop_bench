@@ -2495,3 +2495,135 @@ are gone). Replicate 2 was not rerun (shared GPU, about 30 calls per minute). Th
 - Not run yet, the natural next arm: the 30B as understand reader inside an end-to-end gate (the user asked for a larger model for the
   understanding step: 'dùng model lớn hơn nếu cần thiết'). The offline `understand-eval` of the 30B is in the previous section; it was killed
   there, so an end-to-end arm needs a new reason (for example with the guard) before it spends GPU time.
+
+## Round 7: understanding ceiling and larger model (summary, 2026-11-07)
+
+This section puts the whole round in one place. It adds the ceiling probe (round 7 steps 1 and 2) and the four-parameter `asr_off` rerun
+of the n=5 gate (`results/r7/n5_a2/`). Steps 3 to 5 are described in the three sections above. Baseline in every table:
+`robot_agent:sage_ground2`, planner `qwen3-vl:8b-instruct`, translator `qwen3-vl:30b-a3b-instruct`. Train and dev only; the test split
+was not touched.
+
+### Models tried (already in the model store; nothing was pulled)
+| model | size | used for | result |
+|---|---|---|---|
+| qwen3-vl:8b-instruct | 6.1 GB | baseline planner and reader | reference |
+| qwen3-vl:30b-a3b-instruct | 19 GB | reader (already loaded as the translator, so no extra GPU memory) | better reading, but loops (see below) |
+| qwen3-vl:32b-instruct (dense) | 20 GB | reader, tasks 0..9 only | worse than the 8B; about 30 tok/s; would be a third resident model |
+
+Over the 25 GB limit and not used: llama3.3:70b (42 GB), llama3.2-vision:90b (54 GB), deepseek-coder-v2:236b (132 GB). Present but weaker
+or off-family, not used: qwen3-vl:8b (thinking), qwen2.5:14b, phi4, mistral-nemo, gemma2:9b, llama3.2-vision.
+
+### Ceiling probe (steps 1 and 2; no code change, `understand-eval --model`, first reading only)
+Tasks 0..29 of train and dev, EN and KO, clean and ASR: 188 headline records of 240 (recorded metric, before M1 / M2).
+
+| group | exact 8B / 30B | atom P 8B / 30B | atom R 8B / 30B | dropped | spurious | confident wrong | paired gain / loss (30B vs 8B) |
+|---|---|---|---|---|---|---|---|
+| all | 0.622 / 0.670 | 0.808 / 0.857 | 0.776 / 0.784 | 79 / 76 | 65 / 46 | 35 / 34 | +32 / -23 |
+| EN | 0.691 / 0.734 | 0.867 / 0.918 | 0.818 / 0.824 | 32 / 31 | 22 / 13 | 11 / 11 | +13 / -9 |
+| KO | 0.553 / 0.606 | 0.750 / 0.799 | 0.733 / 0.744 | 47 / 45 | 43 / 33 | 24 / 23 | +19 / -14 |
+| EN clean | 0.766 / 0.766 | 0.859 / 0.938 | 0.898 / 0.852 | 9 / 13 | 13 / 5 | 6 / 4 | +5 / -5 |
+| EN asr | 0.617 / 0.702 | 0.878 / 0.897 | 0.739 / 0.795 | 23 / 18 | 9 / 8 | 5 / 7 | +8 / -4 |
+| KO clean | 0.660 / 0.681 | 0.809 / 0.843 | 0.818 / 0.795 | 16 / 18 | 17 / 13 | 10 / 10 | +8 / -7 |
+| KO asr | 0.447 / 0.532 | 0.687 / 0.753 | 0.648 / 0.693 | 31 / 27 | 26 / 20 | 14 / 13 | +11 / -7 |
+| train | 0.543 / 0.609 | 0.769 / 0.840 | 0.698 / 0.733 | 52 / 46 | 36 / 24 | 21 / 19 | +13 / -7 |
+| dev | 0.698 / 0.729 | 0.841 / 0.872 | 0.850 / 0.833 | 27 / 30 | 29 / 22 | 14 / 15 | +19 / -16 |
+
+32B on tasks 0..9 (64 headline records; small slice, large noise): exact 8B 0.578, 30B 0.656, 32B 0.516; atom P 0.767 / 0.879 / 0.653;
+spurious 27 / 13 / 43; paired 32B vs 8B +7 / -11. 29 of the 32B's 31 losses are prompt adherence (14 readings that ask or refuse with no
+goals, 15 that write procedure steps). 8B on the full tasks 0..149 (cache, reproduces round 6): train exact 0.475, dev 0.595.
+
+Offline analysis of the same records (no LLM call; scripts in scratchpad `homeloop/lab/r7/an/`):
+- Runaway decoding, not understanding, is most of the 30B's loss: 24 of 188 headline first answers were a loop of `go` goals (8B 0, 32B 0);
+  the quoting repair primes the same loop (14 of 24 repairs ran away again). 22 of the 30B's 62 non-exact records are runaways. Server
+  log: runaway rate 8B 0.5 %, 30B 20 %, 32B 13 % of calls; each costs 1 to 5 min of GPU time. This is why the guard of step 3 was built.
+- The 30B is not deterministic at T=0 / seed 0 with 8 parallel slots: 9 of 81 prompts answered twice got different answers.
+- Metric bugs M1 ("orange" read as a colour) and M2 (class id "snack" not an alias) hit every model; fixed in step 3
+  (8B 0.622 -> 0.654, 30B 0.670 -> 0.697 on this window).
+- No model fills the optional `said` field (0 of 2040 valid 8B answers), so the Korean object check F4.5 never ran; this led to
+  `understand_schema_strict`.
+- Where the 8B's 71 headline losses come from: capacity (the 30B reads it exactly when it does not loop) 34 (over-ask / over-refuse 13,
+  procedure steps 10, wrong slot binding 11); prompt or schema, both models wrong the same way 13 (spurious go / close, over-refusal,
+  dropped conditional, correction with the old destination kept, vocabulary); ASR destroyed a content word 14 (a repair question is the
+  right answer there); metric artifact 6; wording or gold doubtful 4. Dropped atoms hardly move with model size (79 -> 76).
+
+### Gates
+Offline gate on the large window (step 4: tasks 0..299 of train and dev, 1936 headline records per variant, M1 / M2 applied; kill rule:
+losses > gains, confident wrong above the 8B, or asked-on-exact above +1.5 pt, on train AND dev):
+
+| variant | exact train | exact dev | confident wrong train / dev | asked-on-exact train / dev | result |
+|---|---|---|---|---|---|
+| 8B baseline | 496 | 573 | 248 / 203 | - | reference |
+| sage_um (30B reads, 8B fallback) | 587 | 611 | 222 / 240 | +1.97 / +1.03 | killed |
+| sage_um_ko (30B for KO only) | 544 | 603 | 238 / 215 | +1.66 / +0.82 | killed |
+| sage_um_verdict | 622 | 649 | 218 / 215 | +1.76 / +0.62 | killed (EN passes both splits) |
+| sage_um_strict | 600 | 627 | 224 / 228 | +2.18 / +1.03 | killed |
+| sage_um_give | 596 | 625 | 230 / 212 | +1.24 / +0.82 | killed |
+| sage_m2 (all three) | 631 | 648 | 225 / 237 | +0.10 / -0.10 | killed (dev confident wrong) |
+
+End-to-end n=5 gate (dev 065, 008, 015, 014, 074; profile `real`; two replicates; 8B reads; rerun with the four-parameter `asr_off`,
+`results/r7/n5_a2/`, aa-check ok; S success, F false success, g give-up, f other failure; per task in the order above):
+
+| config | EN success r1/r2 | EN false success | EN per task r1 / r2 | KO success r1/r2 | KO false success | KO per task r1 / r2 |
+|---|---|---|---|---|---|---|
+| oracle | 5/5 | 0/0 | SSSSS / SSSSS | 5/5 | 0/0 | SSSSS / SSSSS |
+| sage_ground2 | 1/1 | 1/1 | FSggg / FSggg | 1/1 | 1/1 | FSggg / FSggg |
+| sage | 1/1 | 1/1 | FSggg / FSggg | 1/1 | 1/1 | FSggg / FSggg |
+| sage_r3u | 3/3 | 0/0 | SSgSg / SSgSg | 3/3 | 0/0 | SSgSg / SSgSg |
+| sage_g2_verdict | 1/1 | 2/2 | FSFgg / FSFgg | 0/0 | 1/1 | Fgggg / Fgggg |
+| sage_g2_give | 1/1 | 2/2 | FSFgg / FSFgg | 0/0 | 0/0 | fgggg / fgggg |
+| sage_g2_strict | 1/1 | 2/2 | FSFgg / FSFgg | 0/1 | 1/1 | Fgggg / FSggg |
+
+The rerun gives the same outcomes as `n5_a1` in every cell except `sage_g2_strict` KO (n5_a1: 2/1 successes, n5_a2: 0/1). The step 5
+decision stands: none of the three 8B flags is adopted.
+
+### Kept and killed
+- Kept (code, all opt-in, default off, default path byte-identical): `understand_model`, `understand_url`, `understand_model_lang` (data),
+  the runaway guard (`understand_max_tokens`, `understand_max_goals`, fallback to one planner call), the three schema / prompt flags, the
+  bench routing of the understand role, and the metric fixes M1 / M2 (these change the scores of every model equally).
+- Kept as the reader: the 8B.
+- Killed: the 32B (worse on the probe; would break MAX_LOADED_MODELS=2); the 30B as reader in every form tried (`sage_um`, `_ko`,
+  `_verdict`, `_strict`, `_give`, `sage_m2`); the three 8B flags in the end-to-end gate.
+- The step 2 proposal ("30B with fallback, worth it") looked good on 188 records but did not survive the 1936-record window: the 30B adds
+  spurious atoms on dev, so confident wrong rises.
+
+### Caveats
+- All understand numbers are first reading only (no read-back, clarify dialogue, plan or motion).
+- The 30B is not deterministic; a cached 30B reading is one draw; about 15 % of readings differ on a fresh cache.
+- The probe slices are small (188 and 64 records); the 32B verdict rests on 64 records.
+- The n=5 gate is 5 tasks; it cannot separate small effects from noise. Three of its failures are not understanding (014 camera_down,
+  074 partial_open, KO 014 `say_untranslated`; see step 5).
+- Throughput on the shared GPU varied a lot: about 5.6 30B calls per minute in the probe (no token cap, runaways up to 4 min), 35 to 50
+  per minute in step 4 (with the 512-token cap).
+- Not run: the 30B as reader inside an end-to-end gate.
+
+## Round 8 models (2026-11-07)
+
+Understanding evaluation (`understand-eval`, first reading only, `--profile real`, seed 0, tasks 0..299 of train and dev, EN and KO,
+clean and ASR text, 1936 headline records per variant, shared cache, M1 / M2 applied, paired against `robot_agent:sage_ground2`).
+Reader 8B baseline `qwen3-vl:8b-instruct`; Qwen3.5 9B = `qwen3.5:9b` (Q4_K_M, Ollama 0.35.0, think off, guards 512 tokens / 8 goals,
+ASSUMED values, in the manifest overlay). The `sage_m1` row (30B reader) is the round 7 run, not repeated. Kill rule: losses > gains,
+confident wrong above the baseline, or asked-on-exact above +1.5 pt, on train or dev. Scripts and records: scratchpad `homeloop/lab/r8/`.
+
+| variant | exact train (base 496) | exact dev (base 573) | gains/losses train | gains/losses dev | confident wrong train / dev (base 248 / 203) | asked-on-exact pt train / dev | result |
+|---|---|---|---|---|---|---|---|
+| sage_m1 (30B reads, reference) | 587 | 611 | 148 / 57 | 119 / 81 | 222 / 240 | +1.97 / +1.03 | killed (round 7) |
+| sage_m9 (Qwen3.5 9B) | 484 | 485 | 107 / 119 | 82 / 170 | 326 / 333 | +1.14 / +1.13 | killed: exact below the 8B on both splits, losses > gains, confident wrong +31 % / +64 %, spurious atoms 546 / 548 vs 374 / 274 |
+| sage_s4 | 523 | 592 | 27 / 0 | 19 / 0 | 253 / 210 | +0.31 / 0.0 | killed by the rule (confident wrong +5 / +7 of about 250 / 200, inside noise; zero losses) |
+| sage_s45 | 523 | 592 | identical to sage_s4 | identical | identical | identical | killed, same reason (the exec bundle does not change the first reading) |
+| sage_s5 (sage_r3u bundle) | 496 | 573 | 0 / 0 | 0 / 0 | 247 / 203 | 0 / 0 | identical to the baseline here: the exec flags act after the reading, so this test cannot judge it |
+
+Qwen3.5 9B by language: dev EN exact 283 vs 322, dev KO 202 vs 251, train EN 267 vs 279, train KO 217 vs 217. Guard fallbacks 3.5 % (train) and
+2.2 % (dev) of 1200 calls each. 9B throughput about 20 calls per minute at 4 clients on the shared GPU.
+
+Not measured (stated limits):
+- Korean dialog model (HyperCLOVAX-SEED-Think-14B, `sage_mk`): NOT RUN. The GGUF is in the NAS store (`staging/hcx`) but neither Ollama
+  0.35.0 nor 0.40.15 loads it (architecture `hcx-seed-think`); it needs the vendor llama.cpp fork, and cloning and building that fork was
+  refused by the permission system, so no server exists for `$HOMELOOP_DIALOG_URL`. The round-trip comparison against 30B-A3B (translate
+  back, compare slots; judge LLM for naturalness as a side note) was therefore not done. Without a server `sage_mk` falls back to the
+  translator on every sentence and equals `sage_m9`, so it inherits the m9 kill.
+- The 9B as repair model (`repair_model`): understand-eval does not exercise the plan gate's repair prompts; unmeasured (no end-to-end run).
+- sage_s4 / sage_s5 / sage_s45 are decided here only on the first reading; their end-to-end value (ask behaviour, exec integrity) needs
+  the paired end-to-end gate.
+- The 30B reference was run in round 7 with an older build of the same code; the 8B cache is shared.
+
+Container `homeloop_ollama_gpu0` stopped at the end (store mounted read-only from the NAS copy; the shared `ollama` container untouched).

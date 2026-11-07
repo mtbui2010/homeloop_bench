@@ -334,12 +334,14 @@ def _untouched(e: dict) -> bool:
     return not (e.get("llm_cache") or {}).get("misses")
 
 
-def aa_compare(eps_a: list, eps_b: list) -> dict:
+def aa_compare(eps_a: list, eps_b: list, strict: bool = False) -> dict:
     """A/A self-check of two runs of ONE configuration on a shared cache (common random numbers). Episodes are paired by
     (task_id, seed). A run-B episode is *untouched* when all its prompts hit a cache (``llm_cache.misses`` is 0, or
     the field is absent); an untouched episode must equal run A's, apart from the ``llm_cache`` field, because the
     code then saw the same answers. A touched one asked something new (a prompt that changed between the runs) and is
-    only counted. ``ok``: no untouched episode differs and at least one was compared."""
+    only counted. ``ok``: no untouched episode differs and at least one was compared. ``strict`` (two passes run at the same
+    time on a cold cache, lock mode): every episode counts as untouched, because both passes must have read the same first
+    answer to every key, whoever asked the server."""
     key = lambda e: (e["task_id"], int(e["seed"]))                                   # noqa: E731
     a = {key(e): e for e in eps_a}
     strip = lambda e: json.dumps({k: v for k, v in e.items() if k != "llm_cache"}, sort_keys=True)   # noqa: E731
@@ -350,7 +352,7 @@ def aa_compare(eps_a: list, eps_b: list) -> dict:
         if k not in a:
             missing.append(f"{k[0]}#{k[1]}")
             continue
-        if not _untouched(e):
+        if not strict and not _untouched(e):
             touched.append(f"{k[0]}#{k[1]}")
             continue
         n_un += 1

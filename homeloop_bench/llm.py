@@ -22,6 +22,8 @@ import urllib.request
 from pathlib import Path
 from typing import Optional, Protocol, runtime_checkable
 
+from . import shared_cache
+
 DEFAULT_MODEL = "qwen3-vl:8b-instruct"
 SHARED_CACHE_ENV = "HOMELOOP_LLM_SHARED_CACHE"      # dir of a read-through prompt-sha cache shared by paired runs
 
@@ -137,8 +139,11 @@ class CachedLLM:
     configurations whose code sends the same prompt get the same text and a cell that differs between them must come
     from a prompt the variant itself changed. The baseline fills the file first; a variant adds what is new. The run's
     own cache keeps every response it used, so the run stays replayable on its own. The shared file is read again on
-    a miss (another run may have filled it since), under no lock: two runs that miss the same prompt at the same time
-    both call the server, so run the baseline first."""
+    a miss (another run may have filled it since). Without lock mode that is under no lock: two runs that miss the same
+    prompt at the same time both call the server and may get different answers, so run the configurations of a replicate
+    one after the other (the runner refuses otherwise). In lock mode (``HOMELOOP_CACHE_LOCK=1``, ``--cache-lock``) a miss
+    takes a per-key file lock, re-reads the shared file and calls the server only if the key is still absent: the first
+    completed answer wins (write-once) and parallel configurations are paired (see ``shared_cache``)."""
 
     # Process-wide tally of every CachedLLM (planner, translator and the user's intent classifier of the run): the runner
     # reads it before and after an episode and writes the difference to the record (``llm_cache``). "hits": own cache,
@@ -211,16 +216,30 @@ class CachedLLM:
             self.hits += 1
             CachedLLM.tally["hits"] += 1
             return self._mem[k]
+        if self.shared is not None and shared_cache.lock_mode():
+            with shared_cache.key_lock(self.shared, k):          # write-once per key: the first completed answer wins
+                hit = self._from_shared(k, row)
+                return hit if hit is not None else self._miss(k, call, row)
         if self.shared is not None:
-            self._scan_shared()
-            smem = self._smem
-            if k in smem:
-                self.shared_hits += 1
-                CachedLLM.tally["shared"] += 1
-                resp = smem[k]
-                self._mem[k] = resp
-                self._append(self.path, _dumps({"sha": k, "model": self.model, **row, "response": resp}) + "\n")
-                return resp
+            hit = self._from_shared(k, row)
+            if hit is not None:
+                return hit
+        return self._miss(k, call, row)
+
+    def _from_shared(self, k: str, row: dict):
+        """The shared file's answer to ``k`` (copied to the run's own cache), or None."""
+        self._scan_shared()
+        smem = self._smem
+        if k not in smem:
+            return None
+        self.shared_hits += 1
+        CachedLLM.tally["shared"] += 1
+        resp = smem[k]
+        self._mem[k] = resp
+        self._append(self.path, _dumps({"sha": k, "model": self.model, **row, "response": resp}) + "\n")
+        return resp
+
+    def _miss(self, k: str, call, row: dict) -> str:
         self.misses += 1
         CachedLLM.tally["misses"] += 1
         resp = call()

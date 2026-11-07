@@ -2796,3 +2796,11 @@ planner variants `sage_m9`, `sage_mk`, `sage_m9t`, `sage_m9b`, `sage_m9k8`, `sag
 `tools/ollama_shim_vllm.py` with its test (nothing else used the shim: it only served HyperCLOVAX). Kept: `sage_s5`, `sage_ground2`, `sage`,
 and in robot_agent the generic options `repair_model`, `dialog_model`, `understand_model` (default off). The sections above stay as the record;
 the variant names in them no longer run. `sage_v1`..`sage_vs` (round 8c, killed) stay registered as the record of that round.
+
+## Shared-cache race fixed (after round 8)
+
+In the n=5 gate (`results/r8/n5_a2`) configurations ran in parallel on a cold shared cache: 11 keys had more than one response and later
+runs took the first-written one, so the configurations were not paired. Fix: lock mode (write-once per key, `--cache-lock`) and a
+refusal of parallel runs on one shared cache without it; sequential per replicate stays the default. `aa-check --concurrent` runs two
+passes at the same time on a cold cache and requires identical episodes. See docs/runner.md "Shared cache and parallel configurations".
+Earlier results from parallel cold-cache runs (r8 and r8b gates) are therefore only partly paired; they stay in the record as they are.

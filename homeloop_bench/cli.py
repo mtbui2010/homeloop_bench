@@ -32,31 +32,77 @@ def _budgets(a):
                    max_llm_calls=a.max_llm_calls or d.max_llm_calls)
 
 
-def _set_shared_cache(a) -> None:
-    """--shared-cache DIR [--replicate NAME] -> the environment variable the cached LLMs read (spawned workers inherit it)."""
+def _set_shared_cache(a, register: bool = True) -> None:
+    """--shared-cache DIR [--replicate NAME] [--cache-lock] -> the environment variables the cached LLMs read (spawned workers
+    inherit them), and the run is registered on the cache directory: it is refused (SharedCacheError) next to another live run
+    unless every run on the directory is in lock mode. The fake LLM has no cache: nothing to register."""
     if getattr(a, "shared_cache", None):
+        from . import shared_cache as sc
         from .llm import SHARED_CACHE_ENV
         d = Path(a.shared_cache) / a.replicate if getattr(a, "replicate", None) else Path(a.shared_cache)
+        lock = bool(getattr(a, "cache_lock", False)) or bool(getattr(a, "concurrent", False))
         os.environ[SHARED_CACHE_ENV] = str(d.resolve())
+        if lock:
+            os.environ[sc.LOCK_ENV] = "1"
+        else:
+            os.environ.pop(sc.LOCK_ENV, None)
+        if register and a.llm not in (None, "", "fake"):
+            sc.register_run(d.resolve(), lock, label=f"{getattr(a, 'planner', '')} -> {getattr(a, 'out', '')}")
+
+
+def _aa_pass(job) -> tuple:
+    """One pass of a concurrent aa-check, in its own process (spawned: module state and the call tally are per process)."""
+    from .runner import InfraError, PlannerConfigError, run_many
+    kw, out = job
+    try:
+        run_many(out_dir=out, **kw)
+    except PlannerConfigError as e:
+        return ("config", str(e))
+    except InfraError as e:
+        return ("infra", str(e))
+    return ("ok", "")
 
 
 def cmd_aa_check(a) -> int:
     """Run one configuration twice on the same shared cache and compare (docs/runner.md "Common random numbers")."""
-    from .runner import InfraError, PlannerConfigError, aa_compare, run_many
+    from .runner import InfraError, PlannerConfigError, aa_compare
+    from .shared_cache import SharedCacheError
     if not getattr(a, "shared_cache", None) and not (a.llm is None or a.llm == "fake"):
         print("aa-check with a URL needs --shared-cache DIR (the second run must find the first run's answers)",
               file=sys.stderr)
         return 2
     prof = f"{a.profile}+{a.set}" if getattr(a, "set", None) else a.profile
     outs = []
+    concurrent = bool(getattr(a, "concurrent", False))
+    if concurrent and not getattr(a, "shared_cache", None):
+        print("aa-check --concurrent needs --shared-cache DIR (a cold directory: both passes fill it at once)", file=sys.stderr)
+        return 2
     try:
         _set_shared_cache(a)
-        for i in (1, 2):
-            out = Path(a.out) / f"aa_{i}"
-            run_many(a.planner, a.split, a.limit, prof, a.seeds, a.lang, a.llm, out, model=a.model, workers=a.workers,
-                     tasks_file=a.tasks, budgets=_budgets(a), progress=True,
-                     allow_stale=getattr(a, "allow_stale", False))
-            outs.append(out)
+        kw = dict(planner_name=a.planner, split=a.split, limit=a.limit, profile=prof, seeds=a.seeds, lang=a.lang,
+                  llm_spec=a.llm, model=a.model, workers=a.workers, tasks_file=a.tasks, budgets=_budgets(a),
+                  progress=False, allow_stale=getattr(a, "allow_stale", False))
+        outs = [Path(a.out) / f"aa_{i}" for i in (1, 2)]
+        if concurrent:
+            # both passes at once on the same (cold) shared cache, lock mode on: the first answer to a key wins for both
+            import concurrent.futures as cf
+            import multiprocessing as mp
+            with cf.ProcessPoolExecutor(max_workers=2, mp_context=mp.get_context("spawn")) as ex:
+                results = list(ex.map(_aa_pass, [(kw, o) for o in outs]))
+            for kind, msg in results:
+                if kind == "config":
+                    print(msg, file=sys.stderr)
+                    return 2
+                if kind == "infra":
+                    print(f"aa-check aborted: {msg}", file=sys.stderr)
+                    return 3
+        else:
+            from .runner import run_many
+            for out in outs:
+                run_many(out_dir=out, **{**kw, "progress": True})
+    except SharedCacheError as e:
+        print(f"refused: {e}", file=sys.stderr)
+        return 2
     except PlannerConfigError as e:
         print(str(e), file=sys.stderr)
         return 2
@@ -64,7 +110,7 @@ def cmd_aa_check(a) -> int:
         print(f"aa-check aborted: {e}", file=sys.stderr)
         return 3
     from .runner import read_episodes
-    res = aa_compare(read_episodes(outs[0]), read_episodes(outs[1]))
+    res = aa_compare(read_episodes(outs[0]), read_episodes(outs[1]), strict=concurrent)
     (Path(a.out) / "aa_check.json").write_text(json.dumps(res, sort_keys=True, indent=1) + "\n", encoding="utf-8")
     print(json.dumps({k: res[k] for k in ("n_episodes", "n_untouched", "n_touched", "n_identical_untouched",
                                            "n_differ_untouched", "ok")}, sort_keys=True))
@@ -77,6 +123,7 @@ def cmd_aa_check(a) -> int:
 def cmd_run(a) -> int:
     from .planners import REGISTRY, is_spec
     from .runner import InfraError, PlannerConfigError, run_many
+    from .shared_cache import SharedCacheError
     if a.planner not in REGISTRY and not is_spec(a.planner):
         print(f"unknown planner {a.planner!r}; see `homeloop-bench planners` (or give package.module:ClassName)",
               file=sys.stderr)
@@ -95,6 +142,9 @@ def cmd_run(a) -> int:
         s = run_many(a.planner, a.split, a.limit, prof, a.seeds, a.lang, a.llm, a.out, model=a.model,
                      workers=a.workers, tasks_file=a.tasks, budgets=_budgets(a), progress=True, shard=shard,
                      allow_stale=getattr(a, "allow_stale", False))
+    except SharedCacheError as e:
+        print(f"refused: {e}", file=sys.stderr)
+        return 2
     except PlannerConfigError as e:
         print(str(e), file=sys.stderr)
         return 2
@@ -350,7 +400,12 @@ def build_parser() -> argparse.ArgumentParser:
                         "then `merge OUT`")
     r.add_argument("--shared-cache", default=None, metavar="DIR",
                    help="a prompt-sha response cache shared by paired runs (common random numbers): read through, "
-                        "written through, one <model>.jsonl per model; run the baseline first")
+                        "written through, one <model>.jsonl per model; run the baseline first. Configurations of one cache "
+                        "run one after the other unless every run has --cache-lock (the run is refused otherwise)")
+    r.add_argument("--cache-lock", action="store_true",
+                   help="with --shared-cache: lock mode, write-once per key (the first completed answer wins, a run that "
+                        "misses the same key waits and re-reads), so configurations may run in parallel on a cold cache; "
+                        "every run on the directory must have it")
     r.add_argument("--max-calls", type=int, default=None)
     r.add_argument("--max-sim-time-s", type=float, default=None)
     r.add_argument("--max-llm-calls", type=int, default=None)
@@ -362,6 +417,9 @@ def build_parser() -> argparse.ArgumentParser:
                    help="A/A self-check: run the same configuration twice on one shared cache (OUT/aa_1, OUT/aa_2) "
                         "and require identical episodes wherever every prompt hit the cache; needs --shared-cache"
                    ).set_defaults(fn=cmd_aa_check)
+    sub.choices["aa-check"].add_argument("--concurrent", action="store_true",
+                                         help="run the two passes AT THE SAME TIME on a cold shared cache (lock mode on) and "
+                                              "require identical episodes for every task")
 
     c = sub.add_parser("compare", help="paired McNemar test of two run directories")
     c.add_argument("dir_a")
@@ -463,6 +521,9 @@ def main(argv=None) -> int:
     except StaleTasksError as e:
         print(str(e), file=sys.stderr)
         return 2
+    finally:
+        from .shared_cache import release_runs
+        release_runs()                      # the run no longer holds its place on the shared cache
 
 
 if __name__ == "__main__":

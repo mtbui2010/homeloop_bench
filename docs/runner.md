@@ -135,3 +135,22 @@ dialog_paths dialog_not_in_lang final_say_not_in_lang final_say_raw_ids dialog_r
 `final_say_raw_ids` check the last message for the user's language and for raw world ids; `dialog_raw_ids` and
 `dialog_raw_id_utterances` check everything the robot said (questions, Say / Announce texts, the last message) for
 raw world ids ([metrics](metrics.md)).
+
+## Shared cache and parallel configurations
+
+`--shared-cache DIR [--replicate NAME]` gives paired configurations the same answer to an identical prompt (common random numbers).
+On a cold cache, two configurations that run at the same time can miss the same prompt together; both call the server, the answers
+differ, and later runs take the first-written one, so the configurations are not paired (seen in the n=5 gate of round 8: 11 keys
+with more than one response). Two ways to avoid it:
+
+- **Sequential per replicate (the default, the safe one).** One configuration at a time on a replicate's cache directory, the
+  baseline first. The runner enforces it: every run registers on the cache directory (`DIR/.runs/`, an `flock` held while the run
+  lives), and a run that finds another live run there is refused with exit 2 unless lock mode is on in every run.
+- **Lock mode (`--cache-lock`, or `HOMELOOP_CACHE_LOCK=1`).** Write-once per key. A miss takes an exclusive file lock on the key's
+  bucket (`DIR/<model>.jsonl.locks/`), re-reads the shared file and calls the server only if the key is still absent; the first
+  completed answer wins and everyone else waits for it. Needed in every run of the directory. The wait is as long as the server
+  call of the other run.
+
+`aa-check --concurrent` is the test of it: the same configuration twice at the same time on a cold cache (lock mode), and every
+episode of the second pass must equal the first's (`llm_cache` aside), not only the ones that hit the cache. Code: `shared_cache.py`,
+tests: `tests/test_cache_lock.py`.

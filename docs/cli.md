@@ -14,7 +14,8 @@
 | `compare DIR_A DIR_B [--json]` | paired McNemar test on episodes with the same (task, seed) |
 | `report DIR` | re-render DIR/report.md from the run's files |
 | `run ... --shared-cache ROOT --replicate NAME` | the shared cache is ROOT/NAME: one per replicate, common to all configurations of it. Episodes carry `llm_cache` (`hits`, `shared`, `misses`, `touched`) |
-| `aa-check` (the arguments of `run`) | A/A self-check: the same configuration twice on one shared cache; episodes whose prompts all hit must be identical (OUT/aa_check.json; exit 1 on a difference) |
+| `run ... --shared-cache DIR [--cache-lock]` | Parallel configurations on one shared cache: the default is sequential per replicate (one run at a time on `DIR[/NAME]`, the baseline first); a run that finds another live run on the same cache directory is REFUSED (exit 2) unless every run has `--cache-lock` (write-once per key: the first completed answer wins, a run that misses the same key waits and re-reads; [runner](runner.md#shared-cache-and-parallel-configurations)) |
+| `aa-check` (the arguments of `run`) [`--concurrent`] | A/A self-check: the same configuration twice on one shared cache; episodes whose prompts all hit must be identical (OUT/aa_check.json; exit 1 on a difference). `--concurrent` runs both passes at the same time on a cold cache, in lock mode, and requires identical episodes for every task |
 | `tasks-file --split dev\|train [--ids 14,15] [--limit N] --out FILE` | write the current packaged records for `run --tasks` (the test split is refused) |
 | `show TASK_ID [--tasks FILE]` | print one task record |
 | `calibrate-knowno --split train --limit N --llm URL [--model M]` | conformal threshold for knowno_like -> planners/knowno_calib.json |

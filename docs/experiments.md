@@ -2909,3 +2909,31 @@ Killed (removed): the 9B and HyperCLOVAX variants, the 30B reader, verdict / giv
 **Caveats:** n=5 on dev ids used for tuning; run-to-run noise is about 3 tasks per 50, so n=5 cannot rank close variants and the size of
 the s5 gain is not established; user-noise draws are keyed by call index, so on 015 / 074 a paired difference partly shows where the noise
 landed; the r8 / r8b gates ran in parallel on a cold cache before the lock and are only partly paired.
+
+## Round 12: `dialog_agree` (variant `robot_agent:sage_s6`), implemented, gate not run
+
+**Failure class.** In the r11 runs (n10_a2, n50_a1) 21 `sage_s5` episodes ended with "the user did not confirm the task" after a refused
+reading came back (14 of 100 at n=50). Cause, from an offline replay of the recorded dialogues (no LLM): `adds_entity` blocks the restated
+read-back (the simulated user repeats the request with the same words); the answer to the which-part question is never compared with the
+reading ("In the fridge, please." names a part the reading already has); a "not sure" to a read-back is treated as a refusal with content;
+refusals are never undone by the person's later words.
+
+**Option.** `dialog_agree` in robot_agent (default off). Where the run would stop, the person's answers since the first read-back are judged
+part by part against the reading (conflict / agree / neutral). The reading counts as confirmed when the which-part answer agrees (T2), no
+utterance conflicts unless superseded (C2), every refusal was a bare no, a not-sure or superseded conflicting words (C3), and every coverage
+doubt is settled (C4). It is said as a statement and the run goes to planning. Supporting rule S1: a two-destination question declares its
+place options; an answer naming one settles the other. Every word comes from data the robot already has; no new number.
+
+**Variant.** `robot_agent:sage_s6` = `sage_s5` + `dialog_agree: 1`, same manifest overlay. Nothing else changes.
+
+**Checked offline (CPU, cache only).** Decisions of the real code on the cached r11 dialogues match the evaluator in the cases replayed
+(001 EN and 021 EN fire at the refused-again point; 015 EN does not: the robot's own doubt is open; 008 KO diverges earlier because S1
+removes the "you mentioned the armchair" question). With the option off, the traced decisions of 001 EN, 021 EN, 008 KO and 015 EN are
+identical to the `sage_s5` replay. After a fire the cache misses (the planner prompt changes), so these are converged dialogues, not
+measured successes. The offline evaluator found 13 fires on right readings and 0 on wrong ones among the 21 give-ups; the simulated user's
+true "No" always carries a correction, so a bare true "No" cannot be measured here (unit test only).
+
+**Not done / open.** The gate (n=10, then n=50, s6 vs s5 paired, EN and KO, two replicates, `asr_off`) needs the GPU and the LLM server and
+was not run. Keep only if: successes of s6 >= s5 on both replicates and at least 5 of 14 fewer give-ups at n=50; false success s6 <= s5 + 1
+per language and none through an `agreed` confirmation; 0 `agreed` fires on a reading the sim answered `no`; questions per episode not
+higher. s6 episodes are not comparable to s5 on tasks with a refused-again reading and on self-repair requests.

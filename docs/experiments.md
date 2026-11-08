@@ -2909,3 +2909,420 @@ Killed (removed): the 9B and HyperCLOVAX variants, the 30B reader, verdict / giv
 **Caveats:** n=5 on dev ids used for tuning; run-to-run noise is about 3 tasks per 50, so n=5 cannot rank close variants and the size of
 the s5 gain is not established; user-noise draws are keyed by call index, so on 015 / 074 a paired difference partly shows where the noise
 landed; the r8 / r8b gates ran in parallel on a cold cache before the lock and are only partly paired.
+
+## Round 10: Korean slot fix and gates (2026-11-08)
+
+User decisions kept from round 9: the 8B reads EN and KO, the 30B stays the Korean translator, and the dropped variants stay dropped.
+Compared: `robot_agent:sage` vs `robot_agent:sage_ground2` vs `robot_agent:sage_s5`, with `oracle` as the reference. Nothing was pushed
+or merged.
+
+### The fix (robot_agent worktree `hl_wt/sagev2/robot_agent`, branch sage-v2/homeloop, commit cfe1316)
+
+The round 9 bug: a bare object name ("mug") was sent alone to the 30B translator and came back as an unrelated phrase ("미안해요",
+"sorry"), so the Korean read-back and questions were wrong (014 KO). A bare name went to the translator in two places, and both are
+fixed: `LanguageAdapter.local_slot` (called by `speech.render` for the `{object}` slot of a Korean question or read-back) and
+`AssistLoop._local_names` (the bare names behind the F4.8 object check).
+
+A name in the user's language is now found in this order:
+1. a declared name: the robot pack's i18n `names` (`{lang: {english: local}}`), or an ENV entry (its head or an English alias) with an alias
+   in that language. No model call.
+2. otherwise one constrained translation call. The prompt asks for the noun in the frame "Please bring the <name>.", and the result must
+   pass `plausible_name`: the existing script check (`speech.guard`), no sentence punctuation, a length tied to the English name, and not a
+   stock phrase of the pack. The stock phrases are the pack's own i18n phrases for that language plus the language pack's
+   `answer_unsure`, with slots cut out. A candidate that shares a word, or its first syllables, with one of them is rejected. There is no
+   hand-written word list in code.
+3. otherwise the English name stays inside the Korean sentence.
+
+Names and refusals are cached per run (`names_cache`, cleared by `reset()`). `_local_names` takes declared names first, calls the model
+only for the rest, and drops a name the guard rejects, so the object check fails open. `speech.render` passes the slot name to the slot
+callback and falls back to the one-argument call for older callbacks. EN is unchanged. A made-up language `zz` with no data does nothing
+and makes no model call. Non-object slots (`text`, `what`, `why`, `summary`, `first`, `rest`) keep the old free-text translation.
+
+Check through the real loop: with a scripted translator that answers a bare word with "미안해요", the Korean question was
+"미안해요은 어디에 둘까요?" before the fix and is "mug은 어디에 둘까요?" after it. Tests: `tests/test_sage_lab_r10_names.py`, 8 passed
+(stock-phrase guard, declared names, per-run cache, made-up language, EN, object-check names, the real-loop case). homeloop_bench suite
+(with homeloop_robot, the sagev2 robot_agent and embodiplan on `PYTHONPATH`): 482 passed. The robot_agent suite was green on a full run
+after the code change; its count after the new test file was not recorded (a log in the notes shows 935 passed; which suite it is was not
+written down).
+
+In the gate runs the 30B cache holds no bare-name prompt. Names went through the batched name prompt or declared data, and "미안" does
+not appear in any r10 Korean episode (r9 `n5_a2`: once per sage KO replicate).
+
+Left open in the fix: the guard can only reject an unrelated stock phrase when the robot pack declares phrases for that language (with
+none, only script, punctuation and length are checked); the object memory is not a source of declared names; the homeloop_robot pack does
+not yet declare `i18n.phrases.names` for its objects, which is the cheapest way to remove the remaining translator calls for KO.
+
+### Simulator fix during the round (homeloop_robot dad08a4)
+
+The first n=10 run (`results/r10/n10_a1`) showed find / pick of "orange pill bottle" returning `absent` with no event (a name miss) on
+089. An audit of the r8-r10 episodes found 16 name-miss absents, all this one name. Fix: "pill bottle" is declared as an alias of
+`medicine_bottle` (BEHAVIOR-1K synset `pill_bottle.n.01`, listed in docs/realism.md); "pill box" still hits only `pill_box`; test in
+`test_find_description`. The n=10 gate was rerun on a fresh cache (`results/r10/n10_a2`), and `n10_a1` is superseded. Between the two runs,
+089 KO changed path for ground2 / s5 (still give-up), and 008 KO rep2 went from give-up to success in all three sage configs. The 008 change
+is LLM noise on a fresh cache, not the fix: in `n10_a1` the 8B asked about the self-correction "armchair, no, TV stand" and the read-back
+was refused 5 times.
+
+### Setup (all gates)
+
+Dev ids, profile `real`, seed 0, the 4-parameter `asr_off` (`asr.en.app_wer=0, asr.ko.app_cer=0, asr.p_partial=0, asr.p_not_heard=0`),
+planner `qwen3-vl:8b-instruct` on GPU 0, Korean speech through the 30B translator, one shared cache per replicate with `--cache-lock`,
+8 clients, 2 replicates. `aa-check --concurrent` was ok each time (`n5_a1` 5 of 5 identical, `n10_a1` and `n10_a2` 10 of 10, 0 touched).
+All runs EXIT=0 and `n_error` 0. Our Ollama container was stopped at the end; the shared one was not touched. Letters per task: S success,
+F false success, g give-up. Tables were recomputed from `episodes.jsonl` (the notes' `table.txt` for `n10_a2` divides the means by 10
+instead of 20, so the calls and sim columns there are doubled; the counts are right).
+
+### n=5 gate (`results/r10/n5_a1`; tasks 065 008 015 014 074)
+
+| config | EN S / F / g | KO S / F / g | EN r1 / r2 | KO r1 / r2 | LLM calls EN / KO | sim s EN / KO |
+|---|---|---|---|---|---|---|
+| oracle | 10 / 0 / 0 | 10 / 0 / 0 | SSSSS / SSSSS | SSSSS / SSSSS | 0 / 0 | 124 / 124 |
+| sage | 3 / 2 / 5 | 2 / 2 / 6 | FSSgg / FSggg | FSggg / FSggg | 7.3 / 15.2 | 139 / 140 |
+| sage_ground2 | 3 / 2 / 5 | 2 / 2 / 6 | FSSgg / FSggg | FSggg / FSggg | 8.2 / 14.1 | 156 / 151 |
+| sage_s5 | 7 / 0 / 3 | 6 / 0 / 4 | SSSSg / SSgSg | SSgSg / SSgSg | 7.5 / 13.4 | 195 / 189 |
+
+The call sequences of all 40 paired episodes were compared with `sage`. Every sequence that differs, differs at the step where a flag
+fired, and every episode with no flag is identical call for call.
+
+- **065** (F -> S, s5 only, EN and KO, both reps). Step 5, `endstate_check`. sage docks (k26), goes back to the sink to re-find the blue mug
+  (k28-29), re-docks, and that dock draws an injected transient `hw_fault` (k31). sage says "Task completed" while `docked()` is false.
+  `endstate_check` sees the unmet dock goal and docks again (k32-33, ok). Genuine baseline weakness.
+- **014** (g -> S in s5; g in ground2; EN and KO, both reps). Clarify task with two mugs. sage never asks which one, searches at the user and
+  in the fridge, and stops at an injected `camera_down`. Step 4 (`name_canon` in ground2, `inventory_ask` in s5) asks "black or white mug?"
+  and reads back the right plan, now correct in Korean too. ground2 then meets an injected `grasp_failed` and `camera_down` and gives up.
+  s5's step 5 `wait_on_robot` waits 2 + 4 + 8 s, the camera comes back, and after one more injected absent the run succeeds. The dialogue
+  win is step 4, and the outcome win is step 5. `kind_anchor` and `gate_strict` fired with no effect. sage KO 014 now never reads back
+  (0 questions; 9 in r9); the cause is not checked.
+- **074** (g everywhere). The fridge half-opens (`partial_open`, a state event, not injected), so `put_in` is blocked. sage retries twice and
+  gives up. s5's `reset_container` puts the plate down, closes and reopens the fridge and picks the plate again. The next `put_in` (k29)
+  draws an injected `hw_fault_persistent`, and `wait_on_robot` correctly gives up. Genuine (injected fault).
+- **015** (g in all configs; EN rep1 S). sage does not take the message or the destination from "bring it here" and asks again. An
+  injected wrong "No." to a correct read-back (k2) starts a repair loop that never ends; in KO two injected no-answers end the run. In EN
+  rep1 the 8B's first plan took another path and the wrong answer was never drawn. Same in all configs. The replicate gap is 8B noise on
+  a cache miss: 16 of the 73 prompts the two caches share were answered differently at T=0 (8 concurrent clients); within a replicate the
+  configs read one locked cache, so the pairing holds.
+- **008**: S everywhere.
+
+Decision at n=5: **PASS**. No harness or simulator bug, no variant worse than sage on any task, language or replicate, and every
+difference explained by one flag.
+
+### n=10 gate (`results/r10/n10_a2`; adds tasks 027 062 021 089 001)
+
+| config | EN S / F / g | KO S / F / g | EN r1 / r2 | KO r1 / r2 | LLM calls EN / KO | sim s EN / KO |
+|---|---|---|---|---|---|---|
+| oracle | 20 / 0 / 0 | 20 / 0 / 0 | SSSSSSSSSS / SSSSSSSSSS | SSSSSSSSSS / SSSSSSSSSS | 0 / 0 | 112 / 112 |
+| sage | 3 / 6 / 11 | 6 / 7 / 7 | FSSggFFggg / FSgggFFggg | FSgggFFFSS / FSgggFFgSS | 6.8 / 13.1 | 141 / 155 |
+| sage_ground2 | 9 / 2 / 9 | 9 / 3 / 8 | FSSggSSSgg / FSgggSSSgg | FSgggSSFgS / FSgggSSSgS | 6.8 / 12.6 | 166 / 157 |
+| sage_s5 | 13 / 0 / 7 | 13 / 1 / 6 | SSSSgSSSgg / SSgSgSSSgg | SSgSgSSFgS / SSgSgSSSgS | 6.4 / 12.2 | 185 / 170 |
+
+Task order 065 008 015 014 074 027 062 021 089 001. The first five tasks give the same letters as `n5_a1` (074 KO has other call counts,
+same outcome; separate caches).
+
+- **027** and **062** (sage F; ground2 / s5 S; EN and KO, both reps). Step 4, `name_canon` / `inventory_ask`. Two books (027) and two mugs
+  (062). sage does not ask, picks the first book / mug it finds (the wrong one) and says done: a false success. The step-4 flag asks
+  "blue or red?", the user answers, and the right object is placed. Genuine baseline weakness (no question on an ambiguous object). The
+  Korean read-back drops the object particle ("파란 머그컵 협탁에 놓을게요"); the user still accepts it.
+- **021** EN (sage g; ground2 / s5 S, both reps). Step 4 again: two glasses. sage goes for the white glass (wrong), draws three injected
+  pick failures, asks for help, hears "I'm not sure what you mean" and gives up. Without the faults it would have delivered the wrong
+  glass. ground2 / s5 ask, take the green glass and succeed. In s5, `endstate_check` and `gate_strict` fired with no change.
+- **021** KO rep1 (F in all three). The 8B reading dropped the glass goal, no flag fired, and the robot did the keys and the dock and
+  said done. Genuine 8B reading miss, the same in every config. This is s5's only false success. KO rep2: as in EN (sage g after injected
+  pick failures; ground2 / s5 ask and succeed). In that sage episode the help question came out as the stock "죄송해요, 잘 이해하지
+  못했어요. 다른 말로 다시 말씀해 주시겠어요?" and the last message as "죄송해요, 지금은 그 말씀을 드리기 어려워요." (see the open
+  KO problem below).
+- **089** EN (g in all three, both reps). The 8B misreads the request (go to the shelf and *say* "I found ..."), and it takes 4 or 5
+  questions to get the right read-back. The medicine bottle goes on the shelf. The red mug is on the coffee table, and the find there draws
+  an injected detection miss (`miss`). The robot never looks there again, the user does not know where the mug is, and the run gives up.
+  Genuine: one missed detection marks a place as searched.
+- **089** KO (sage S; ground2 / s5 g; both reps): **a variant is worse than the baseline here.** ground2 / s5 ask "which mug?" (step 4),
+  so their call indices shift. Their find of "red mug" at the coffee table draws the injected miss, and they never come back. sage's miss
+  lands on the shelf, and sage later finds the mug on the coffee table. Both paths also hit a **simulator bug** (below): the Korean
+  "where is it?" question is answered "빨간 거요" ("the red one"). So this difference is noise placement keyed by call index, plus the
+  same no-re-look weakness, plus the simulator bug. It is not a defect of the step-4 question.
+- **001** EN (g in all three, both reps). The read-back states the wrong order (put in, then open). An injected wrong "No." follows, and
+  the repair dialogue stops after 3 questions ("could not confirm"). KO: no read-back, S. Same in all configs. Genuine dialogue fragility
+  under the intended user noise.
+
+s5 vs ground2 on the five new tasks: identical outcomes. ground2 vs sage on them: EN +6, KO +4 (027, 062, 021), and KO -2 on 089.
+
+Problems found at n=10 (not fixed in this round):
+- **Simulator bug (homeloop_robot, simulated user).** The user model reads the pack's own Korean where-question `q_where_is`
+  ("{object}, 못 찾았어요. 어디에 있는지 아세요?") as a which-object question (rule `clarify_answer`, path `structured_mismatch`), so it answers
+  "빨간 거요" even when asked about an unambiguous object. Replay with `make_episode` on 089: "주황색 약병, 못 찾았어요. 어디에 있는지
+  아세요?" -> "빨간 거요."; 062 with "파란 머그잔, ..." -> "파란 거요."; a plain "빨간 머그잔은 어디에 있어요?" -> "거실 탁자 위에 있어요."
+  (structured, `where_is`); EN "Where is it?" is read as `where_is`. In `n10_a2` all 6 Korean where-questions (089, all three sage configs,
+  both reps) got this answer.
+- **Robot-side, Korean (open, not from cfe1316).** Long KO episodes use the whole translate budget (manifest `translate_budget: 8`; the
+  episodes record `llm_calls_translate` = 8 on 014 and 089). Much of it goes on progress messages ("green glass 집기를 진행합니다" ->
+  "그린글라스 집기를 진행하겠습니다."). After that, a name stays in English inside the Korean sentence ("red mug, 못 찾았어요. 어디에 있는지
+  아세요?", the fail-open path 3 of the fix), a free question becomes the stock "say it in other words", and a final message becomes
+  `say_untranslated`. The link to the budget is inferred from the counter and from the missing prompts in the 30B cache, not traced call
+  by call. Name wording also stays weak: "glass" -> "유리" (the material, not a drinking glass).
+
+Decision at n=10: **not passed** by the round's rule (every failure explained and no open bug). Every difference has an explanation, but
+the simulator bug is open, and on 089 KO two variants are worse than sage. **n=50: not run** (no results on disk; the milestone order is
+5 -> 10 -> 50, each passing).
+
+### Holdout and ASR
+
+**Holdout: not run** (no fresh slice; the test split was not touched). **ASR-on drop: not measured**; every number here has the
+4-parameter `asr_off`.
+
+### Kept / killed
+
+- Kept: cfe1316 (no bare name sent alone to the translator; the apology is gone from the Korean episodes); homeloop_robot dad08a4 (pill
+  bottle alias); `sage_s5` as the candidate (n=10: EN 13 vs 9 vs 3 of 20, KO 13 vs 9 vs 6; false success EN 0 vs 2 vs 6, KO 1 vs 3 vs 7;
+  every gain over ground2 is 065 and 014, from step 5); `sage_ground2` and `sage` as baselines. At n=10 step 4 matters on three more tasks.
+- Killed: nothing new in this round (the round 8 removals stand).
+
+### Caveats
+
+- All tasks are dev ids used for tuning, so the numbers are optimistic. The test split was not touched.
+- Run-to-run noise is about 3 tasks per 50. n=5 and n=10 cannot size the effects. Replicates and languages are correlated (same task,
+  same cache within a replicate), so the s5 gain over ground2 is 2 task-level wins (065, 014), not 8.
+- User and fault noise is keyed by call index, so a flag that adds a question moves where the noise lands (089 KO).
+- The 8B is not deterministic on a cache miss (16 of 73 shared prompts differed between replicates in `n5_a1`). Configs within a
+  replicate are paired; replicates are not.
+- s5 costs more simulated time per episode (recovery waits): over ground2 +39 / +38 s (EN / KO) at n=5 and +19 / +13 s at n=10.
+- Not checked: the root cause of the missing read-back on sage KO 014; whether the constrained name prompt ("Please bring the <name>")
+  ever ran in the gates (no such prompt is in the caches); the Korean naturalness of names beyond the examples above.
+- Notes and scripts: scratchpad `homeloop/lab/r10` (`n10/` holds the `n10_a1` setup; `gate/` holds the replay scripts used above).
+
+## Round 11: Korean where-question in the simulated user, 089 KO diagnosis, translate budget (2026-11-08)
+
+No GPU was used; offline replays of cached episodes only (`results/r10/n10_a2`, cache copies in scratchpad `homeloop/lab/r11`). Nothing pushed.
+
+### Simulated user fix (homeloop_robot, commit 78f807f)
+The pack's Korean question `q_where_is` ("{object}, 못 찾았어요. 어디에 있는지 아세요?") was read as the which-object / which-place
+clarification when the task has candidates (an ambiguity task) or a scripted answer: `intent.NOT_FOUND` for Korean knew "찾을 수 없" and
+"찾지 못" but not "못 찾", so `read_free` did not return `where_is`, `dialog.compose` took its clarify branch (any wh-question with
+candidates), and the heard-text check turned the structured `where_is` into `structured_mismatch`. The English form ("I couldn't find the X.
+Where is it?") was read right. Fix: the Korean not-found pattern also matches "못 찾" (same place as the English one, no new list). Test
+`test_ko_not_found_where_is_with_an_ambiguous_object` (4 phrasings, with and without the structured meaning) fails on the old code.
+This is a consistency fix; no rate, profile or scoring value changed.
+
+Earlier results that are not comparable (Korean only; English was never affected): every Korean episode in which the planner asked this
+question on a task with candidates or a scripted answer. By a scan of `results/` (qtype of the answer != where_is for a "못 찾 ... 어디"
+question): 159 episodes, tasks 003 021 027 041 042 047 051 072 078 083 089 096 176 187 203 233 255 265 290, in `r3/n5_a1`, `r3/n5_a2`,
+`r3/m10s`, `milestones_r3/m10` and `m50`, `lab1/trigger`, `lab1/trigger_fixed`, `perf1/e2e`, `r4b/*` (base, i1, i3, i4, i5, regress50, the
+stopped 300 run) and `r10/n10_a1`, `r10/n10_a2`. The answer was a colour or a destination place instead of where the object is (50 which_object,
+101 which_place, 6 scripted). A further 20 asks answered `where_is` / `not_understood` are a different case and not part of this fix. Only the
+episodes with such a question can change; aggregate numbers move only through them. They need a rerun to be compared with new results.
+
+### 089 KO: what decides it (replays of n10_a2, `lab/r11/*.py`)
+sage succeeds, ground2 and s5 give up, both replicates. Checked one by one:
+1. **Call numbering of the keyed draws: no.** The robot's outcome draws are keyed by (skill, canonical args, nth call of that same skill and
+   args), not by the call index (`skills.py` `_call`; only the user's draws are keyed by the ask index). The extra question moves no draw.
+2. **The name in the find arguments: yes, this is the decisive draw.** ground2 and s5 asked "which mug?" and the step-4 flag renamed the object,
+   so they call `find("red mug")`; sage calls `find("mug")`. Those are different keys. Recomputed from the seed: u[FAIL] for `find red mug`
+   nth 0..7 = .002 .833 .050 .663 .510 .862 .799 .008, for `find mug` = .890 .945 .027 .046 .780 .389 .869 .177, with p_miss = .093.
+   ground2's third find of "red mug" is at the coffee table, where the mug is, and draws .050 (< p_miss): the injected detection miss
+   (episode k=28). sage's 4th find draws .046, its one injected miss (k=32, at the shelf), and its find at the coffee table is
+   the 6th (.389): found. A return to the coffee table would pass for ground2 too (nth 3 = .663).
+3. **No re-look at the place of the miss (robot side).** After the miss the belief marks the coffee table searched; the second looks went
+   to the counter and the side table. The run asked where the mug is at k=32 and went back to places it had searched. Known weakness, not
+   changed here.
+4. **The simulated-user bug: it withheld the one thing that would have fixed (3).** In ground2 / s5 the where-question is the 3rd (rep2 s5: 4th) ask.
+   With the fix the user answers "거실 탁자 위에 있어요." (the coffee table) for ask indexes 1 to 4 and "잘 모르겠어요" from index 5 on
+   (the knowledge draw is keyed by the ask index; in EN the same question was the 6th ask, hence "I don't know" there). The robot code that
+   uses such an answer (`_recover_find`: ground the place, take it off the searched list, "the user says the X is on P") was read, not run;
+   the next planner call is a cache miss, so the outcome with the fixed user was not replayed (it needs the 8B). sage got the same wrong
+   "빨간 거요" and did not need the answer.
+5. **Translate budget: spent, but not the cause.** All six 089 KO episodes, sage included, end at `llm_calls_translate` = 8. The replay's own
+   30B cache lists the 8 calls of ground2 rep1 in order: the which-mug question, the object names, then 6 progress lines ("orange pill bottle
+   찾기를 진행합니다", ... "red mug 찾기를 진행합니다"). The where-question at k=32 therefore has "red mug" in English and the final message is the
+   stock sentence. After the user fix an English name in that question is still read as `where_is`, so the budget does not change the answer
+   the user gives. sage says "mug" in English the same way and succeeded.
+Verdict: the injected detection miss on the renamed object's key, plus no second look at that place; the sim-user bug removed the chance
+that the user's answer corrected it; the numbering and the budget are not the cause. Live outcome with the fixed user: not run.
+
+### Translate budget (robot_agent, commit 660bfb9)
+Confirmed to cut the Korean dialogue short (names in English, stock sentence), as above: progress lines were 6 of the 8 calls.
+Fix, general: a step milestone (`step_start` / `step_success` / `step_fail` with no free-text reason) in a language with a pack phrase for it is
+said as the robot's own declared phrase with the object name as a slot (`ClosedLoop._announce`, overridden in `AssistLoop`, all 7 call
+sites). The name is declared, else the run's cached name, else English inside the sentence, so no translator call; the object check's
+names (`_local_names`) seed the same name cache. A skill with no declared verb in the language, a failure with a reason, and English runs are as
+before. Repeated sentences and names were already cached per run and a call is counted only when it is made. The manifest number
+`translate_budget: 8` is unchanged. Tests `tests/test_sage_lab_r11_progress_budget.py` (3 of 5 fail on the old code). The 089 outcome with
+this change was not replayed (the dialogue changes, so the 8B and 30B would be called).
+
+## Round 11: sim-user fix and gates (2026-11-08)
+
+User decisions kept: the 8B reads EN and KO, the 30B stays the Korean translator, and the dropped variants (Qwen3.5 9B, HyperCLOVAX,
+30B reader, verdict / give / strict, s4 / s45) stay dropped. Compared: `robot_agent:sage` vs `robot_agent:sage_ground2` vs
+`robot_agent:sage_s5`, with `oracle` as the reference. Nothing was pushed or merged. GPU 0 only, at most 8 clients, our Ollama container
+stopped at the end (none is left), the shared one and ports 8001 / 5577 / 8003 not touched, test split not touched. The fix details and the
+offline 089 KO diagnosis are in the section above; this section adds the later simulator fixes and the gates.
+
+### Fixes in this round (all with a test that fails on the old code; no rate, profile or scoring value changed)
+
+| repo, commit | what | found by |
+|---|---|---|
+| homeloop_robot 78f807f | Korean "X, 못 찾았어요. 어디에 있는지 아세요?" is read as `where_is` also on tasks with candidates (it was answered with a colour or a place to put it) | round 10, 089 KO |
+| robot_agent 660bfb9 (`hl_wt/sagev2`, sage-v2/homeloop) | step milestones in the user's language are the robot's declared phrase with the name as a slot, no translator call | round 10, 089 / 014 KO |
+| homeloop_robot 4f132c0 | a read-back part of an object ends at a clause that states another goal, so "bring you the green glass, then go to the charging dock" is confirmed (the dock clause counted as a wrong place for the glass) | `n10_a1`, 021 EN |
+| homeloop_robot 5557136 | detector: an English query word matches a name that differs only by the regular plural (`world.stem_en`, -s / -es / -ies), a morphology rule, not a word list. Audit of all `results/`: 174 name-miss absents change ('vitamin' 154 on 024, 'black sock' 18 on 079, 'milk packs' 2 on 244) | `n50_a1`, 024 KO |
+| homeloop_robot 326b1bf | (a) a place the request text names outside its message part is part of the request (030 EN, "go to the kitchen table, then tell husband" now confirmed); (b) Korean 책상 is not 책 + a particle (`_thing_word`, `D.mentions`; 042 KO which-place question); (c) open(X) / closed(X) with an in(., X) goal is not covered when the read-back says the opposite verb on X (038 KO "서랍 닫을게요" now gets no) | `n50_a1` |
+
+660bfb9 shows in the data: in `n10_a2` the 089 KO translate calls fell from 8 (round 10) to 2-5, and 014 KO ground2 / s5 to 5-6. Only sage KO
+014 still reaches 8, from a Say step the 8B made up whose whole text is "mug" (sent to the 30B as free text and returned as "미안해요."; the
+cfe1316 guard covers only object slots).
+
+Tests: homeloop_robot 869 passed, 58 skipped after 326b1bf; the 2 failures are `tests/test_configs_adapter.py`, which needs robot_agent on
+`PYTHONPATH` (10 of 10 pass with it). `profiles validate --strict` and `realism --strict` exit 0. homeloop_bench 482 passed. robot_agent
+tests directory: no failing test (the run printed no summary line). The full homeloop_robot suite was not rerun with the robot_agent path.
+
+### Setup (all gates)
+
+Profile `real`, seed 0, the 4-parameter `asr_off` (`asr.en.app_wer=0, asr.ko.app_cer=0, asr.p_partial=0, asr.p_not_heard=0`), planner
+`qwen3-vl:8b-instruct` on GPU 0, Korean speech through the 30B translator, one shared cache per replicate with `--cache-lock`, 8 clients,
+each gate on a fresh cache. All logs EXIT=0, `n_error` 0, `aa-check --concurrent` ok every time (n=10: 10 of 10 identical, 0 touched;
+n=50: 5 of 5). S success, F false success, g give-up, f budget stop. Calls are planner calls per episode, means over all episodes of a cell.
+
+### n=10 gate (tasks 065 008 015 014 074 027 062 021 089 001, 2 replicates)
+
+`results/r11/n10_a1` (homeloop_robot 78f807f): **not passed**. 021 EN: the correct read-back "..., bring you the green glass, then go to
+the living room charging dock" got "No." from the user model, and an injected wrong answer turned it into "Yes" (two simulator errors
+cancelling; r10 ground2 / s5 won 021 EN this way). Fixed in 4f132c0. `n10_a1` is superseded.
+
+`results/r11/n10_a2` (homeloop_robot 4f132c0, robot_agent 660bfb9; 10:31-10:46 KST):
+
+| config | EN S / F / g | KO S / F / g | EN r1 / r2 | KO r1 / r2 | LLM calls EN / KO | sim s EN / KO |
+|---|---|---|---|---|---|---|
+| oracle | 20 / 0 / 0 | 20 / 0 / 0 | SSSSSSSSSS / SSSSSSSSSS | SSSSSSSSSS / SSSSSSSSSS | 0 / 0 | 112 / 112 |
+| sage | 4 / 6 / 10 | 2 / 7 / 11 | FSSggFFgSg / FSgggFFggg | FggggFFFgS / FggggFFggS | 6.8 / 10.3 | 141 / 131 |
+| sage_ground2 | 8 / 2 / 10 | 9 / 3 / 8 | FSSggSSgSg / FSgggSSggg | FggggSSFSS / FggggSSSSS | 6.8 / 8.8 | 140 / 145 |
+| sage_s5 | 12 / 0 / 8 | 13 / 1 / 6 | SSSSgSSgSg / SSgSgSSggg | SggSgSSFSS / SggSgSSSSS | 6.4 / 8.4 | 159 / 160 |
+
+All 80 paired episodes were diffed call by call against sage (`lab/r11/gate/diff11.py`, user replays `ans11.py`, `cov11.py`). Every
+episode with no flag is identical to sage; every difference starts at the call where a flag fired. No variant is worse than sage on any
+task, language or replicate, and s5 is never worse than ground2.
+
+- **065** (F -> S, s5 only, EN and KO, both reps): step 5, `endstate_check`. After the injected `hw_fault` on the second dock, sage and
+  ground2 say "Task completed" while not docked; s5 sees the unmet dock goal and docks again.
+- **027, 062** (F -> S, ground2 and s5, EN and KO, both reps): step 4 (`name_canon` / `inventory_ask`) asks "red or blue?". sage takes the
+  first book / mug it finds, the wrong one, and says done.
+- **014** (g -> S, s5 only, EN and KO, both reps): step 4 asks which mug, but the outcome win is step 5: `wait_on_robot` waits 2 + 4 + 8 s,
+  the injected `camera_down` ends, and the run recovers from one more injected pick failure. ground2 stops at the camera fault. In both
+  variants the plan hands the mug over before picking it (an 8B slip the gate does not catch).
+- **089 KO** (g -> S, ground2 and s5, both reps; sage S -> g since round 10): step 4 renames the object to "red mug". After the injected
+  detection miss at the coffee table, the where-question is now answered "거실 탁자 위에 있어요." (78f807f works), and they succeed. sage
+  gets the same right answer and picks the mug, but its repair loop goes back to the finished medicine-bottle goal with a stale place while
+  holding the mug, and gives up (8B planning slip). sage's round 10 win came from the simulator bug.
+- **021 EN** (g in all three): step 4 asks which glass; the injected wrong answer at ask 1 is now a real "No, the white glass" (4f132c0), and
+  the repair dialogue does not converge. sage takes the white (wrong) glass and draws 3 injected pick failures. The round 10 ground2 / s5
+  wins here came from the simulator bug; losing them is correct.
+- **021 KO rep2** (g -> S, ground2 and s5): step 4 again, but partly luck. "glass" is rendered "녹색 유리" (the material), the user model
+  correctly does not match it, and an injected wrong answer turned the correct "No" into "Yes". Counted as noise, not a clean step-4 win.
+- **021 KO rep1** (F in all three, identical): the 8B reading drops the glass goal and no flag can see it. s5's only false success.
+- **074** (g in all three): s5's `reset_container` changes the path (plate down, fridge closed and reopened), then the second `put_in` draws
+  an injected `hw_fault_persistent`. Same outcome.
+- **089 EN rep2** (g in all three): `go_steps` changes only the wording of the first two read-backs; same answers, same rest.
+- Identical in all three (genuine): 008 EN S; 008 KO g (the robot asks about the self-corrected word, then an injected not-sure answer);
+  015 EN and KO (intended user noise: no-answers, a wrong "No"); 001 EN g (wrong order in the read-back, injected wrong "No"); 001 KO S;
+  089 EN rep1 S.
+
+Decision at n=10: **PASS** (no harness or simulator bug open, every difference explained by one flag). s5 over ground2: 2 task-level
+wins (065, 014), both step 5. ground2 / s5 over sage: 027, 062, 089 KO, plus the lucky 021 KO rep2.
+
+### n=50 gate (dev tasks 0..49, 1 replicate, paired on the same ids)
+
+`results/r11/n50_a1` (homeloop_robot 4f132c0): **not passed**, four simulator bugs: S1 'vitamin' had no detector hit (024 KO); S2 a
+faithful message read-back rejected (030 EN); S3 Korean 책상 read as 책 (042 KO); S4 a read-back with "close drawer" confirmed although
+the goal is an open drawer (038 KO). Fixed in 5557136 and 326b1bf, then rerun on a fresh cache.
+
+`results/r11/n50_a2` (homeloop_robot 326b1bf, committed 26 s before the run; robot_agent 660bfb9), with `n50_a1` in brackets:
+
+| config | EN S / F / g | KO S / F / g / f | LLM calls EN / KO | sim s EN / KO |
+|---|---|---|---|---|
+| oracle | 40 / 0 / 10 (same) | 40 / 0 / 10 / 0 (same) | 0 / 0 | 92 / 92 |
+| sage | 27 / 2 / 21 (26 / 1 / 23) | 20 / 2 / 28 / 0 (20 / 4 / 26 / 0) | 5.7 / 8.7 | 131 / 129 |
+| sage_ground2 | 28 / 1 / 21 (27 / 0 / 23) | 21 / 2 / 26 / 1 (22 / 4 / 23 / 1) | 5.5 / 8.5 | 130 / 135 |
+| sage_s5 | 29 / 1 / 20 (28 / 0 / 22) | 22 / 2 / 25 / 1 (23 / 4 / 22 / 1) | 5.5 / 8.6 | 134 / 138 |
+
+Net against sage in `n50_a2`: ground2 EN +1, KO +1 (+2 -1); s5 EN +2, KO +2 (+3 -1). The oracle gives up on the same 10 tasks in both
+languages, all on injected faults (ceiling 80 %). Where a variant differs from sage (scripts `lab/r11/g50b`):
+
+- **027 EN** (F -> S, ground2 and s5): step 4 asks "blue or red book?"; sage takes the wrong book and claims success.
+- **014 EN and KO** (g -> S, s5 only): as at n=10. Step 4 asks which mug, step 5 `wait_on_robot` outlasts the injected `camera_down`;
+  ground2 stops there.
+- **007 KO** (g -> S, ground2 and s5): step 4 `kind_anchor` drops an invented "open the kitchen drawer". sage reads back the wrong plan,
+  draws an injected "아니요" and gives up; the variants start moving and obey the user's scripted "stop" (scored as success, as for the
+  oracle).
+- **024 KO** (g -> S, ground2 and s5): step 4 `name_canon` renames "vitamin" to "vitamins", so the memory sighting points to the dining
+  table. sage searches five other places. After 5557136 the detector finds 'vitamin', but sage's own matching of its memory still misses
+  the plural (robot side).
+- **044 KO** (S -> g, ground2 and s5; the only loss): step 4 `go_steps` correctly drops the leading "go to nightstand" goal, so every later
+  prompt changes. After the injected `put_in` `hw_fault`, the 8B's repair plan leaves out PutIn (sage's prompt kept it; both prompts are in
+  the caches), and the goal check repeats say + dock while holding the wallet. An 8B slip plus a robot gap (a repair without the step for the
+  current sub-goal is accepted), not a defect of the flag's logic. One task, inside the noise.
+- **048 KO** (g -> f, ground2 and s5): all fail. The variants ask which mug, the user is not sure (intended noise), then injected drops and
+  misses until the budget stop. sage's own episode depends on the open simulator bug U4 below.
+- Fired with no effect: `wait_on_robot` (036 EN / KO, persistent fault), `gate_strict` (032 EN, 033 EN / KO, 037 KO), `dialog_unstick`
+  (003 EN), `endstate_check` (021 KO), `kind_anchor` (014 KO, 039 KO), `name_canon` (038 KO).
+
+Changes from `n50_a1` to `n50_a2`: 030 EN Sggg -> SSSS (S2 fix); 038 KO SgFF -> Sggg (S4 fix: the user now rejects the close; the 8B keeps
+planning it, so a give-up); 024 KO unchanged SgSS (now a `not_here` event, not a silent miss); 042 KO unchanged; 015 EN SSSS -> SFFF (the 8B
+read "tell grandpa" as a delivery and an injected wrong "yes" accepted it); 039 EN Sggg -> SSSS, 025 KO SFFF -> Sggg, 027 KO SFSS -> SSSS, 032
+KO SSSS -> Sggg (fresh-cache 8B noise plus the user fixes, not traced one by one).
+
+Tasks where all three sage configs fail the same way (no flag effect), oracle S:
+- Genuine (injected faults, intended user noise, robot or 8B weakness): EN 001 021 032 033 036 042 043 046 048, EN 015 F; KO 000 013 015
+  018 020 032 033 036 045 046, KO 021 F (glass goal dropped), KO 039 F (an invented question, two noise answers).
+- An open simulator bug decides or contributes: EN 003 (U8), EN 037 (U1), KO 003 (U2), KO 025 and 043 (U6), KO 038 (U5). KO 042 is a robot
+  bug (R1). EN 023 and KO 026: the oracle fails on three injected failures and sage passes.
+
+Open simulated-user bugs found at n=50 (homeloop_robot 326b1bf, replayed with noise off; not fixed in this round):
+- U1 EN: "Which book do you want, the red one or the blue one?" is read as which-place or not understood (037 EN).
+- U2 KO: a correct read-back ending in "맞는 거죠?" gets a correction; "맞아요? / 맞죠? / 괜찮을까요?" get yes (003 KO).
+- U3 KO: the colloquial "폰" is not matched to the phone (휴대폰), so a correct read-back is corrected (033 KO, no outcome effect).
+- U4 KO: "충전기에 있는 X" (the charger as the object's source) counts as covering the dock goal, and a colourless "mug" is confirmed
+  where EN rejects the same read-back (048 KO sage).
+- U5 KO: "충전기 말씀하셨는데, 거기서 뭘 할까요?" is answered with a destination; EN gets the whole request (038 KO).
+- U6: help reply is "OK, I moved it." in EN but "치웠어요." in KO, with no yes-word although the robot asked for "네" (KO 025, 043 fail in
+  all configs; EN 025 succeeds).
+- U7: `user.wrong_places()` does not exclude the true place, so a "wrong" where-answer can be right (033 EN); the effective wrong-answer
+  rate for where-questions is below the declared rate and the event label is wrong.
+- U8: a compound "Where is the milk, and where would you like me to put it away?" gets only the where part (003 EN).
+
+Robot-side bugs recorded (SAGE-v2, not changed): R1 a one-letter non-object slot ('c' from "C 방 책상요") sent alone to the 30B, which
+answered with its own instruction ("해요체로 자연스럽고 정중한 말투로 번역해주세요 ..."), spoken in three questions (042 KO); R2 a local repair
+without the step of the current sub-goal is accepted (044 KO); R3 the repair dialogue gives up after one noise "No" or "I don't know" (EN
+001 037 043, KO 000 013 020 045); R4 a done-reply with no yes-word is read as a correction (KO 025 043); R5 a silent partial open is never
+reopened (042); R6 one injected miss marks a place searched for good (033, 046 EN; 089 at n=10); R7 sage memory misses the plural (024 KO);
+R8 8B planning slips (033 EN, 014, 021 KO, 039 KO, 038 KO, 018 KO, 015 EN); R9 a malformed compound where_is meaning (003 EN); R10 the
+Korean read-back doubt ignores the place given in the clarification (003 KO). Also a bare-name Say ("mug") still goes to the translator
+(sage KO 014 at n=10), and "glass" is "유리" (the material).
+
+Decision at n=50: **not passed**. No harness bug, and no variant is worse than sage beyond the noise (one loss, 044 KO, explained), but
+eight simulated-user bugs (U1-U8) are open, so the "no simulator bug left" rule is not met. Next: fix U1-U8 with tests, scan `results/`
+for the episodes they change, rerun n=50 on a fresh cache.
+
+### Holdout and ASR
+
+**Holdout: not run** (the n=50 gate did not pass; no fresh slice; the test split was not touched). **ASR-on drop: not measured**; every
+number in this round has the 4-parameter `asr_off`.
+
+### Kept / killed
+
+- Kept: 78f807f, 4f132c0, 5557136, 326b1bf (simulator consistency fixes) and 660bfb9 (translate budget no longer spent on progress lines).
+  `sage_s5` stays the candidate: n=10 S EN 12 vs 8 vs 4 of 20, KO 13 vs 9 vs 2; false success EN 0 vs 2 vs 6, KO 1 vs 3 vs 7. n=50 S EN 29
+  vs 28 vs 27, KO 22 vs 21 vs 20. Its gain over ground2 is 014 (n=50) and 065 + 014 (n=10), all from step 5. `sage_ground2` and `sage` stay
+  as baselines.
+- Killed: nothing in this round.
+
+### Caveats
+
+- All tasks are dev ids used for tuning, so the numbers are optimistic. The paper must report the test split.
+- Run-to-run noise is about 3 tasks per 50. The n=50 differences (1-2 tasks per language, one replicate) are not established. n=10 cannot
+  size effects; its replicates and languages are correlated, so the s5 gain over ground2 there is 2 task-level wins, not 8 episodes.
+- Robot draws are keyed by (skill, args, nth call), user draws by the ask index, so a flag that renames an object or adds a question moves
+  where the noise lands (089 KO in round 10, 038 KO and 044 KO at n=50).
+- The 8B is not deterministic on a cache miss; configs within a replicate share one locked cache and are paired, replicates are not.
+- `asr_off` is a sensitivity condition, not the headline.
+- s5 costs more simulated time (recovery waits): +19 / +15 s over ground2 (EN / KO) at n=10, +4 / +3 s at n=50.
+- Not comparable with earlier results without a rerun: the 159 KO episodes with the where-question (78f807f, listed above), the 021 dock
+  read-backs (4f132c0; scan of r10 and r11 only), the 174 name-miss absents (5557136), and `n10_a1` / `n50_a1` against the `a2` runs.
+- Not checked: the 20 earlier KO asks answered `where_is` / `not_understood`; irregular plurals; the KO `object_parts` gap (4f132c0 does
+  not cover "녹색 유리"); the causes of the n50 a1 -> a2 changes on 039 EN, 025 / 027 / 032 KO.
+- Notes and scripts: scratchpad `homeloop/lab/r11` (`gate/` for n=10, `g50/` and `g50b/` for n=50, `n50_a2_table.txt`, `table_a2.txt`,
+  `audit_all.py`, `s2.py`, `s3.py`). This file is uncommitted (rounds 10 and 11).

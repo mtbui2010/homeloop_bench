@@ -3354,3 +3354,174 @@ true "No" always carries a correction, so a bare true "No" cannot be measured he
 was not run. Keep only if: successes of s6 >= s5 on both replicates and at least 5 of 14 fewer give-ups at n=50; false success s6 <= s5 + 1
 per language and none through an `agreed` confirmation; 0 `agreed` fires on a reading the sim answered `no`; questions per episode not
 higher. s6 episodes are not comparable to s5 on tasks with a refused-again reading and on self-repair requests.
+
+## Round 13: final measurement (2026-11-08)
+
+User decision (2026-11-09 approval, carried out in this round): fix the known simulator bugs once and freeze the simulator; merge the r12
+branches into the working branches; then the final measurement. Compared: `robot_agent:sage`, `robot_agent:sage_ground2`,
+`robot_agent:sage_s5`, `robot_agent:sage_s6` (= s5 + `dialog_agree`), with `oracle` as the reference. Nothing was pushed. GPU 0 only, 8
+clients, our Ollama container stopped at the end; the shared one, ports 8001 / 5577 / 8003 / 11535 and the ROS domains not touched; test
+split not touched.
+
+### Simulator freeze (homeloop_robot tag `sim-freeze-r13` on 6432c35, not pushed)
+
+The eight open simulated-user bugs of round 11 (U1-U8, numbered S1-S8 in the freeze commits) are fixed, each with a test; no rate, profile
+or scoring value changed.
+
+| freeze id (round 11 id) | fix |
+|---|---|
+| S1 (U1) | "the red one or the blue one" / 빨간 거 아니면 파란 거 is a which-object choice, EN and KO |
+| S2 (U2) | the Korean read-back tag 맞는 거죠 / 맞는 건가요 is read like 맞죠 (one shared tag pattern) |
+| S3 (U3) | 폰 is a declared Korean alias of the phone class (`catalog.py`, marked assumed in docs/realism.md) |
+| S4 (U4) | a dock word that places an object (from the charger / 충전기에 있는, 충전기에서 가져온) is not the `docked()` step |
+| S5 (U5) | a Korean context clause joined to its question by a comma is context, as in the EN two-sentence form |
+| S6 (U6) | the Korean help reply is 네, 치웠어요. (EN already had OK) |
+| S7 (U7) | a wrong where-answer never names the true place or the wanted destination; the rng draw is unchanged (next place) |
+| S8 (U8) | a compound "where is X, and where should I put it" is answered for both parts (KO too) |
+
+Commits 7cfbec5 (S1-S6), e1a7c79 (S7, S8), 6432c35 (docs/user_model.md, section "Simulator freeze"). Tests: homeloop_robot 972 passed with
+robot_agent and embodiplan on `PYTHONPATH` (new `tests/test_dialog_r13_freeze.py`, 21 tests, and `tests/test_dialog_r13_freeze_user.py`, 5
+tests; 16 of the cases fail on the code before the fixes, the rest are guard cases); bench suite passed; `profiles validate --strict`,
+`profiles consistency --strict` and `realism --strict` exit 0. Left alone on purpose: R1-R10 (robot side), and two separate question
+sentences are still answered from the first one.
+
+Not comparable after the freeze: every earlier result set for episodes that touch a fixed pattern (S7 can move any episode with a
+where-question), i.e. r3 to r12, milestones, exp, lab, perf, gate and live-smoke results. Counts per fix and result set are in
+homeloop_robot docs/user_model.md; audit script `lab/r13/audit.py`. Compare variants only within run sets made after `sim-freeze-r13`.
+
+### Merges
+
+- robot_agent worktree `hl_wt/sagev2`, branch sage-v2/homeloop: fast-forward 660bfb9 -> 86ea3f1 (`dialog_agree`), no merge commit, no
+  conflict. robot_agent main not touched.
+- homeloop_bench main: da0a804 (Rounds 10, 11 text), merge 2ffc4c1 of r12 (variant `robot_agent:sage_s6`; one conflict in this file, both
+  sides kept), f5bc315 (stale note).
+- Flag-off check: sage and sage_s5, EN and KO, on the ten r11 `n10_a2` tasks, replayed offline from the r11 cache before and after the
+  merge (40 pairs): `trace.jsonl` byte-identical in all 40, `episodes.jsonl` byte-identical in the 37 that finish (3 abort on the same cache
+  miss, identically), `summary.json` differs only in the git-hash fields.
+- Tests after merge: robot_agent 1466 passed, 3 skipped (counted from the progress dots), bench 487 passed, homeloop_robot 972 passed.
+
+### Setup
+
+Profile `real`, seed 0, planner `qwen3-vl:8b-instruct` on GPU 0, Korean speech through the 30B translator. Versions in every summary:
+homeloop_robot 6432c357826f, homeloop_bench f5bc31535b7c, robot_agent 86ea3f167013, embodiplan 4080017ad509. One fresh shared cache per
+replicate with `--cache-lock`, 8 clients, oracle first. All 40 runs EXIT=0, `n_error` 0, `llm_budget_hit_rate` 0, no text in the wrong
+language, no raw ids in dialogue or final say. `aa-check --concurrent` on sage_s6 EN, 5 tasks: 5 of 5 identical. Runs:
+`results/r13/dev50` (dev 0..49, `asr_off`, rep1 + rep2), `results/r13/holdout` (dev 50..99, `asr_off`, rep1), `results/r13/asr_on` (dev
+0..49, ASR on, rep1). `asr_off` = the 4 parameters `asr.en.app_wer=0, asr.ko.app_cer=0, asr.p_partial=0, asr.p_not_heard=0`. S success,
+FS false success, GU give-up, O other (here only a budget stop on 048). Calls = skill calls per episode, LLM = LLM calls per episode, sim =
+simulated seconds per episode.
+
+### Dev 0..49, `asr_off`, pooled over two replicates (n = 100 per cell)
+
+| variant | lang | S | FS | GU | O | calls | LLM | sim s | rep1 S / FS | rep2 S / FS |
+|---|---|---|---|---|---|---|---|---|---|---|
+| oracle | en | 80 | 0 | 20 | 0 | 8.30 | 0 | 92 | 40 / 0 | 40 / 0 |
+| oracle | ko | 80 | 0 | 20 | 0 | 8.36 | 0 | 92 | 40 / 0 | 40 / 0 |
+| sage | en | 51 | 5 | 44 | 0 | 19.40 | 5.77 | 131 | 24 / 3 | 27 / 2 |
+| sage | ko | 41 | 10 | 49 | 0 | 18.38 | 8.67 | 127 | 21 / 5 | 20 / 5 |
+| sage_ground2 | en | 53 | 3 | 44 | 0 | 18.90 | 5.67 | 131 | 25 / 2 | 28 / 1 |
+| sage_ground2 | ko | 46 | 8 | 44 | 2 | 19.07 | 8.49 | 134 | 23 / 4 | 23 / 4 |
+| sage_s5 | en | 55 | 3 | 42 | 0 | 19.56 | 5.68 | 135 | 26 / 2 | 29 / 1 |
+| sage_s5 | ko | 48 | 8 | 42 | 2 | 19.64 | 8.51 | 137 | 24 / 4 | 24 / 4 |
+| sage_s6 | en | 60 | 3 | 37 | 0 | 21.08 | 5.90 | 145 | 29 / 2 | 31 / 1 |
+| sage_s6 | ko | 51 | 8 | 39 | 2 | 19.59 | 8.52 | 137 | 25 / 4 | 26 / 4 |
+
+The oracle gives the same result in both replicates (fails the same 10 tasks, all give-ups on injected faults; ceiling 80 %). Questions
+per episode: sage 1.12 / 2.19, s5 1.34 / 2.21, s6 1.40 / 2.25 (EN / KO). Safety violations: 0-2 per cell, the oracle has 2.
+
+### Holdout dev 50..99, `asr_off`, rep1 (n = 50 per cell)
+
+| variant | EN S (CI95) | EN FS | KO S (CI95) | KO FS | LLM EN / KO |
+|---|---|---|---|---|---|
+| oracle | 0.86 [0.74, 0.93] | 0.00 | 0.86 [0.74, 0.93] | 0.00 | 0 / 0 |
+| sage | 0.50 [0.37, 0.63] | 0.14 | 0.32 [0.21, 0.46] | 0.22 | 5.8 / 8.1 |
+| sage_ground2 | 0.52 [0.39, 0.65] | 0.12 | 0.34 [0.22, 0.48] | 0.20 | 5.7 / 7.8 |
+| sage_s5 | 0.54 [0.40, 0.67] | 0.10 | 0.38 [0.26, 0.52] | 0.18 | 5.6 / 7.9 |
+| sage_s6 | 0.58 [0.44, 0.71] | 0.10 | 0.40 [0.28, 0.54] | 0.18 | 5.9 / 8.3 |
+
+Same order as on dev (sage < ground2 < s5 < s6, both languages). Safety violations 1 in every cell, the oracle included.
+
+### ASR on (dev 0..49, rep1, n = 50), against `asr_off` rep1 of the same tasks
+
+| variant | EN S off -> on | KO S off -> on | EN FS off -> on | KO FS off -> on | KO S rate, `asr_off` pooled -> on |
+|---|---|---|---|---|---|
+| oracle | 40 -> 40 | 40 -> 40 | 0 -> 0 | 0 -> 0 | 80 % -> 80 % |
+| sage | 24 -> 27 (+3) | 21 -> 17 (-4) | 3 -> 2 | 5 -> 4 | 41 % -> 34 % |
+| sage_ground2 | 25 -> 27 (+2) | 23 -> 21 (-2) | 2 -> 1 | 4 -> 3 | 46 % -> 42 % |
+| sage_s5 | 26 -> 28 (+2) | 24 -> 22 (-2) | 2 -> 1 | 4 -> 4 | 48 % -> 44 % |
+| sage_s6 | 29 -> 29 (0) | 25 -> 23 (-2) | 2 -> 1 | 4 -> 6 | 51 % -> 46 % |
+
+English shows no drop (all changes inside the ~3-task run noise; the two runs use different caches). Korean drops by 2 to 4 tasks of 50
+for every planner. With ASR on, each sage variant has one budget stop (048) in EN and in KO. Questions per episode rise (s6 1.78 / 2.54).
+
+**`dialog_agree` under ASR noise.** In KO it fired 4 times (of 9 events); two of the 4 gave a false success (s5 gave up on both):
+- 018 KO: the read-back "초록책 할아버지한테 직접 건네줄게요 ..." got "아니요, 초록색 책은 저한태 갖다 주세요." (the ASR turned 저한테 into
+  저한태). The correction was not matched, the later restated request had 책 garbled to 착, and the refused reading was taken as agreed.
+  The green book went to grandpa.
+- 012 KO: the last reading put the red book on the counter (the goal is to bring it to mom); the user said "잘 모르겠어요.", the restated
+  request named no place for the book, and the reading was taken as agreed.
+
+With `asr_off` (dev and holdout) no fire led to a false success: dev fires EN 7 (5 S, 2 G on 043), KO 4 (all S); holdout 6 (4 S, 2 G).
+
+### Paired statistics (two-sided sign test; unit = task, success counts summed over replicates)
+
+| pair | dev EN W / L | dev KO W / L | dev task x lang W / L, p | holdout task x lang W / L, p | ASR-on task x lang W / L, p |
+|---|---|---|---|---|---|
+| sage -> ground2 | 1 / 0 | 3 / 1 | 4 / 1, 0.375 | 3 / 1, 0.625 | 5 / 1, 0.219 |
+| ground2 -> s5 | 1 / 0 | 1 / 0 | 2 / 0, 0.500 | 3 / 0, 0.250 | 2 / 0, 0.500 |
+| s5 -> s6 | 3 / 0 | 2 / 1 | 5 / 1, 0.219 | 4 / 1, 0.375 | 3 / 1, 0.625 |
+| sage -> s6 | 5 / 0 | 6 / 2 | 11 / 2, 0.022 | 9 / 1, 0.021 | 10 / 2, 0.039 |
+
+Dev + holdout, task level (both languages and replicates summed): sage -> s6 16 / 3, p = 0.004; s5 -> s6 9 / 2, p = 0.065. EN better
+than KO (task level): sage dev 12 / 6 (p 0.24), holdout 12 / 3 (p 0.035); s6 dev 9 / 5 (p 0.42), holdout 10 / 1 (p 0.012); oracle 0 / 0.
+
+Where s6 differs from s5:
+- Wins, all at a `dialog_agree` fire: dev EN 001, 037, 039; dev KO 000, 013; holdout EN 052, 084; holdout KO 077, 097.
+- Losses: dev KO 008 (rep1, and again with ASR on): S1 of r12 settles the two-destination question, so the "안락의자 말씀하셨는데" question
+  is not asked; the 8B read-back then drops the water bottle and the dialogue does not converge. Holdout KO 089: s6 asks one more
+  where-to-put question, which moves the user noise draw; the later where-is gets "잘 모르겠어요." and the mug is not found.
+
+Round 12 keep rules (`asr_off`): s6 successes >= s5 on both replicates (yes: EN 29 / 26, 31 / 29; KO 25 / 24, 26 / 24); give-ups of the
+"not confirmed" kind fall from 32 to 22 over 200 episodes (5 per replicate; all give-ups fall 4 per replicate); false success s6 = s5 in
+every cell, none through an agreed confirmation (yes); no fire on a reading the simulated user truly refused (yes; holdout 080 KO's only "아니요" was an injected wrong answer); questions per episode
+not higher (no, +0.06 EN, +0.04 KO). With ASR on, the false-success rule fails in KO (+2, both through `dialog_agree`).
+
+### Causes of the remaining failures (sage_s6, dev `asr_off`, episodes of 100 per language)
+
+| cause | EN | KO |
+|---|---|---|
+| the oracle fails the same task and replicate too (injected faults: hardware fault, repeated misses) | 18 | 18 |
+| dialogue never confirmed, no action taken (refused or unclear read-backs, no-answer timeouts) | 4 | 18 |
+| search / reach / drop give-up after start (injected misses, blocked path, collision) | 12 | 3 |
+| hardware fault after start (the oracle succeeds on that draw) | 3 | 1 |
+| false success (the 8B reading drops or changes a goal and says done) | 3 | 6 |
+| budget stop (048) | 0 | 2 |
+| other give-up after start (044 KO: dock left out after a repair) | 0 | 1 |
+
+KO tasks in the "never confirmed" row: 003, 008, 015 (no-answer timeouts), 018, 020, 032, 033 (timeouts), 038, 045; 11 of the 15 KO
+`dialog_agree` events that did not fire are here (the other 4 are 023 and 029, in the oracle row). False successes: EN 015 (rep1), 025
+(both); KO 021 (glass goal dropped), 025, 039 (both replicates); KO 047 (both) is in the oracle row. Robot-side bugs R1-R10 from round 11
+are still open (R3 repair after one noise "No", R6 a place marked searched after one injected miss, R8 8B planning slips) and appear among
+these failures; they were not traced one by one in this round. Holdout s6: EN 4 / 3 / 3 / 4 / 5 / 1 / 1 and KO 4 / 6
+/ 7 / 5 / 8 / 0 / 0 in the same row order (n = 50).
+
+### Kept / carried forward
+
+- `robot_agent:sage_s6` is carried forward as the main SAGE-v2 variant: best success in every cell (dev pooled EN 60 vs 55 / 53 / 51, KO
+  51 vs 48 / 46 / 41; holdout EN 0.58, KO 0.40), false success equal to s5 with `asr_off`, and clearly better than sage (p 0.02 on dev,
+  holdout and ASR-on). Its gain over s5 alone is not established (p 0.22 dev, 0.065 dev + holdout).
+- `sage_s5`, `sage_ground2`, `sage` stay as ablations / baselines. The simulator stays frozen at `sim-freeze-r13`.
+- Open before the test split: `dialog_agree` takes a refusal whose correction words are garbled by ASR as neutral (018 KO, 012 KO).
+
+### Caveats
+
+- All tasks are dev ids (0..49 tuned on, 50..99 held out from tuning but from the dev split). The paper must report the test split.
+- Run noise is about 3 tasks per 50; s5 -> s6 is 5 task-level wins to 1 on dev; ASR-on and holdout have one replicate only.
+- Robot draws are keyed by (skill, args, nth call), user draws by the ask index, so a flag that adds or removes a question moves where the
+  noise lands (holdout 089 KO).
+- The 8B is not deterministic on a cache miss; variants in one replicate share one locked cache and are paired, replicates are not.
+- The ASR-on comparison uses a different cache from `asr_off` rep1, so its per-task changes mix ASR and 8B noise.
+- Only `dialog_agree` and `dialog_unstick` log whether they fired; for the other flags the events show only that the flag was active.
+- s6 costs more: +10 s simulated time and +1.5 skill calls per EN episode over s5 (episodes that now run instead of stopping).
+- Notes and scripts: scratchpad `homeloop/lab/r13` (`final.sh`, `holdout.sh`, `asr_on.sh`, `report.md`, `report_asr_on.md`, `an/` for the
+  paired tests and failure buckets).

@@ -3709,8 +3709,11 @@ read at the end):
   to the bed in the same room; 047: from the bed to an armchair in the living room). The spot was reachable from the start position (0.45 and
   0.52 m); at the end the object is on the stale spot and nothing is within the person's reach. The ENV entry is never updated while the robot
   works (`refresh_person_spot` keeps any old spot that has a free slot, and the robot's `look` lists only person ids per room), so the robot
-  has no reading that says so. In 033 the robot also walked to the kitchen and back for nothing (the gate's `op_complete` appended the full
-  fetch after a Pick, the tidy removed Find / Pick afterwards and left the `MoveTo source`: 80 s more for the person to leave).
+  has no reading that says so. In 033 the robot also walked to the kitchen and back for nothing (80 s more for the person to leave).
+  Correction from the check replay below: the walk does NOT come from `op_complete`. The gate's symbolic round made no edit; the LLM
+  sub-goal edit (`subgoal_repair`, round 1, finding "this sub-goal must also achieve: Place the red mug on spot within your reach" sent to
+  sub-goal 3 "go to dock") returned MoveTo counter, Find, Pick, MoveTo spot, Place spot, and `plan_tidy` then removed Find / Pick as no-ops
+  and kept the `MoveTo counter@kitchen`.
 - Not a reach problem (5 of the 7 cases): at the end the object is not where the claim says, or is with someone else: dev 007 (EN, KO:
   towel_2 is still on dresser@bedroom), 015 EN (book_1 is in the grandpa's hand), 021 KO (glass_2 on shelf@kitchen), 039 KO (bowl_1 still in
   kimchi_fridge@kitchen). Not traced further here (wrong instance or an unverified claim). Holdout EN 088 is not a delivery error either: the
@@ -3733,13 +3736,16 @@ object, place or person name in the code; fail open.
    nearest to them" (needs a hand-over action).
 4. The end-of-run goal check reads the person's entry again: the object was put down at the entry's `spot` then; another spot or none now = the
    goal is NOT met (honest failure instead of "done").
-5. Gate: `op_complete` no longer re-adds the fetch of an object the plan already holds (the walk back to the source).
+5. Gate: `op_complete` no longer re-adds the fetch of an object the plan already holds (the walk back to the source). It changes no
+   recorded episode, and it does not remove the 033 walk, which comes from the LLM sub-goal edit (see the correction above): under s8, 033
+   still walks to the kitchen and back (sim time 376 s against 373 s for s7, the hand-over takes about 55 s).
 `AssistLoop.clock`: a host with its own clock sets it (the bench sets the episode's simulated clock; robot_agent's `time.time()` there advances
 only with `sleep`, which is why the first replay saw an age of 0.3 s).
 
 The one new piece of pack data is the trust time, carried by the variants as a manifest overlay (`SNAPSHOT_OVERLAY`, `assumed: true`): 60 s,
 a design choice with no source (how long an adult at home stays where they were last seen is not a published number we found). It does not
-use the simulator's reach radius, height bands or the person's script. Sensitivity (below): 30, 60 and 120 s give the same result on dev.
+use the simulator's reach radius, height bands or the person's script. Sensitivity (below, against 60 s on dev rep1): 30 s turns KO 037
+S into a MISS, 120 s leaves KO 047 a false success (no hand-over), 300 s is s7 again for 033 (false success).
 
 ### Offline replay (dev 0..49, `asr_off`, rep1, official r14 caches, no GPU; a task whose new path needs an LLM call the cache does not
 hold stops at the miss and is listed as MISS: it needs the live run)
@@ -3753,6 +3759,42 @@ hold stops at the miss and is listed as MISS: it needs the live run)
 - s6 -> s6d: no completed episode changes; 047 KO and 048 MISS.
 - Trust time: 30 s adds a KO loss (37 S -> MISS), 120 s fixes 033 EN but not 047 KO, 300 s changes nothing.
 
+### Check replay (all recorded sets; scratchpad `homeloop/lab/r15/chk`, `cmp.py` / `cmp.out`)
+
+Cache-only replay with the r15 code, no GPU, from copies of the recorded caches with the "N s ago" age normalised as in round 14 (dev
+0..49 rep1 and rep2: the official r14 caches; holdout dev 50..99 and ASR on: the round-14 canon caches plus the pilot fills).
+1,600 episodes: s7, s8, s6, s6d x EN / KO x 4 sets. S / GU / FS (+MISS):
+
+| set | lang | s7 | s8 | what changed (s7 -> s8) |
+|---|---|---|---|---|
+| dev rep1 | en | 32 / 15 / 2 (+1) | 33 / 14 / 1 (+2) | 033 FS -> S; 048 GU -> MISS |
+| dev rep1 | ko | 29 / 17 / 4 | 29 / 16 / 3 (+2) | 047 FS -> MISS, 048 GU -> MISS |
+| dev rep2 | en | 34 / 14 / 1 (+1) | 35 / 13 / 0 (+2) | 033 FS -> S; 048 GU -> MISS |
+| dev rep2 | ko | 29 / 17 / 4 | 29 / 16 / 3 (+2) | 047 FS -> MISS, 048 GU -> MISS |
+| holdout | en | 30 / 14 / 6 | 30 / 14 / 4 (+2) | 070 FS -> S (asked where, front door, handed over); 051 S -> MISS, 069 FS -> MISS |
+| holdout | ko | 20 / 21 / 9 | 19 / 20 / 9 (+2) | 051 S -> MISS, 054 GU -> MISS |
+| ASR on | en | 32 / 16 / 2 | 33 / 15 / 1 (+1) | 033 FS -> S; 048 GU -> MISS |
+| ASR on | ko | 24 / 19 / 7 | 24 / 18 / 6 (+2) | 047 FS -> MISS, 036 GU -> MISS |
+
+- Flag off: s6 replays its r13 episodes in 400 of 400 cases, s7 its r14 episodes in 398 of 400; the 2 others (dev 025 EN, both
+  replicates) stop at a miss made by the age normalisation (9 canon keys of dev rep1 carry two replies); without it, s7 025 equals the
+  recorded episode and s8 025 equals s7 in both replicates.
+- Every changed decision is the option's own: in all 107 changed episodes (81 complete, 26 stopped at a miss; s8 and s6d) the first
+  differing robot call is the hand-over in place of the pre-place grasp check and the put-down. Of the five parts, only (1) and (2) act
+  (`lab_events` of the complete episodes: stale 87, asked_where 2; no `no_declared_spot`, `stale_no_handover`, end-check rejection or
+  gate change). The snapshot age at the put-down is
+  61..371 s, so with 60 s every put-down for a person in these sets became a hand-over.
+- No recorded success changes among complete episodes. Two recorded successes stop at a miss after the change (holdout 051 EN and KO):
+  the hand-over hit an injected `hw_fault` (draws keyed by call index; s7's put-down at that index succeeded), the replan needs the LLM.
+- s6 -> s6d: the same pattern (dev: 047 KO FS -> MISS, 048 MISS; holdout: 070 EN FS -> S, 051 EN / KO S -> MISS, 069 EN FS -> MISS, 054 KO
+  GU -> MISS; ASR on: 048 EN, 047 KO, 048 KO GU -> MISS), no change among complete episodes on dev.
+- dev 033 EN no longer ends in a false success (3 of 3 recorded runs, by hand-over). Holdout EN 088 is unchanged, false success under s8
+  too: the put-down was at 58 s (under the trust time), and a hand-over would not help: the robot answered the correction with "could not
+  apply that: ... I will carry on" and delivered the mug, while the goal is the glass. It stays out of scope (correction handling).
+- Cost: a hand-over takes about 40-55 s of simulated time against about 10 s for a put-down (the person must take it); over the 81
+  complete changed episodes the episode time changes by -17..+58 s (median +28 s); LLM calls are equal except dev 011 (1-5 fewer: s7's
+  put-down there hit an injected `hw_fault`, and its recovery messages and end-check misses cost the calls).
+
 ### Tests
 
 robot_agent `tests/test_sage_lab_r15_reach_delivery.py` (19, through the real `AssistLoop.run_blocking` with a scripted LLM, planner and a symbolic
@@ -3764,8 +3806,13 @@ robot_agent 1523 passed, 3 skipped; bench `tests/test_lab_r15_s8.py` (variants, 
 
 ### Left (needs the GPU phase) and simulator issues
 
-- Live paired runs s7 vs s8 and s6 vs s6d (dev 0..49 x 2, holdout, ASR on) to see the MISS cases (dev 047 KO, 048 EN / KO) and the hand-over's
-  own failure modes (timeout "user did not take", drop). The offline replay cannot say whether hand-overs lose elsewhere.
+- Live paired runs s7 vs s8 and s6 vs s6d (dev 0..49 x 2, holdout, ASR on) to see the MISS cases (dev 047 KO, 048 EN / KO; holdout 051 EN /
+  KO, 069 EN, 054 KO; ASR on 048 EN, 036 / 047 KO) and the hand-over's own failure modes (timeout "user did not take", drop, hardware fault).
+  The offline replay cannot say whether hand-overs lose elsewhere.
+- The 033 walk to the kitchen and back is not fixed (it comes from the LLM sub-goal edit and `plan_tidy`, not from `op_complete`); a fix
+  would be a tidy rule (a MoveTo that only led to removed no-op steps) and needs its own measurement.
+- The pack's step-failure message puts the step object in the sentence as is; a failed hand-over to the speaker says the ENV key
+  ("spot within your reach 건네주기에 실패했습니다") before the translator (homeloop_robot configs, frozen: report only).
 - Simulator, report only: (1) `skills._sk_vlm_check` drops `mode` in `_resolve_atom` (a robot cannot ask whether a reach delivery holds);
   (2) the ENV never tells the robot where the person is now (`refresh_person_spot` keeps a free old spot; `look` gives ids per room), and
   `person_spot` uses a 1.2 m radius while the judge's reach radius is about 0.63 m, so a declared `spot` is not always reachable although the ENV

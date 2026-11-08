@@ -3973,3 +3973,80 @@ episodes. NOT established: that s8 > s7 is significant (p 0.06 to 0.25), that s7
 - Simulator, report only (frozen): fault and miss draws are keyed by call index, so an option that adds or replaces calls moves where an
   injected fault lands (EN 126, EN 156, KO 123); `find.p_miss` is drawn fresh at every look, so `relook`'s gains are optimistic; plus the
   issues listed in "Round 15: reach delivery" above.
+
+## Round 16 (stream B): audit of the round 12-15 flags, constants moved to pack data, sweep plan (2026-11-09)
+
+No GPU and no live run. Branches: robot_agent `sage-v2/r16b` (01c9b4b), bench `r16b`. Nothing pushed.
+
+### Audit
+
+All hard-coded constants, thresholds, words, action names, language codes and simulator-derived assumptions of `dialog_agree`,
+`dialog_agree2` (guard, `dialog_ext`), `relook`, `reach_delivery`, `unapplied_change` and `request_coverage`, classified (language / robot /
+benchmark / simulator / skill) with a severity: scratchpad `homeloop/lab/r16/audit_r12_15.md` (46 findings; 4 high, 18 medium before
+the fixes). The high ones were skill names in code: `Place` (recognising the put-down of `reach_delivery`), `MoveTo` (the where-question
+of `reach_delivery`), `Close` / `Open` (the reopen sense of `relook`) and the particle chain `{1,2}` of the garble guard.
+
+### What moved (robot_agent, all with the old value as the bench overlay, marked assumed)
+
+| was in code | now | fail open |
+|---|---|---|
+| `"Place"`, `"MoveTo"`, `"Close"`, `"Open"` in the options | `planner.action_roles.{put_down, move, close, open}` | a role not declared = that part does nothing |
+| `{1,2}` particles after a name | `planner.agree_guard.particle_chain` (2) | not declared = no particle-tail test |
+| `min(3, len)` tail of a stem | `planner.agree_guard.tail_chars` (2) | not declared = no declared-tail skip |
+| `sc.get("min_share", 0.7)` | pack `script.min_share` only | none = no share test |
+| `MAX_PARTS = 2`, `MAX_STEPS = 40` | `planner.coverage_limits` | none = no cap |
+| no check of `agree_guard`, `person_snapshot`, `room_names` | validated in `manifest.py` (unknown keys, ranges) | n/a: a bad value is an error at load |
+
+Bench: `ACTION_ROLES_OVERLAY` (new, in `S7_OVERLAY`, `S6D_OVERLAY` and so `S8_OVERLAY`), `AGREE_GUARD_OVERLAY` carries the two new numbers, and
+`HOMELOOP_RA_SET` sets a manifest planner key for one run (recorded in `summary.json`; see `docs/robot_agent.md`).
+
+### Left, with the reason
+
+Language lists (the speaker words of `dialog_agree`, `isascii()` of the plausibility test, the final text of `unapplied_change`) stay for
+stream A (language packs); the second-look budget `20 x miss_rate` clamped to 1..4 and `SECOND_LOOKS = 2` belong to the search belief of
+round 4b, in effect without `relook`; `AssistLoop._restates` 0.6 / 4 / 3 is older than round 12; the abstract action vocabulary of the
+gate is the pack contract.
+
+### Simulator conventions, written down as limitations
+
+`docs/env.md` (robot_agent) and `docs/robot_agent.md` (here): the wait schedule works against the simulator's "a wait of at least 5 s
+clears a camera fault with probability 0.5" (assumed there); `relook` and second looks assume independent misses per look, which holds by
+construction because each `find` draws afresh; `reach_delivery` counts the snapshot age in simulated seconds, which depend on partly
+assumed skill durations, and its gain depends on the seeded schedule on which the simulated person moves.
+
+### Sensitivity-sweep plan (not run; for the Live phase)
+
+`homeloop/lab/r16/sweep_plan.json` (scratchpad; 17 parameters, each with the current value, the values to try, the variant, the dev
+task sets, the metric and the way to run). Dev sets only: dev50 rep1 / rep2, holdout, ASR on; the test split is not used. Run with
+`HOMELOOP_RA_SET`, baseline first, on a copy of the shared cache, pilot of 3-5 tasks first. Parameters: `person_snapshot.trust_s` (60;
+15 .. 100000), `agree_guard.garble_ratio` (0.6; 0.4 .. 0.9), `particle_chain`, `tail_chars`, the six `unstick.*` numbers,
+`recovery.return_tries` (3), `recovery.wait.schedule_s` (2/4/8 s; control row `--set perception.p_clear_on_wait=0`),
+`recovery.blocked_putin` (control row `--set verify.p_false_success=0`), `detector_miss_rate` (0.1; control rows `--set find.p_miss=...`),
+`search_total`, `understand_max_tokens` / `understand_max_goals`, `coverage_limits`. A control row moves the simulator constant the
+option is suspected to exploit: a gain that disappears there is a gain against the simulator's rule, not a finding about the method.
+
+### Checks
+
+Flag-off and data-move check, cache-only replay (no GPU, scratchpad `homeloop/lab/r16/b`: `one_b.sh`, `cmp_b.py`; the same dead-LLM-port
+replay and the "N s ago" canon keys as the round 15 check). Old = the r15 heads (robot_agent `sage-v2/r15`, bench `r15`), new = r16b, the
+same shared caches (copied, the round results untouched). 2,000 episodes: dev 0..49 rep1 and rep2, holdout, ASR on, x `sage_s5`, `sage_s6`,
+`sage_s7`, `sage_s8`, `sage_s6d` x EN / KO x 50 tasks (s5 and s6 are the flag-off arms of the options audited here, s7 / s8 / s6d the
+flag-on arms with the new overlay data).
+
+- 1,969 of 2,000 episodes complete on both sides: `episodes.jsonl` byte-identical in 1,969 of 1,969 (calls, status, events, `lab_events`,
+  sim time), and the cache-miss logs identical.
+- The other 31 stop at the same cache miss on both sides (exit 3, the `miss.txt` identical): the new path of the option needs the live model
+  (the r15 check had the same cases).
+- The options acted in this replay, so the equality covers the moved data: `relook` 350 times (senses `reopen` 52 and `wait` 298, i.e. the
+  `action_roles` close / open path), `reach_delivery` 89 (s8, s6d), `dialog_agree` (with the guard numbers) 182, plus the earlier flags.
+- A first run of 8 old-side jobs broke because the replay script was edited while it ran (exit 127); they were rerun, not counted.
+- robot_agent suite: two tests of `test_sage_lab_r12_agree` / `r14_agree2` ("option off is the earlier events") failed once in a full run
+  before any change (order dependent, they pass alone and in the next full run); not investigated further.
+
+### Tests
+
+robot_agent `tests/test_sage_lab_r16_data.py` (30: manifest validation of the new and old sections, roles, a pack with another put-down
+name, reach_delivery and relook with and without the roles through the real loop, caps, guard numbers and a missing one, script share)
+and the r8 / r14 / r15 tests with the new data: 1561 passed, 3 skipped. Bench `tests/test_lab_r16_overlay.py` (overlay data of s6d / s7 /
+s8, valid manifest data, the switch: nothing set = unchanged object, set values merged and recorded, malformed refused) and the two variant
+tests adjusted: bench suite 507 passed.

@@ -17,8 +17,8 @@ def test_sage_s7_is_s6_plus_the_round_14_options_only():
     s6, s7 = planner_class("robot_agent:sage_s6"), planner_class("robot_agent:sage_s7")
     assert s7.loop_options == {**s6.loop_options, "dialog_agree2": "1", "relook": "1"}
     assert "dialog_agree2" not in s6.loop_options and "relook" not in s6.loop_options
-    assert s7.manifest_overlay["planner"]["agree_guard"] == {"garble_ratio": 0.6}
-    assert {k: v for k, v in s7.manifest_overlay["planner"].items() if k != "agree_guard"} == s6.manifest_overlay["planner"]
+    assert s7.manifest_overlay["planner"]["agree_guard"] == {"garble_ratio": 0.6, "particle_chain": 2, "tail_chars": 2}
+    assert {k: v for k, v in s7.manifest_overlay["planner"].items() if k not in ("agree_guard", "action_roles")} == s6.manifest_overlay["planner"]
     c6, c7 = s6.run_config(), s7.run_config()
     assert c7.get("dialog_agree2") == 1 and c7.get("relook") == 1 and "relook" not in c6 and "dialog_agree2" not in c6
 

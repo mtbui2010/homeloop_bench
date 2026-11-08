@@ -19,7 +19,7 @@ def test_sage_s8_is_s7_plus_reach_delivery_only():
     assert s8.loop_options == {**s7.loop_options, "reach_delivery": "1", "unapplied_change": "1"}
     assert "reach_delivery" not in s7.loop_options and "unapplied_change" not in s7.loop_options
     mo7, mo8 = s7.manifest_overlay["planner"], s8.manifest_overlay["planner"]
-    assert {k: v for k, v in mo8.items() if k != "person_snapshot"} == mo7
+    assert {k: v for k, v in mo8.items() if k != "person_snapshot"} == mo7           # the roles are already in s7
     assert set(mo8["person_snapshot"]) == {"trust_s"} and mo8["person_snapshot"]["trust_s"] > 0
     assert s8.manifest_overlay["assumed"] is True and "trust" in s8.manifest_overlay["note"]
 
@@ -29,7 +29,7 @@ def test_sage_s6d_is_s6_plus_reach_delivery_only():
     assert s6d.loop_options == {**s6.loop_options, "reach_delivery": "1"}
     assert "dialog_agree2" not in s6d.loop_options and "relook" not in s6d.loop_options
     mo6, mo6d = s6.manifest_overlay["planner"], s6d.manifest_overlay["planner"]
-    assert {k: v for k, v in mo6d.items() if k != "person_snapshot"} == mo6
+    assert {k: v for k, v in mo6d.items() if k not in ("person_snapshot", "action_roles")} == mo6
     assert mo6d["person_snapshot"] == planner_class("robot_agent:sage_s8").manifest_overlay["planner"]["person_snapshot"]
 
 

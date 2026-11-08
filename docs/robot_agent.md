@@ -158,3 +158,37 @@ scores are not results.
 - `say::text` programs of llm_direct carry no language; the robot package's `say` defaults to English, so a
   Korean sentence is logged as English and the `said_to` check (Korean keywords) fails.
 - ClosedLoop (grace, llm_direct) has no understand step and cannot refuse.
+
+## Assumed pack values, the sensitivity switch and simulator conventions (round 16)
+
+The variants after round 3 add data to the robot pack's manifest (`manifest_overlay` in `robot_agent_adapter.py`) because the frozen
+mock robot package declares none. Every overlay is marked `assumed: true`, with a note, and is written into `summary.json` under
+`config.planner_config.manifest_overlay`:
+
+| overlay | keys | variants | what it is |
+|---|---|---|---|
+| `WAIT_OVERLAY` | `recovery.wait` (`Wait`, 2 / 4 / 8 s) | exec family, s5..s8 | assumed backoff; see the simulator note below |
+| `BLOCKED_PUTIN_OVERLAY` | `recovery.blocked_putin` (`Close`, `Open`) | exec family, s5..s8 | assumed; overlaps the simulator's partial-open rule |
+| `RETURN_OVERLAY` | `recovery.return_tries` 3 | exec family, s5..s8 | assumed (lab round 3) |
+| `UNSTICK_OVERLAY` | `unstick.*` (5, 24, 0.6, 3, 4, 6) | s5..s8 | assumed, fitted by eye on dev 100 |
+| `AGREE_GUARD_OVERLAY` | `agree_guard.garble_ratio` 0.6, `particle_chain` 2, `tail_chars` 2 | s7, s8 | assumed; the last two were constants in robot_agent until round 16 |
+| `SNAPSHOT_OVERLAY` | `person_snapshot.trust_s` 60 | s8, s6d | assumed, a design choice |
+| `ACTION_ROLES_OVERLAY` | `action_roles` put_down `Place`, move `MoveTo`, open `Open`, close `Close` | s6d, s7, s8 | the mock robot's own action names, stated by the bench (round 16); without them `reach_delivery` and the reopen sense of `relook` do nothing |
+
+**Sensitivity switch.** `HOMELOOP_RA_SET="person_snapshot.trust_s=30,agree_guard.garble_ratio=0.5"` sets keys of the manifest `planner`
+section on top of the variant's overlay for one run (a dotted path, a JSON or plain value; a list keeps its commas). Nothing set: the
+overlay is untouched and every earlier run reproduces. The effective overlay, with the string under `sensitivity_set`, is recorded in
+`summary.json`. `--set` is for the simulator's profile and is not used for robot numbers. The planned sweeps are in
+`docs/experiments.md`, round 16.
+
+**Behaviour that depends on simulator conventions.** Read these results with the sentence that applies:
+
+- `wait_on_robot`: the simulator clears a camera / detector fault by a `wait` of at least 5 s with probability 0.5
+  (`perception.p_clear_on_wait`, assumed in the simulator, `homeloop_robot/docs/failure_model.md`). Of the schedule 2 / 4 / 8 s only the 8 s
+  entry can clear it. The gain is a gain against that rule.
+- `relook` and the second looks of the search belief: a miss is treated as an independent draw per look. The simulator draws `find.p_miss`
+  (0.093) afresh for each `find`, so that holds by construction; a detector that misses the same view again is not in the simulator, and
+  the reopen / wait senses of `relook`, built for it, cannot show a gain here.
+- `reach_delivery`: the person entry of the ENV is a snapshot; `trust_s` counts simulated seconds on the simulator's clock, which depend on
+  skill durations that are partly assumed (`find.duration_s`, `calibration.md`); the simulator moves people on a fixed seeded schedule and
+  judges a delivery where the person is at the end (`homeloop_robot/docs/reach.md`). The effect size is tied to how often a person has moved.

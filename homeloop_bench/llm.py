@@ -25,6 +25,7 @@ from typing import Optional, Protocol, runtime_checkable
 from . import shared_cache
 
 DEFAULT_MODEL = "qwen3-vl:8b-instruct"
+CACHE_ONLY = "cache-only"            # --llm cache-only: replay from the own / shared cache, a miss raises CacheMiss
 SHARED_CACHE_ENV = "HOMELOOP_LLM_SHARED_CACHE"      # dir of a read-through prompt-sha cache shared by paired runs
 
 
@@ -34,6 +35,11 @@ class BudgetExceeded(RuntimeError):
 
 class LLMError(RuntimeError):
     """The LLM server failed (network, HTTP error, bad body)."""
+
+
+class CacheMiss(LLMError):
+    """``--llm cache-only``: a prompt the caches do not hold. The episode is marked ``replay_miss`` (never ``error``) and
+    listed, so a rescore of recorded runs separates what needs a rerun from what crashed."""
 
 
 @runtime_checkable
@@ -125,6 +131,25 @@ class FakeLLM:
         from .planners import keyword
         self.n_calls += 1
         return keyword.answer(prompt, temperature=temperature, seed=seed)
+
+
+class NoServer:
+    """The inner LLM of ``--llm cache-only``: it answers nothing, so every miss raises :class:`CacheMiss` at once (no
+    connection attempt, no retry back-off)."""
+
+    url = "cache-only://replay"          # truthy, so code that asks "is there a server?" (role clients) builds its client
+
+    def __init__(self, model: str = DEFAULT_MODEL):
+        self.model = model
+        self.n_calls = 0
+        self.think: Optional[bool] = None
+
+    def chat(self, prompt: str, format=None, temperature: float = 0.0, seed: int = 0, num_predict=None) -> str:
+        raise CacheMiss("cache-only: no cached answer for this prompt")
+
+    def chat_messages(self, messages, temperature: float = 0.0, seed: int = 0, format=None, prompt: str = "",
+                      num_predict=None) -> str:
+        raise CacheMiss("cache-only: no cached answer for this prompt")
 
 
 def cache_key(model: str, prompt: str, format, temperature: float, seed: int) -> str:
@@ -335,13 +360,13 @@ def make_llm(spec: Optional[str], model: Optional[str] = None, cache_dir: Option
         return None
     if spec == "fake":
         return FakeLLM()
-    if spec.startswith(("http://", "https://")):
-        llm = OllamaHTTP(spec, model or DEFAULT_MODEL)
+    if spec == CACHE_ONLY or spec.startswith(("http://", "https://")):
+        llm = NoServer(model or DEFAULT_MODEL) if spec == CACHE_ONLY else OllamaHTTP(spec, model or DEFAULT_MODEL)
         if cache_dir:
             safe = (model or DEFAULT_MODEL).replace("/", "_").replace(":", "_")
             llm = CachedLLM(llm, Path(cache_dir) / f"{safe}.jsonl", shared=shared_cache_path(model or DEFAULT_MODEL))
         return llm
-    raise ValueError(f"--llm must be a URL (http://host:port) or 'fake', got {spec!r}")
+    raise ValueError(f"--llm must be a URL (http://host:port) or 'fake' or 'cache-only', got {spec!r}")
 
 
 def parse_json(text: str):

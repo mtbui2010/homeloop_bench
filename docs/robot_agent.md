@@ -158,6 +158,8 @@ scores are not results.
 - `say::text` programs of llm_direct carry no language; the robot package's `say` defaults to English, so a
   Korean sentence is logged as English and the `said_to` check (Korean keywords) fails.
 - ClosedLoop (grace, llm_direct) has no understand step and cannot refuse.
+- Partial refusals: the adapter reads `refusals` of the final event (robot_agent r19+) and calls `env.note_refusal` for each
+  ([metrics](metrics.md#refusals-and-parts)); a robot_agent without the key reports none, as before round 19.
 
 ## Assumed pack values, the sensitivity switch and simulator conventions (round 16)
 

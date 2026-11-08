@@ -333,6 +333,24 @@ def cmd_tasks_file(a) -> int:
     return 0
 
 
+def cmd_rescore(a) -> int:
+    from .rescore import rescore_dir
+    info = rescore_dir(a.old, a.out, a.tasks)
+    print(json.dumps({k: v for k, v in info.items() if k != "needs_rerun"}, sort_keys=True))
+    for r in info["needs_rerun"][:20]:
+        print(f"needs rerun: {r['task_id']} seed {r['seed']} {r['planner']} {r['lang']}: {r['reason']}")
+    return 0
+
+
+def cmd_rescore_diff(a) -> int:
+    from .rescore import diff_dirs
+    d = diff_dirs(a.old, a.new, a.tasks, a.out, a.subset)
+    print(json.dumps({k: (v if not isinstance(v, list) else len(v)) for k, v in d.items()}, sort_keys=True))
+    for u in d["unexpected"][:20]:
+        print(f"UNEXPECTED {u['task_id']} seed {u['seed']}: {u['fields']}", file=sys.stderr)
+    return 0 if d["ok"] else 4
+
+
 def cmd_calibrate(a) -> int:
     from .llm import make_llm
     from .planners.knowno_like import CALIB_PATH, calibrate
@@ -386,7 +404,7 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--profile", default="real", choices=["ideal", "real", "stress"])
     r.add_argument("--seeds", type=int, default=1)
     r.add_argument("--lang", default="en", choices=["en", "ko"])
-    r.add_argument("--llm", default=None, help="Ollama URL (http://host:port) or 'fake' (tests only)")
+    r.add_argument("--llm", default=None, help="Ollama URL (http://host:port), 'fake' (tests only) or 'cache-only' (replay from the caches; a miss marks the episode replay_miss)")
     r.add_argument("--model", default=DEFAULT_MODEL)
     r.add_argument("--out", required=True)
     r.add_argument("--workers", type=int, default=1)
@@ -457,7 +475,7 @@ def build_parser() -> argparse.ArgumentParser:
                     help="clean: the task's own text; asr: the text after the profile's simulated speech recognition")
     ue.add_argument("--profile", default="real", choices=["ideal", "real", "stress"], help="the speech-recognition profile")
     ue.add_argument("--seed", type=int, default=0, help="the episode seed (the speech-recognition draw)")
-    ue.add_argument("--llm", default=None, help="Ollama URL (http://host:port) or 'fake' (tests only)")
+    ue.add_argument("--llm", default=None, help="Ollama URL (http://host:port), 'fake' (tests only) or 'cache-only' (replay from the caches; a miss marks the episode replay_miss)")
     ue.add_argument("--model", default=DEFAULT_MODEL, help="the planner's model (the one that plans; reads the request unless "
                                                            "--understand-model or the planner variant says otherwise)")
     ue.add_argument("--understand-model", default=None, help="robot_agent's understand_model for this run: another model reads "
@@ -484,6 +502,22 @@ def build_parser() -> argparse.ArgumentParser:
     tf.add_argument("--limit", type=int, default=None)
     tf.add_argument("--out", required=True)
     tf.set_defaults(fn=cmd_tasks_file)
+
+    rs = sub.add_parser("rescore", help="add the part split (refused correctly / carried out / not refused ...) to a recorded "
+                                        "run, offline; lists the episodes that need a rerun")
+    rs.add_argument("old", help="a run directory (episodes.jsonl + summary.json)")
+    rs.add_argument("--out", required=True)
+    rs.add_argument("--tasks", default=None, help="the run's --tasks file, when it used one")
+    rs.set_defaults(fn=cmd_rescore)
+
+    rd = sub.add_parser("rescore-diff", help="compare a run with its rerun (run --llm cache-only on the same shared cache); "
+                                             "exit 4 when anything outside the refusal fields moved")
+    rd.add_argument("old")
+    rd.add_argument("new")
+    rd.add_argument("--tasks", default=None)
+    rd.add_argument("--out", default=None, help="write the diff here (diff.json)")
+    rd.add_argument("--subset", action="store_true", help="the rerun covers only some tasks of the old run")
+    rd.set_defaults(fn=cmd_rescore_diff)
 
     k = sub.add_parser("calibrate-knowno", help="conformal threshold for knowno_like")
     k.add_argument("--split", default="train")

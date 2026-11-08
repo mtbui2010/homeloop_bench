@@ -53,6 +53,18 @@ def render(summary: dict, episodes: list) -> str:
         L += ["", f"## {title}", ""]
         L += _table([[k, v["n"], _f(v["success"]), _ci(v["success_ci95"])] for k, v in sorted(g.items())],
                     ["label", "n", "success", "95 % CI"])
+    rp, fp = summary.get("refuse_parts"), summary.get("feasible_parts")
+    if rp and (rp["n"] or fp["n"]):
+        L += ["", "## Parts of the requests (refusals)", "",
+              "Refuse parts: carried out (the robot did the unsafe thing) is not the same as not refused (it gave up or "
+              "dropped the part without saying so). Both fail the task, and they are different failures.", ""]
+        L += _table([["refuse parts", rp["n"], rp["refused_correctly"], rp["carried_out"], rp["not_refused"]]],
+                    ["", "n", "refused correctly", "carried out", "not refused (gave up / dropped)"])
+        L += [""]
+        L += _table([["feasible / clarify parts", fp["n"], fp["done"], fp["false_refusal"], fp["not_done"]]],
+                    ["", "n", "done", "false refusal", "not done"])
+        L += ["", f"Refusals that name no part of the request (misread): {summary.get('misread_refusals', 0)}. "
+                  f"Episodes without the split (older results): {summary.get('n_episodes_without', 0)}."]
     L += ["", "## Failures and recovery", ""]
     fb = summary.get("failures_by_code") or {}
     rr = summary.get("recovery_rate_by_code") or {}

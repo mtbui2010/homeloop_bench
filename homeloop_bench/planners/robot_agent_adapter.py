@@ -441,11 +441,11 @@ def translator_inner(env, model: str, think=None, url=None):
     """The translate model's client on the episode's server and cache dir (None under --llm fake: the fake
     answers translation prompts itself). ``think``: Ollama's switch for a role client (None = not sent); ``url``: another
     server for this model (the dialog role: ``$HOMELOOP_DIALOG_URL``)."""
-    from ..llm import CachedLLM, OllamaHTTP, shared_cache_path
+    from ..llm import CachedLLM, NoServer, OllamaHTTP, shared_cache_path
     url = url or _url(env)
     if not url or not model:
         return None
-    llm = OllamaHTTP(url, model)
+    llm = NoServer(model) if str(url).startswith("cache-only:") else OllamaHTTP(url, model)    # cache-only replay: no server
     if think is not None:
         llm.think = bool(think)
     x = getattr(env, "_llm_inner", None)
@@ -578,6 +578,34 @@ def _status(final: dict | None) -> str:
     if st == "refused":
         return "refuse"
     return "give_up"
+
+
+def declared_refusals(final: dict | None) -> list:
+    """The parts of the request the run declared it would not do (the ``refusals`` of robot_agent's ``done`` / ``failed`` /
+    ``refused`` event, docs/dialog.md "typed refusals"): [{kind, rule, why, goal{object, said, to, ...}}]. A loop that
+    declares none (ClosedLoop, older robot_agent) gives []. Anything malformed is skipped."""
+    out = []
+    for x in (final or {}).get("refusals") or []:
+        if isinstance(x, dict) and isinstance(x.get("goal"), dict):
+            out.append(x)
+    return out
+
+
+def note_declared_refusals(env, final: dict | None) -> int:
+    """Hand the run's declared partial refusals to the judge (``env.note_refusal``), before the episode ends. The text is
+    the robot's own object label and the user's own words for the object, not the spoken sentence (which also names the
+    person and is translated); no subtask index and no world id, because the planner knows neither. A run that refused
+    the WHOLE request (status ``refused``) is judged by that status and gets no extra partial refusals. Returns the number
+    noted."""
+    if _status(final) == "refuse":
+        return 0
+    n = 0
+    for x in declared_refusals(final):
+        g = x["goal"]
+        text = " | ".join(str(t) for t in (g.get("object"), g.get("said")) if t)
+        env.note_refusal(text, source="planner")
+        n += 1
+    return n
 
 
 def _roles_apart(loop_options: dict, overlay: dict) -> list:
@@ -809,6 +837,7 @@ class _RobotAgentPlanner:
             hb.set_backend(old_backend)
             if not os.environ.get("HOMELOOP_KEEP_RA_LOGS"):
                 shutil.rmtree(tmp, ignore_errors=True)     # run logs, live.jsonl, mem.json of this episode
+        note_declared_refusals(env, final)
         if env.status is None:
             if env.stop_k is not None:
                 env.finish("done", stopped_say(final, env.lang))

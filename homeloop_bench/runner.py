@@ -20,7 +20,7 @@ from homeloop_robot.rng import r6
 from homeloop_robot.types import _round_tree
 
 from .env import Budgets, EpisodeEnv, give_up_text, task_dict
-from .llm import BudgetExceeded, CachedLLM, FakeLLM, LLMError, llm_kind, make_llm
+from .llm import BudgetExceeded, CacheMiss, CachedLLM, FakeLLM, LLMError, llm_kind, make_llm
 from .user_intent import classifier_kind
 from .planners import make_planner, needs_llm, planner_available, planner_class
 
@@ -74,6 +74,8 @@ def run_episode(task, planner_name: str, profile: str, seed: int, lang: str, llm
             env.finish("give_up", give_up_text(env.lang), reason="planner returned without finishing")
     except BudgetExceeded:
         env.set_budget()
+    except CacheMiss:
+        env.set_replay_miss()
     except (LLMError, ImportError) as e:
         raise InfraError(f"task {env.task_id} seed {seed}: {type(e).__name__}: {e}") from e
     except Exception as e:  # noqa: BLE001 - any other planner crash is a failed episode (status "error")
@@ -81,7 +83,9 @@ def run_episode(task, planner_name: str, profile: str, seed: int, lang: str, llm
         if getattr(planner, "raise_errors", False):
             raise
     failed = getattr(env.llm(), "failed", None)
-    if failed is not None:              # an LLM error that the planner's own code swallowed
+    if isinstance(failed, CacheMiss):   # cache-only replay: a prompt no cache holds (also when the planner swallowed it)
+        env.set_replay_miss()
+    elif failed is not None:            # an LLM error that the planner's own code swallowed
         raise InfraError(f"task {env.task_id} seed {seed}: {type(failed).__name__}: {failed}") from failed
     rec = env.record()
     # H4: how many of this episode's LLM prompts were answered from the run's own cache ("hits"), from the file shared
@@ -433,7 +437,7 @@ def _merge_caches(shard_dirs: list, dest: Path) -> None:
 
 def _digest(llm, llm_spec, model) -> Optional[str]:
     """The Ollama model digest (``/api/tags``) of a URL run; None for fake / no LLM."""
-    if not llm_spec or llm_spec == "fake":
+    if not llm_spec or llm_spec in ("fake", "cache-only"):
         return None
     from .llm import model_digest
     try:

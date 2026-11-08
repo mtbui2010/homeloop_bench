@@ -612,7 +612,8 @@ class _RobotAgentPlanner:
                   "request_coverage",                       # round 8
                   "dialog_agree",                           # round 12
                   "dialog_agree2", "relook",                # round 14
-                  "reach_delivery")                         # round 15
+                  "reach_delivery",                         # round 15
+                  "hazard_receiver")                        # round 17
     # (round 2's flags were never recorded: their summary.json stay as they were)
     # every option the loop reads from the variant: the episodes of a variant that sets one carry ``lab_events``
     _ALL_LAB_FLAGS = _LAB_FLAGS + ("person_goals", "go_steps", "kind_anchor", "name_canon", "reask_abstain",
@@ -620,6 +621,9 @@ class _RobotAgentPlanner:
     # Data the variant adds to the robot pack's manifest for this run (a dict merged key by key into the loop's
     # ``robot.manifest.planner``), declared apart from the pack: the pack stays as it is, the summary records the overlay.
     manifest_overlay: dict = {}
+    # Options of the variant's base that this variant leaves OFF on purpose (round 17: ``sage_s8n`` is ``sage_s8`` without ``relook``).
+    # An option left off is simply not in ``loop_options``; this list says so in the run config, so the arm is explicit and recorded.
+    options_off: tuple = ()
 
     @classmethod
     def understands_apart(cls) -> bool:
@@ -644,6 +648,7 @@ class _RobotAgentPlanner:
                 **({"person_goals": 1} if cls.loop_kind == "assist" and cls.loop_options.get("person_goals") else {}),
                 # lab-round options, likewise only where set
                 **({k: 1 for k in cls._LAB_FLAGS if cls.loop_options.get(k)} if cls.loop_kind == "assist" else {}),
+                **({"options_off": list(cls.options_off)} if cls.options_off else {}),
                 # every loop option the variant sets, as given (also the round-2 flags), and the manifest data it adds
                 **({"loop_options": {k: str(v) for k, v in sorted(cls.loop_options.items())}}
                    if cls.loop_kind == "assist" and cls.loop_options else {}),
@@ -1173,6 +1178,26 @@ class SageS8Planner(SagePlanner):
     name = "robot_agent:sage_s8"
     loop_options = {**SageS7Planner.loop_options, "reach_delivery": "1", "unapplied_change": "1"}
     manifest_overlay = S8_OVERLAY
+
+
+class SageS8nPlanner(SagePlanner):
+    """Round 17: ``sage_s8`` WITHOUT ``relook`` (everything else identical: dialog_agree2, reach_delivery, unapplied_change and the same
+    manifest overlay). Round 15 found ``relook`` unproven (fresh dev 100..199: net 4 wins, 6 losses, partly the call cap). The arm is
+    recorded in the run config (``options_off``)."""
+    name = "robot_agent:sage_s8n"
+    loop_options = {k: v for k, v in SageS8Planner.loop_options.items() if k != "relook"}
+    manifest_overlay = S8_OVERLAY
+    options_off = ("relook",)
+
+
+class SageS9Planner(SagePlanner):
+    """Round 17: ``sage_s8n`` + ``hazard_receiver`` (a hazardous product is not handed to a vulnerable person: product class x
+    receiver class, both from language-pack data and the ENV's names; robot_agent ``core/safety/receiver_class.py``). No new manifest
+    data. Needs a robot_agent with the round-17 option (an older one drops unknown options silently)."""
+    name = "robot_agent:sage_s9"
+    loop_options = {**SageS8nPlanner.loop_options, "hazard_receiver": "1"}
+    manifest_overlay = S8_OVERLAY
+    options_off = ("relook",)
 
 
 class SageS6dPlanner(SagePlanner):

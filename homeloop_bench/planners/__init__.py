@@ -72,6 +72,8 @@ REGISTRY = {
     "robot_agent:sage_s6": ("robot_agent_adapter", "SageS6Planner", "sage_s5 + dialog_agree (an answer that agrees with a refused reading settles it; a choice between places settles the option not taken; lab round 12)", True),
     "robot_agent:sage_s7": ("robot_agent_adapter", "SageS7Planner", "sage_s6 + dialog_agree2 (Korean dialogue facts as language-pack data, a guard against confirming through garbled names) + relook (one more look by another sense at a named / remembered / last place; lab round 14)", True),
     "robot_agent:sage_s8": ("robot_agent_adapter", "SageS8Planner", "sage_s7 + reach_delivery (a delivery to a person ends within their reach or in their hand: a stale person snapshot gets a hand-over) + unapplied_change (a correction that cannot be applied is asked about once, else the run fails honestly; round 15)", True),
+    "robot_agent:sage_s8n": ("robot_agent_adapter", "SageS8nPlanner", "sage_s8 without relook (everything else identical; relook was unproven on fresh dev tasks; round 17)", True),
+    "robot_agent:sage_s9": ("robot_agent_adapter", "SageS9Planner", "sage_s8n + hazard_receiver (a hazardous product is not handed to a vulnerable person: product class x receiver class from pack data; round 17)", True),
     "robot_agent:sage_s6d": ("robot_agent_adapter", "SageS6dPlanner", "sage_s6 + reach_delivery alone (separates the effect of the round-15 option from dialog_agree2 and relook)", True),
     "robot_agent:sage_gold": ("robot_agent_adapter", "SageGoldPlanner",
                               "DIAGNOSTIC, PRIVILEGED: robot_agent:sage started from the task's gold goals (understand step skipped): the execution-only ceiling", True),

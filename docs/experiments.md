@@ -3525,3 +3525,163 @@ these failures; they were not traced one by one in this round. Holdout s6: EN 4 
 - s6 costs more: +10 s simulated time and +1.5 skill calls per EN episode over s5 (episodes that now run instead of stopping).
 - Notes and scripts: scratchpad `homeloop/lab/r13` (`final.sh`, `holdout.sh`, `asr_on.sh`, `report.md`, `report_asr_on.md`, `an/` for the
   paired tests and failure buckets).
+
+## Round 14: dialogue and re-look (2026-11-08)
+
+User decision: improve the two remaining failure groups of round 13, group 2 (dialogue does not converge, KO 18 / EN 4 per 100) and group 3
+(search / pick give-ups, EN 12 per 100). New variant `robot_agent:sage_s7` = `sage_s6` + `dialog_agree2` + `relook`; `sage_s6` stays the
+reference. The simulator stays frozen at `sim-freeze-r13` (6432c35, read only). Nothing pushed or merged; GPU 0 only, 8 clients, our Ollama
+container stopped at the end; the shared one and ports 8001 / 5577 / 8003 not touched; test split not touched.
+
+Branches (worktrees under `hl_wt/r14`): robot_agent sage-v2/r14 (from 86ea3f1): 7aec7e3, 28745ae, 597136d; homeloop_bench r14: 518002f
+(variant); embodiplan sage-v2/r14 at 4080017, no change.
+
+### What was built (both options default off)
+
+- `dialog_agree2` (group 2). The Korean facts that `dialog_agree` was missing are declared data in a new block `dialogue_ext` of
+  `lang/ko.json` and `lang/en.json`, read by the new `core/planning/dialog_ext.py`: polite endings (요), 아니-style self-correction markers
+  (used in place of the English-only `understand._CORR` while the option is on), Korean not-sure phrases, room names (침실 ...); a robot pack
+  can add `planner.room_names`. A language without the block gets nothing. Agreement guard (active only when the manifest declares
+  `planner.agree_guard.garble_ratio`; bench overlay value 0.6, marked assumed): `dialog_agree` does not confirm through a fuzzy-only object
+  match, an object alone (no place, room, person or option named), a token that is close to but not equal to a declared name or particle
+  (Unicode-letter similarity; Hangul compared by jamo), or text outside the language's declared script. It asks the same yes / no read-back
+  once more instead; a yes confirms, a real No still stops. The check runs only for languages whose pack declares `script.letters` (not EN).
+- `relook` (group 3). A Find miss (`absent`) at a place the person named, that memory holds, or that is the last place the belief has left
+  gets one more look with another sense before it counts as searched: close and reopen a container, the pack's declared wait action, or a
+  plain repeat. Once per object and place, counted against `search_total`, no LLM call; acts even when the pack declares
+  `detector_miss_rate=0`.
+- Tests through the real AssistLoop (scripted LLM, user and robot): `tests/test_sage_lab_r14_agree2.py`, `tests/test_sage_lab_r14_relook.py`
+  (001 / 021 EN, 008 / 015 KO, 012 / 018 KO false confirmation prevented, a real No stops, 089 shape, memory and last-place triggers, one
+  relook per place, `search_total=1` gives none, flag off identical, a made-up language does nothing); bench `tests/test_lab_r14_s7.py`.
+  robot_agent 1504 passed, 3 skipped; bench 492 passed.
+
+### Offline check and the two fixes
+
+Replay of sage_s6 and sage_s7 from copies of the r13 caches (no GPU, no LLM; one prompt with a wall-clock memory age "N s ago" normalised).
+sage_s6 on the r14 code reproduces the r13 `episodes.jsonl` in 400 of 400 episodes (flag-off proof for s6; the 40-pair sage / sage_s5 replay
+was not run). The first s7 replay found two bugs in the new option, both on clean text:
+- F1: `Guard.garbled` flagged ordinary Korean words (아니요 vs the name 아내, 갖다, 계시면 vs 거실) because only the prefix of a token was
+  compared. KO dev 013 (both replicates) and holdout 097 went from success to give-up.
+- F2: once `ko.json` declares not-sure phrases, `dialog_unstick.unsure_answer` dropped its structural fallback, so a garbled "잘 몽르겠어요."
+  became a bad refusal (ASR-on KO 013, success to give-up).
+
+Fixed in 597136d: the guard skips the pack's own words and their stems after a declared 1-2 character tail; `unsure_answer(...,
+fallback_too=True)` also runs the structural test when the language has phrases (only with the option on). After the fix the replay has no
+KO success turned into give-up among complete episodes.
+
+### Pilot
+
+The 112 episodes that stopped at a cache miss in the replay were run live (GPU 0, 8 clients, all exit 0) and combined with the 288 complete
+replays. Two KO losses (dev rep1 012: 8B plan left out the handover step, the same path succeeds in rep2; holdout 092: relook's close / open
+of the toy box hit injected open failures and used the shared replan budget). Decision: go to the full dev run.
+
+### Dev 0..49, `asr_off`, pooled over two replicates (n = 100 per cell; official runs `results/r14/dev50`)
+
+Versions: robot_agent 597136de36cb, homeloop_bench 518002f032ce, embodiplan 4080017ad509, homeloop_robot 6432c357826f. r13 caches copied per
+replicate, `--cache-lock`; A/A on 5 tasks: sage_s6 identical to r13 (only the cache hit counters differ). s6 and sage are the r13 runs.
+
+| variant | lang | S | FS | GU | O | asks | calls | LLM | max LLM | sim s | rep1 S / FS | rep2 S / FS |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| sage | en | 51 | 5 | 44 | 0 | 1.12 | 19.40 | 5.77 | 17 | 131 | 24 / 3 | 27 / 2 |
+| sage | ko | 41 | 10 | 49 | 0 | 2.19 | 18.38 | 8.67 | 19 | 127 | 21 / 5 | 20 / 5 |
+| sage_s6 | en | 60 | 3 | 37 | 0 | 1.40 | 21.08 | 5.90 | 17 | 145 | 29 / 2 | 31 / 1 |
+| sage_s6 | ko | 51 | 8 | 39 | 2 | 2.25 | 19.59 | 8.52 | 19 | 137 | 25 / 4 | 26 / 4 |
+| sage_s7 | en | 66 | 5 | 29 | 0 | 1.26 | 21.40 | 5.82 | 17 | 143 | 32 / 3 | 34 / 2 |
+| sage_s7 | ko | 58 | 8 | 34 | 0 | 2.19 | 20.43 | 8.95 | 21 | 134 | 29 / 4 | 29 / 4 |
+
+No budget hit in s7 (llm_budget 22); the two s6 KO budget stops (048) become give-ups.
+
+### Holdout dev 50..99 and ASR on (dev 0..49), rep1, n = 50 per cell: NOT clean
+
+There are no official s7 runs for these sets. The s7 rows are rebuilt from the pilot (cache replay plus live fill of the misses) on the final
+code; the same rebuild on dev matches the official dev runs in 195 of 200 episodes (196 same outcome). The sets were seen during the
+round (the replay and pilot ran s7 on every task, the tests use the shapes of holdout 097 and ASR KO 012 / 018, the 0.6 threshold was chosen
+on 012 / 018), and the ASR-on tasks are the dev tasks.
+
+| set | variant | EN S / FS / GU / O | KO S / FS / GU / O | LLM EN / KO |
+|---|---|---|---|---|
+| holdout | sage | 25 / 7 / 17 / 1 | 16 / 11 / 22 / 1 | 5.82 / 8.12 |
+| holdout | sage_s6 | 29 / 5 / 14 / 2 | 20 / 9 / 20 / 1 | 5.92 / 8.30 |
+| holdout | sage_s7 | 30 / 6 / 12 / 2 | 20 / 9 / 20 / 1 | 5.88 / 8.76 |
+| ASR on | sage | 27 / 2 / 20 / 1 | 17 / 4 / 28 / 1 | 6.04 / 8.90 |
+| ASR on | sage_s6 | 29 / 1 / 19 / 1 | 23 / 6 / 20 / 1 | 6.12 / 9.22 |
+| ASR on | sage_s7 | 32 / 2 / 16 / 0 | 24 / 7 / 19 / 0 | 6.12 / 9.30 |
+
+### Paired statistics (two-sided sign test; unit = task, successes summed over replicates)
+
+| pair | dev EN W / L | dev KO W / L | dev task x lang W / L, p | holdout task x lang W / L, p | ASR-on task x lang W / L, p |
+|---|---|---|---|---|---|
+| s6 -> s7 | 3 / 0 | 4 / 0 | 7 / 0, 0.016 | 2 / 1, 1.000 | 4 / 0, 0.125 |
+| sage -> s7 | 8 / 0 | 10 / 2 | 18 / 2, 0.0004 | 11 / 2, 0.022 | 14 / 2, 0.004 |
+| sage -> s6 (r13) | 5 / 0 | 6 / 2 | 11 / 2, 0.022 | 9 / 1, 0.021 | 10 / 2, 0.039 |
+
+Dev + holdout, task x lang: s6 -> s7 9 / 1, p = 0.021 (holdout not clean, dev tuned on).
+
+Where s7 differs from s6 and which group caused it (from the first call where the two differ):
+- Group 3 (relook): every EN win (dev 026, 043, 046 by the wait sense, 026 is a task the oracle fails too; holdout EN 053 and KO 053 by
+  reopen), every loss (holdout KO 092) and every new false success (dev EN 033 both replicates and ASR on, holdout EN 088: relook finds the
+  object after an injected miss, then the existing person delivery puts it on furniture, `delivered[reach]` false, and says done; ASR KO 025
+  and 047: the extra calls move the noise draws into an end-check phantom (025) and the same delivery error (047)).
+- Group 2 (`dialog_agree2`): every KO dev win (003: 김치냉장고요 now read; 032: self-repair 아니 소파에 seen, rep1 only; 020: agreement
+  fires; 045: the guard asks once more and the second answer settles it); ASR KO 045 win and 018 false success -> give-up. No effect on the
+  holdout (KO dialogue failures 6 -> 6, agreement not fired 4 -> 4), as expected for data fixed on dev.
+
+### False confirmations (an agreement fire on an episode that ends in false success)
+
+- ASR on: s7 0 of 100 episodes, s6 2 (KO 012, 018). KO 018 under s7: the guard sees 저한태 / 초룩색 착 and the object-only answer, asks
+  once more, the episode ends as an honest give-up. KO 012 under s7 is still a false success, but not through agreement: the repeated
+  read-back got an injected wrong "네, 맞아요." from the simulated user (`user_wrong_answer`).
+- `asr_off`: 0 for s6 and s7, dev and holdout. Guard false alarms without noise: dev KO 000 (좋겠어요) and 045 (계시면), both replicates,
+  4 of 17 KO agreement events; both episodes still succeed, the cost is one more question.
+
+### relook audit (dev, 98 events: wait 84, reopen 14; reason named 74, memory 24)
+
+At most one relook per (episode, place, object), no loops, no LLM calls. After an injected miss the second look found the object 15 times
+(EN 10, KO 5); after a true absence it missed 72 times, gave a phantom detection 7 times and "found" 6 times (heuristic, uncertain). The
+"named" reason counts any goal `from` given by the understand LLM, also places the person did not say (088, 047, 092).
+
+### Causes of the remaining failures, s6 -> s7 (dev `asr_off`, episodes of 100 per language)
+
+| cause | EN | KO |
+|---|---|---|
+| the oracle fails the same task and replicate too (injected faults) | 18 -> 16 | 18 -> 18 |
+| dialogue never confirmed | 4 -> 4 | 18 -> 13 |
+| search / reach / drop give-up after start | 12 -> 6 | 3 -> 3 |
+| hardware fault after start | 3 -> 3 | 1 -> 1 |
+| false success | 3 -> 5 | 6 -> 6 |
+| budget stop | 0 -> 0 | 2 -> 0 |
+| other | 0 -> 0 | 1 -> 1 |
+
+Holdout: EN injected 4 -> 3, search 3 -> 2, false success 5 -> 6, rest equal; KO identical (dialogue 6, search 7, false success 8,
+hardware 5, injected 4). ASR on: EN injected 9 -> 8, search 5 -> 3, false success 1 -> 2, budget 1 -> 0; KO dialogue 8 -> 9, search 2 -> 1,
+budget 1 -> 0. Still open: KO dialogue (13 per 100 on dev, 9 agreement events did not fire), the person-delivery grounding of "within your
+reach" to furniture (the source of the relook-exposed false successes), KO false successes (8B reading drops a goal).
+
+### Simulator issues (reported only, simulator frozen)
+
+- `find.p_miss` is drawn fresh on every Find call (homeloop_robot `skills.py` around line 681, keyed by the nth call), so a 2 s wait from the
+  same pose recovers an injected miss with probability 1 - p_miss. Real misses from occlusion or viewpoint are correlated, and the declared
+  source of the miss rate is a memory-retrieval failure that a second look would not fix. Gains from the wait sense are therefore optimistic.
+- Draws keyed by the nth call move the noise when an option adds calls (holdout KO 092, ASR KO 025).
+- Holdout EN 088: the episode goal atoms show `delivered[reach](glass_1, grandma)` while the task goal is the mug, under s6 too (scoring,
+  not traced).
+
+### Verdict
+
+`robot_agent:sage_s6` stays the reference. `sage_s7` is kept as an ablation (relook + agreement guard), not as the new main variant:
+- dev s6 -> s7 7 / 0 (p 0.016), +6 EN and +7 KO successes per 100, no budget hit, KO +0.4 LLM calls per episode;
+- no false confirmation under KO ASR noise (0 vs 2);
+- but no gain on the holdout (2 / 1, KO identical), false successes up by 5 over 400 episodes (all relook-related), and the holdout and
+  ASR-on numbers are rebuilt from the pilot, not clean runs.
+Before any claim that s7 > s6: a clean paired s6 vs s7 run (2 replicates, `asr_off` and ASR on) on never-seen tasks (dev 100..199 or the
+test split), and a fix of the person-delivery grounding. Optional follow-ups (each needs a new measurement): count relook "named" only when
+the heard words contain the place's declared name; drop the relook (no replan) when its own close / open fails.
+
+### Caveats
+
+- Dev 0..49 was tuned on; holdout and ASR-on were seen during the round and are rebuilt, not official runs; ASR-on is the dev tasks.
+- Run noise is about 3 tasks per 50; one seed; holdout and ASR-on one replicate.
+- The replay normalises the "N s ago" memory age, an approximation for those prompts; the 8B is not deterministic on a cache miss.
+- The simulator draws Find misses independently on each look (see above), so the relook wait gains are optimistic.
+- Notes and scripts: scratchpad `homeloop/lab/r14` (`an_r14.py` / `an_r14.out` dev tables, `an_r14_pre.py` / `an_r14_pre.out` holdout and
+  ASR-on, `an_r14_fs.py`, `an_r14_div.py`, `pt7/` replay, `pilot/` live fill, `decide2/`).

@@ -69,6 +69,7 @@ REGISTRY = {
     "robot_agent:sage_m1": ("robot_agent_adapter", "SageM1Planner", "robot_agent:sage_ground2 + the understand-model option with the runaway guard (same configuration as sage_um)", True),
     "robot_agent:sage_m2": ("robot_agent_adapter", "SageM2Planner", "robot_agent:sage_m1 + understand_schema_strict + understand_give_kind + understand_verify_verdict", True),
     "robot_agent:sage_s5": ("robot_agent_adapter", "SageS5Planner", "the sage_r3u bundle (ground2 + exec_integrity: endstate_check, wait_on_robot, reset_container, gate_strict + inventory_ask + dialog_unstick; step 5)", True),
+    "robot_agent:sage_s6": ("robot_agent_adapter", "SageS6Planner", "sage_s5 + dialog_agree (an answer that agrees with a refused reading settles it; a choice between places settles the option not taken; lab round 12)", True),
     "robot_agent:sage_gold": ("robot_agent_adapter", "SageGoldPlanner",
                               "DIAGNOSTIC, PRIVILEGED: robot_agent:sage started from the task's gold goals (understand step skipped): the execution-only ceiling", True),
     "robot_agent:grace": ("robot_agent_adapter", "GracePlanner",

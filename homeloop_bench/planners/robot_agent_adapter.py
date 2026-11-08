@@ -559,7 +559,8 @@ class _RobotAgentPlanner:
                   "inventory_ask", "dialog_unstick",       # lab round 3 (and 4: dialog_unstick)
                   "reask_anchor", "no_shared_listener", "understand_views", "understand_goals_first",   # round 7
                   "understand_schema_strict", "understand_give_kind", "understand_verify_verdict",
-                  "request_coverage")                       # round 8
+                  "request_coverage",                       # round 8
+                  "dialog_agree")                           # round 12
     # (round 2's flags were never recorded: their summary.json stay as they were)
     # every option the loop reads from the variant: the episodes of a variant that sets one carry ``lab_events``
     _ALL_LAB_FLAGS = _LAB_FLAGS + ("person_goals", "go_steps", "kind_anchor", "name_canon", "reask_abstain",
@@ -1045,6 +1046,16 @@ class SageS5Planner(SagePlanner):
     gate_strict, inventory_ask, dialog_unstick) with the same pack declarations."""
     name = "robot_agent:sage_s5"
     loop_options = dict(SageR3uPlanner.loop_options)
+    manifest_overlay = EXEC_UNSTICK_OVERLAY
+
+
+class SageS6Planner(SagePlanner):
+    """Lab round 12: ``sage_s5`` + ``dialog_agree`` (an answer that agrees with a refused reading settles it: where the run would give
+    up after the which-part question, the person's answers are compared with the reading, part by part; a choice between places,
+    once answered, settles the option not taken). No new pack data: the option reads the ENV, the goals and the robot's own questions.
+    Needs a robot_agent with the round-12 option (an older one drops unknown options silently)."""
+    name = "robot_agent:sage_s6"
+    loop_options = {**SageS5Planner.loop_options, "dialog_agree": "1"}
     manifest_overlay = EXEC_UNSTICK_OVERLAY
 
 

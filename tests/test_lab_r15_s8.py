@@ -16,8 +16,8 @@ def test_registered():
 
 def test_sage_s8_is_s7_plus_reach_delivery_only():
     s7, s8 = planner_class("robot_agent:sage_s7"), planner_class("robot_agent:sage_s8")
-    assert s8.loop_options == {**s7.loop_options, "reach_delivery": "1"}
-    assert "reach_delivery" not in s7.loop_options
+    assert s8.loop_options == {**s7.loop_options, "reach_delivery": "1", "unapplied_change": "1"}
+    assert "reach_delivery" not in s7.loop_options and "unapplied_change" not in s7.loop_options
     mo7, mo8 = s7.manifest_overlay["planner"], s8.manifest_overlay["planner"]
     assert {k: v for k, v in mo8.items() if k != "person_snapshot"} == mo7
     assert set(mo8["person_snapshot"]) == {"trust_s"} and mo8["person_snapshot"]["trust_s"] > 0

@@ -1102,10 +1102,11 @@ class SageS8Planner(SagePlanner):
     """Round 15: ``sage_s7`` + ``reach_delivery`` (a delivery to a person ends within their reach or in their hand: a put-down
     for a person whose ENV snapshot is older than the pack's ``person_snapshot.trust_s`` is the hand-over action instead; a
     person entry with a position and no declared reachable surface gets a hand-over; the goal check reads the person's entry
-    again; the gate no longer walks back to the source of an object the plan holds). The only new pack data is the trust time
+    again; the gate no longer walks back to the source of an object the plan holds) + ``unapplied_change`` (a correction that cannot
+    be applied asks the understand step's question once, else the run ends failed, never a success for the old goals). The only new pack data is the trust time
     (``S8_OVERLAY``). Needs a robot_agent with the round-15 option. ``sage_s7`` stays the reference."""
     name = "robot_agent:sage_s8"
-    loop_options = {**SageS7Planner.loop_options, "reach_delivery": "1"}
+    loop_options = {**SageS7Planner.loop_options, "reach_delivery": "1", "unapplied_change": "1"}
     manifest_overlay = S8_OVERLAY
 
 

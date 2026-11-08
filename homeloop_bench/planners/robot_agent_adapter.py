@@ -613,7 +613,8 @@ class _RobotAgentPlanner:
                   "dialog_agree",                           # round 12
                   "dialog_agree2", "relook",                # round 14
                   "reach_delivery",                         # round 15
-                  "hazard_receiver")                        # round 17
+                  "hazard_receiver",                        # round 17
+                  "dialog_hold", "noun_relabel")            # round 18
     # (round 2's flags were never recorded: their summary.json stay as they were)
     # every option the loop reads from the variant: the episodes of a variant that sets one carry ``lab_events``
     _ALL_LAB_FLAGS = _LAB_FLAGS + ("person_goals", "go_steps", "kind_anchor", "name_canon", "reask_abstain",
@@ -1197,6 +1198,42 @@ class SageS9Planner(SagePlanner):
     name = "robot_agent:sage_s9"
     loop_options = {**SageS8nPlanner.loop_options, "hazard_receiver": "1"}
     manifest_overlay = S8_OVERLAY
+    options_off = ("relook",)
+
+
+# Round 18: the dialogue-hold option. ``max_options`` (the most options in a spoken choice) is ASSUMED: a human-factors bound (a
+# spoken list of more than three is hard to follow), no source; it is not the simulated user's patience and not tuned on dev.
+HOLD_OVERLAY = {"planner": {**S8_OVERLAY["planner"], "dialog_hold": {"hold": True, "one_part": True, "max_options": 3}},
+                "assumed": True, "note": S8_OVERLAY["note"] + "; assumed: a spoken choice has at most 3 options (human-factors bound, no source)"}
+HOLD1_OVERLAY = {"planner": {**S8_OVERLAY["planner"], "dialog_hold": {"hold": True, "one_part": False, "max_options": 3}},
+                 "assumed": True, "note": HOLD_OVERLAY["note"]}
+
+
+class SageS10Planner(SagePlanner):
+    """Round 18: ``sage_s9`` + ``dialog_hold`` (both parts): the reading is held in a ledger of parts (no drift of a settled slot or
+    an object label, a content correction edits one part, one two-way choice for two conflicting statements) and a bare No / not-sure /
+    not-understood answer to a read-back gets a one-part read-back and one open question with the existing templates, no question
+    twice after a not-sure, a search instead of a where-question when the robot can find. Needs a robot_agent with the round-18 option."""
+    name = "robot_agent:sage_s10"
+    loop_options = {**SageS9Planner.loop_options, "dialog_hold": "1"}
+    manifest_overlay = HOLD_OVERLAY
+    options_off = ("relook",)
+
+
+class SageS10h1Planner(SagePlanner):
+    """Round 18 ablation: ``sage_s9`` + ``dialog_hold`` with the ledger only (no one-part repair)."""
+    name = "robot_agent:sage_s10h1"
+    loop_options = {**SageS9Planner.loop_options, "dialog_hold": "hold"}
+    manifest_overlay = HOLD1_OVERLAY
+    options_off = ("relook",)
+
+
+class SageS10wPlanner(SagePlanner):
+    """Round 18 wild card (NOT in the main set): ``sage_s10`` + ``noun_relabel`` (her object noun names the part; the English label is the
+    translator's one cached call for it)."""
+    name = "robot_agent:sage_s10w"
+    loop_options = {**SageS10Planner.loop_options, "noun_relabel": "1"}
+    manifest_overlay = HOLD_OVERLAY
     options_off = ("relook",)
 
 

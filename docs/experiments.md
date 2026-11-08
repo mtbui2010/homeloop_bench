@@ -3685,3 +3685,88 @@ the heard words contain the place's declared name; drop the relook (no replan) w
 - The simulator draws Find misses independently on each look (see above), so the relook wait gains are optimistic.
 - Notes and scripts: scratchpad `homeloop/lab/r14` (`an_r14.py` / `an_r14.out` dev tables, `an_r14_pre.py` / `an_r14_pre.out` holdout and
   ASR-on, `an_r14_fs.py`, `an_r14_div.py`, `pt7/` replay, `pilot/` live fill, `decide2/`).
+
+## Round 15: reach delivery (2026-11-08)
+
+Problem (the round 14 false successes of s7): the run says done and `delivered[reach](obj, person)` is false. No GPU in this part: diagnosis
+and a fix from the recorded episodes and caches, offline replay of the official r14 caches (the same code path as the live runs, no model
+call). New variants `robot_agent:sage_s8` = `sage_s7` + `reach_delivery` and `robot_agent:sage_s6d` = `sage_s6` + `reach_delivery`
+(separates the effect from `dialog_agree2` and `relook`). The simulator stays frozen at `sim-freeze-r13`; nothing pushed or merged.
+Worktrees `hl_wt/r15`: robot_agent `sage-v2/r15`, embodiplan `sage-v2/r15` (no change), homeloop_bench `r15`.
+
+### Diagnosis (traces: scratchpad `homeloop/lab/r15`, `diag4.py`, `an4.sh`)
+
+How the speaker's delivery is grounded: the simulator's ENV gives the speaker one person entry whose key is the made-up phrase "spot within
+your reach", with `loc` (where the robot LAST SAW the person, built at the start of the episode), `seat` and `spot` (the support surface beside
+them then). "Bring it to me" becomes the goal `on(obj -> that key)`; `persons.delivery` keeps the `spot` ("place" mode); the plan is
+`... MoveTo <key>, Place <key>`; the simulator's `move` / `place` of that key go to the ENV `spot`. The gate (`_check`, `_on_reached`) accepts a
+Place at the person key, and the end-of-run goal check (`_observe_goal`) walks back to the key and Finds the object, which it does see (on the
+spot). Nothing in that chain looks at the person.
+
+Why it fails (the 15 claimed-and-false `delivered[reach]` atoms of s7 dev50, 7 distinct task x language cases, all re-run with the true world
+read at the end):
+- Person moved (dev 033 EN, dev 047 KO; 2 of the 7 cases, 6 of the 15 atoms). The person is scripted to move at t = 90..120 s (033: from the desk
+  to the bed in the same room; 047: from the bed to an armchair in the living room). The spot was reachable from the start position (0.45 and
+  0.52 m); at the end the object is on the stale spot and nothing is within the person's reach. The ENV entry is never updated while the robot
+  works (`refresh_person_spot` keeps any old spot that has a free slot, and the robot's `look` lists only person ids per room), so the robot
+  has no reading that says so. In 033 the robot also walked to the kitchen and back for nothing (the gate's `op_complete` appended the full
+  fetch after a Pick, the tidy removed Find / Pick afterwards and left the `MoveTo source`: 80 s more for the person to leave).
+- Not a reach problem (5 of the 7 cases): at the end the object is not where the claim says, or is with someone else: dev 007 (EN, KO:
+  towel_2 is still on dresser@bedroom), 015 EN (book_1 is in the grandpa's hand), 021 KO (glass_2 on shelf@kitchen), 039 KO (bowl_1 still in
+  kimchi_fridge@kitchen). Not traced further here (wrong instance or an unverified claim). Holdout EN 088 is not a delivery error either: the
+  task has a mid-run correction ("Sorry, I meant the white glass, not the red mug") that AssistLoop answers with "could not apply that, I will
+  carry on", then delivers the mug and says done; the judge wants `glass_1` (s6 gives up for another reason). ASR-on KO 025 ends with an
+  absent and then a seen Find of the socks at the end check (the phantom detection of the round 14 analysis), not a delivery. Only ASR-on
+  KO 047 is the reach case (same as dev 047).
+- The `vlm_check` ("Query") of the simulator cannot observe it: `skills._sk_vlm_check` resolves the goal atoms with `_resolve_atom`, which
+  drops the `mode`, so `delivered[reach](obj, person)` is evaluated as `delivered[hand]` (False for an object on a reachable surface).
+
+### What was built (`reach_delivery`, default off, robot_agent `core/planning/reach_delivery.py`)
+
+All from data: the ENV person entry and the pack's manifest `planner.person_snapshot: {trust_s}` (absent = the option does nothing); no
+object, place or person name in the code; fail open.
+1. A put-down for a person (`Place <person>` or a `near_person` goal's place) run more than `trust_s` after the run started is the robot's
+   hand-over action instead (a hand-over reaches the person wherever they are in the room); a robot with no hand-over action keeps the put-down.
+2. A hand-over that replaced a put-down and fails `unreachable` asks once "Where are you?" / "Where is X?", goes to the place named
+   (`persons.place_in_answer`) and hands over there. No answer / no place = the failure goes the usual way.
+3. A tracked person entry with `loc` and no `spot` field (the pack declares no reachable surface) gets a hand-over, never "the support surface
+   nearest to them" (needs a hand-over action).
+4. The end-of-run goal check reads the person's entry again: the object was put down at the entry's `spot` then; another spot or none now = the
+   goal is NOT met (honest failure instead of "done").
+5. Gate: `op_complete` no longer re-adds the fetch of an object the plan already holds (the walk back to the source).
+`AssistLoop.clock`: a host with its own clock sets it (the bench sets the episode's simulated clock; robot_agent's `time.time()` there advances
+only with `sleep`, which is why the first replay saw an age of 0.3 s).
+
+The one new piece of pack data is the trust time, carried by the variants as a manifest overlay (`SNAPSHOT_OVERLAY`, `assumed: true`): 60 s,
+a design choice with no source (how long an adult at home stays where they were last seen is not a published number we found). It does not
+use the simulator's reach radius, height bands or the person's script. Sensitivity (below): 30, 60 and 120 s give the same result on dev.
+
+### Offline replay (dev 0..49, `asr_off`, rep1, official r14 caches, no GPU; a task whose new path needs an LLM call the cache does not
+hold stops at the miss and is listed as MISS: it needs the live run)
+
+- Flag off is unchanged: s7 on the r15 code reproduces the official r14 rep1 episodes in 99 of 99 cases (calls, status, false success, sim time).
+- s7 -> s8, EN: 33 S / 14 GU / 2 FS (+1 MISS) against 32 / 15 / 3: dev 033 FS -> S (hand-over after 196 s, `delivered` true); dev 048 MISS.
+  KO: 28 S / 16 GU / 3 FS (+3 MISS) against 28 / 17 / 4 (+1 MISS in both): dev 047 FS -> MISS (milk handed over after the question, the
+  glasses then fail to pick; the end needs the live LLM), dev 048 MISS (the hand-over times out, "user did not take", then a replan).
+- The option acts in 12 of 100 s8 episodes (EN 11, 12, 33, 36, 37, 39, 46; KO 11, 32, 36, 37, 46): 9 end S as before (the hand-over works as
+  the put-down did), EN 36 and KO 36 are give-ups in both, EN 33 is the only change among the completed ones (FS -> S).
+- s6 -> s6d: no completed episode changes; 047 KO and 048 MISS.
+- Trust time: 30 s adds a KO loss (37 S -> MISS), 120 s fixes 033 EN but not 047 KO, 300 s changes nothing.
+
+### Tests
+
+robot_agent `tests/test_sage_lab_r15_reach_delivery.py` (19, through the real `AssistLoop.run_blocking` with a scripted LLM, planner and a symbolic
+robot with a Handover skill, pack `tests/fakehome`): the 033 shape (EN: the person left the desk after the ENV was built; the put-down is a
+hand-over; without the option the mug stays on the stale spot and the run says done), the 047 shape (EN and KO: the person left the room; the
+question; the hand-over there), no answer, one question only, a fresh snapshot is trusted, no hand-over action keeps the put-down, flag off
+byte-identical, no declaration = nothing, a made-up robot and language with no data does nothing, no declared spot, the goal check, the gate.
+robot_agent 1523 passed, 3 skipped; bench `tests/test_lab_r15_s8.py` (variants, overlay, run_config) and the suite 498 passed.
+
+### Left (needs the GPU phase) and simulator issues
+
+- Live paired runs s7 vs s8 and s6 vs s6d (dev 0..49 x 2, holdout, ASR on) to see the MISS cases (dev 047 KO, 048 EN / KO) and the hand-over's
+  own failure modes (timeout "user did not take", drop). The offline replay cannot say whether hand-overs lose elsewhere.
+- Simulator, report only: (1) `skills._sk_vlm_check` drops `mode` in `_resolve_atom` (a robot cannot ask whether a reach delivery holds);
+  (2) the ENV never tells the robot where the person is now (`refresh_person_spot` keeps a free old spot; `look` gives ids per room), and
+  `person_spot` uses a 1.2 m radius while the judge's reach radius is about 0.63 m, so a declared `spot` is not always reachable although the ENV
+  contract calls it "a reachable support surface" (the cases examined here were reachable at the start); (3) the 088 correction.

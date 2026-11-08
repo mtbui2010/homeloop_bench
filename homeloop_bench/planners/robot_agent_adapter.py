@@ -561,7 +561,8 @@ class _RobotAgentPlanner:
                   "understand_schema_strict", "understand_give_kind", "understand_verify_verdict",
                   "request_coverage",                       # round 8
                   "dialog_agree",                           # round 12
-                  "dialog_agree2", "relook")                # round 14
+                  "dialog_agree2", "relook",                # round 14
+                  "reach_delivery")                         # round 15
     # (round 2's flags were never recorded: their summary.json stay as they were)
     # every option the loop reads from the variant: the episodes of a variant that sets one carry ``lab_events``
     _ALL_LAB_FLAGS = _LAB_FLAGS + ("person_goals", "go_steps", "kind_anchor", "name_canon", "reask_abstain",
@@ -703,6 +704,7 @@ class _RobotAgentPlanner:
                     seed_memory(env, tmp / "mem.json")
                 loop = self._make_loop(agent, tmp, fake)
                 loop._llm_client = client
+                loop.clock = lambda: float(env.robot.clock.t)    # the episode's simulated clock (robot_agent reads it only for reach_delivery)
                 if not self.seed_pool:
                     no_seed_pool(loop)
                 if self.structured and os.environ.get("HOMELOOP_RA_STRUCTURED", "1") != "0":
@@ -1078,6 +1080,40 @@ class SageS7Planner(SagePlanner):
     name = "robot_agent:sage_s7"
     loop_options = {**SageS6Planner.loop_options, "dialog_agree2": "1", "relook": "1"}
     manifest_overlay = S7_OVERLAY
+
+
+# Round 15: the person entries of the ENV are snapshots (``loc`` = where the robot last saw the person). The pack's manifest
+# can say how long a snapshot is trusted (``planner.person_snapshot.trust_s``, robot_agent core/planning/reach_delivery.py);
+# the mock robot package declares none, so the variants carry it as an overlay. ASSUMED: no source gives how long an adult at
+# home stays where they were last seen; the value is a design choice (the length of a short chore), not a measurement, and
+# a sensitivity run is in docs/experiments.md "Round 15". It does not use the simulator's reach radius, heights or the
+# person's script.
+PERSON_SNAPSHOT_TRUST_S = 60
+SNAPSHOT_OVERLAY = {"planner": {"person_snapshot": {"trust_s": PERSON_SNAPSHOT_TRUST_S}}, "assumed": True,
+                    "note": f"assumed: a person's last-seen position is trusted for {PERSON_SNAPSHOT_TRUST_S} s (a design choice, "
+                            "no source), then a delivery is a hand-over"}
+S6D_OVERLAY = {"planner": {**EXEC_UNSTICK_OVERLAY["planner"], **SNAPSHOT_OVERLAY["planner"]},
+               "assumed": True, "note": EXEC_UNSTICK_OVERLAY["note"] + "; " + SNAPSHOT_OVERLAY["note"]}
+S8_OVERLAY = {"planner": {**S7_OVERLAY["planner"], **SNAPSHOT_OVERLAY["planner"]},
+              "assumed": True, "note": S7_OVERLAY["note"] + "; " + SNAPSHOT_OVERLAY["note"]}
+
+
+class SageS8Planner(SagePlanner):
+    """Round 15: ``sage_s7`` + ``reach_delivery`` (a delivery to a person ends within their reach or in their hand: a put-down
+    for a person whose ENV snapshot is older than the pack's ``person_snapshot.trust_s`` is the hand-over action instead; a
+    person entry with a position and no declared reachable surface gets a hand-over; the goal check reads the person's entry
+    again; the gate no longer walks back to the source of an object the plan holds). The only new pack data is the trust time
+    (``S8_OVERLAY``). Needs a robot_agent with the round-15 option. ``sage_s7`` stays the reference."""
+    name = "robot_agent:sage_s8"
+    loop_options = {**SageS7Planner.loop_options, "reach_delivery": "1"}
+    manifest_overlay = S8_OVERLAY
+
+
+class SageS6dPlanner(SagePlanner):
+    """Round 15, to separate the effect: ``sage_s6`` + ``reach_delivery`` (without ``dialog_agree2`` and ``relook``)."""
+    name = "robot_agent:sage_s6d"
+    loop_options = {**SageS6Planner.loop_options, "reach_delivery": "1"}
+    manifest_overlay = S6D_OVERLAY
 
 
 class SageGoldPlanner(SagePlanner):

@@ -4050,3 +4050,167 @@ name, reach_delivery and relook with and without the roles through the real loop
 and the r8 / r14 / r15 tests with the new data: 1561 passed, 3 skipped. Bench `tests/test_lab_r16_overlay.py` (overlay data of s6d / s7 /
 s8, valid manifest data, the switch: nothing set = unchanged object, set values merged and recorded, malformed refused) and the two variant
 tests adjusted: bench suite 507 passed.
+
+## Round 16: generalisation (2026-11-08)
+
+Goal of the round: the language facts and the tuned numbers of the always-on core and of the round 12-15 options become declared data
+(language pack, manifest, environment), with fail-open behaviour when the data is missing and no hand-written word list in code; then
+check that nothing changed, sweep the assumed numbers, try a second robot and a third language. User decision: the third language is
+Vietnamese (not Japanese), added only as a data pack. Simulator frozen at `sim-freeze-r13` (HEAD equals the tag, not changed). Two
+streams from the round 15 heads, then merged: robot_agent `sage-v2/r16a` (languages) and `sage-v2/r16b` (option numbers, section
+above) into `sage-v2/r16`; bench `r16b` into `r16` (`r16a` bench has no change); embodiplan unchanged (`4080017`). Nothing pushed, nothing
+merged into a main branch, no test split. Lab notes and scripts: scratchpad `homeloop/lab/r16`.
+
+### Inventory of the language-specific literals (stream A)
+
+`tools/lang_inventory.py` (robot_agent) scans `robot_agent/` (not tests, not the packs) and prints a classified table with file:line, a
+JSON form and a `--check` gate. Before: 152 statements (290 literals) in 144 files; after: 62. Tables in `lab/r16/out/inventory_before.txt`
+and `inventory_after.txt`. `tests/test_lang_inventory.py` keeps the emptied classes empty and caps the total at 70.
+
+| class | before | after |
+|---|---|---|
+| language_code | 30 | 9 |
+| pivot_grammar | 18 | 16 |
+| yes_no_refusal | 18 | 3 |
+| failure_text | 11 | 11 |
+| domain_words | 11 | 1 |
+| particles | 10 | 0 |
+| thresholds | 9 | 6 |
+| into_markers | 9 | 5 |
+| script_detect | 7 | 0 |
+| pivot | 7 | 2 |
+| speaker_forms | 4 | 2 |
+| self_correction | 2 | 0 |
+| verb_endings | 2 | 0 |
+| asr_hallucination | 2 | 0 |
+
+By kind, script-specific literals (Hangul and others) went from 56 to 3.
+
+What moved into the packs (`lang/en.json`, `ko.json`, the `detect_marks` of `ja` / `zh`, new `vi.json`), read through `langdata`:
+- noun particles and the verb-noun suffix (`understand._find`); into / on-top / from / addressee markers and the open / close verbs
+  (`goal_fix`, was `_KO_INTO` / `_EN_INTO`); the self-correction markers (`understand._CORR` is now `default_corr()`, English markers in
+  `en.json`; the Korean "아니" markers stay behind `dialog_agree2`); refusal-reason words; the answer tail; object-marked noun groups;
+- yes / no / fillers / near misses (`interact/dialog.py`); stop / pause / resume / negation fallbacks (`intent_router`); translation guard
+  and script checks (`speech`: `_script_ok`, `_in_script`, guard 0.6); speaker forms (`persons`, `dialog_converge`); hazard and
+  food-place words (`core/safety`); the object particle of the announcer (`grammar.object_particle`); the Whisper silence phrases
+  (`connect/stt`); the translate trigger (`language._NON_LATIN` became pack `detect_marks`); the alias and script checks in `assist_loop`;
+- the pivot-language compares (`lg == "en"`) in `assist_loop`, `language` and `goal_fix` now use `langdata.is_prompt_lang`.
+- `PROMPT_LANG` is a setting: manifest `planner.prompt_lang` or `$ROBOT_AGENT_PROMPT_LANG`, default `en`.
+  `AssistLoop._restates` (0.6 / 4 / 3) is manifest `planner.restates {frac, word_len, min_words}` with the same defaults.
+
+Bug found by the replay and fixed: `dialog_ext.Guard._pack_words` walked the whole pack, so new data in `ko.json` changed which tokens
+the agreement guard called garbled (holdout s7 / s8 KO 030 differed in `lab_events`). It now reads only the blocks that existed before.
+
+### Audit of the round 12-15 options (stream B)
+
+See "Round 16 (stream B)" above: 46 findings (4 high, 18 medium); the skill names `Place` / `MoveTo` / `Close` / `Open` became
+`planner.action_roles`, the guard's particle chain and tail length became `planner.agree_guard` numbers, `coverage_limits`, the code
+default `min_share` 0.7 removed, the new manifest sections validated at load. The bench overlays carry the old values, marked assumed.
+
+### Merge
+
+robot_agent `sage-v2/r16`: `--no-ff` merge of `r16a` (`166da8f`, no conflict), then `r16b` (`ba9539c`; 4 files conflicted, among them
+`CHANGELOG.md` and `docs/env.md`, all resolved by keeping both sides). Bench `r16`: merge of `r16b` (`cc04ec9`).
+Tests on the merged trees: robot_agent 1602 passed, 3 skipped (27 s); bench 507 passed (140 s); homeloop_robot 972 passed;
+`make lint-core` 0 private names.
+
+### Byte-identical check (cache only, no GPU)
+
+Old = the r15 heads, new = the round 16 code, the same copied shared caches ("N s ago" normalised), a dead LLM port so every call
+must hit the cache. robot_agent side, 1,700 jobs (dev 0..49 rep1 and rep2, holdout, ASR on, x `sage_s6`, `s6d`, `s7`, `s8` x EN / KO,
+plus `sage` dev rep1):
+
+| replay | code | differing jobs |
+|---|---|---|
+| g1 | patterns, particles, self-correction, refusal marks, prompt_lang | 0 |
+| g2 | + dialogue, scripts, safety, announcer | 2 (the `_pack_words` bug, fixed) |
+| g3 | + vi pack, `is_prompt_lang` | 0 |
+| g4 | `sage-v2/r16a` head | 0 |
+| m | merged `sage-v2/r16` | 0 |
+
+In every replay 1,668 jobs complete with byte-identical `episodes.jsonl` (`llm_cache` aside) and 32 stop at the same cache miss with the
+same miss text and exit code. Stream B's own check (2,000 episodes, s5 / s6 / s7 / s8 / s6d): 1,969 of 1,969 complete episodes identical,
+31 stop at the same miss; the options acted in it (`relook` 350, `reach_delivery` 89, `dialog_agree` 182). The S / GU / FS table of the
+replay equals Round 15 (e.g. dev rep1 EN s7 32 / 15 / 2, one miss).
+
+### Sensitivity of the assumed numbers (live, GPU 0, `sage_s8`, merged code)
+
+Real profile, seed 1, qwen3-vl:8b-instruct through `tools/llm_gpu0.sh`, a copied shared locked cache per set, `HOMELOOP_RA_SET` for one
+key at a time (the effective overlay and the string are in `summary.json`). Sets: the 12 pilot ids (EN and KO, `asr_off`, rep2), dev
+0..49 EN `asr_off` rep2, dev 0..49 EN ASR on rep1. `relook` off was a scratch wrapper that drops the option (not a manifest key).
+S / FS, with the task changes against the baseline of the same set:
+
+| setting | pilot EN /12 | pilot KO /12 | dev50 EN off /50 | dev50 EN ASR on /50 |
+|---|---|---|---|---|
+| baseline (trust_s 60, garble 0.6, unstick defaults) | 7 / 1 | 7 / 3 | 36 / 1 | 34 / 1 |
+| `person_snapshot.trust_s` 30 | 7 / 1 | 7 / 3 | 36 / 1 | 34 / 1 |
+| `trust_s` 120 | 7 / 1 | 6 / 4 (047 S -> FS) | 36 / 1 | - |
+| `trust_s` 300 | 6 / 2 (033 S -> FS) | 6 / 4 (047 S -> FS) | 34 / 2 (033 S -> FS, 048 S -> F) | 32 / 2 (same two) |
+| `agree_guard.garble_ratio` 0.5, 0.7 | identical | - | - | identical |
+| `unstick.restate_frac` 0.4, 0.8 | identical | - | - | identical |
+| `unstick.fallback_words` 3, 8 | identical | - | - | identical |
+| `unstick.restate_min_words` 3, 6; `restate_min_bigrams` 4, 10; `fallback_chars` 12, 48 | identical | - | - | - |
+| `relook` off | 5 / 1 (033, 089 S -> F) | - | - | 30 / 1 (026, 033, 043, 046 S -> F; no win) |
+
+- `trust_s`: a plateau from 30 to 60 s (and to 120 s in EN); at 300 s the robot trusts a stale person position, hands over at the old
+  place and a run turns into a false success (033, 047). Korean already loses one at 120 s. So 60 s sits on the plateau, about one step
+  below its edge; it is still an assumed value.
+- `garble_ratio` and the six `unstick` numbers: no change at all, not one call. This is mostly low exposure: in these sets
+  `dialog_unstick` acted in 1-2 episodes and `dialog_agree` in 1-3 per 50 (EN). It does not show that the numbers are right; the guard
+  numbers matter in Korean, and `garble_ratio`, `particle_chain` and `tail_chars` were not swept in Korean.
+- `relook` off costs 2 of 12 and 4 of 50 here, with no win. These are tasks used for tuning; on the fresh dev 100..199 of round 15
+  `relook` was net 4 / 6. The simulator draws a detector miss afresh at every look, so the gain is optimistic.
+- Not run from the sweep plan: `return_tries`, the wait schedule, `blocked_putin`, `detector_miss_rate`, `search_total`, the understand
+  guard, `coverage_limits`, and the control rows that move the simulator constants (`perception.p_clear_on_wait`, `verify.p_false_success`,
+  `find.p_miss`).
+
+### Second robot: base_robot pilot (live, GPU 0)
+
+base_robot (drive, talk, tray; no arm) through robot_agent's real loader, adapter, manifest and skills over its fake backend, the same
+8B model, the bench overlays of `sage` and `sage_s8`. 10 English tasks (B1-B5 from round 4a, B6-B10 drafted this round in the same
+style); success is judged on the fake robot's state.
+
+- `sage` 6 / 10 and `sage_s8` 6 / 10, the same per task, no error. Pass: go and say (B1, B6), tray delivery (B2, B4), refuse "pick up the
+  cup" with "I have no arm" and no motion (B5), refuse "open the window" (B10).
+- Fail, all four with "Task completed" (false success): B3 "Ask dad if he wants tea, then dock" asks a malformed question at the dock,
+  not where dad is (the r15 code does the same: an old failure); B7 "Ask mom if she wants coffee" says the question at the dock and asks
+  nothing; B8 / B9 end with a move to the dock instead of the Dock skill (`docked` false).
+- The round 16 data and options neither help nor harm on this robot (s8 = sage). The failures are in the core's reading of
+  "ask a person" and "go back to the dock" for a robot without arm.
+
+### Third language: Vietnamese smoke test (live, GPU 0)
+
+10 dev pilot ids with a Vietnamese request drafted by the model from the English text (`lab/r16/live/vi_requests.md`, not checked by a
+native speaker). The frozen simulator's user speaks only EN / KO, so a scratch wrapper makes the simulated user English-speaking and
+hears the request as written (no Vietnamese ASR). Not a result, only a check that a language needs a pack and no code.
+
+- Both runs end with exit 0 and `n_error` 0; the robot asks in Vietnamese (`ask` with `lang: vi`) and reads the request through the
+  pack. `sage` 0 / 10 S (2 FS), `sage_s8` 2 / 10 S (0 FS); English on the same ids with s8: 7 S.
+- Why it is low: the user answers Vietnamese questions in English, so many dialogues never confirm (014, 089); "cốc" (mug) is read as
+  "cup" and the robot searches for a "red cup" that does not exist (033, 062, 065, 092); many final messages stay in English ("could not
+  find the red cup", "Task completed"), and the language check counts 0 because it cannot tell two Latin-script languages apart.
+- A third run (`vi_s8`) was stopped before the end and is not counted.
+
+### Still hard-coded, with the reason
+
+- The English grammar of the held reading in `understand.py` (`_COND`, `_NEG`, `_SOURCE`, `_VERB`, ...), `goal_change.py`,
+  `goal_filter.py` and the article stripping: this is the grammar of the prompt language; moving it needs a prompt-language pack and a
+  replay per regex. A `prompt_lang` other than `en` also needs the core's English prompts and `CORE_PHRASES` as data.
+- `UNDERSTAND_PROMPT` keeps a Korean example: the prompt text is part of every cache key, so changing it would break the replay.
+- The `"en"` compares in `speech.py` and the announcer's English tables decide on English text, not on translation.
+- Language-independent or a-priori numbers (`stt._repetitive` 0.6, `dialog_converge._close` 0.8, `goal_fix` 0.9, `dialog_ext` 0.7,
+  the 0.5 non-ASCII default); `failures.py` and `verify_vlm` word sets are robot / model tokens, not user language.
+- From stream B: the speaker words `("me", "user")` in `dialog_agree`, `isascii()` in the guard and in `request_coverage`, the English
+  final text of `unapplied_change`; older than round 12: the second-look budget, `SECOND_LOOKS`, `POSTERIOR_FLOOR`, `search_total` default.
+- Guard known words stay limited to the old blocks (widening them changes Korean behaviour and needs its own measurement).
+- Simulator conventions are documented, not fixed (frozen): the 5 s wait rule, independent redraw of detector misses, the seeded
+  person-move schedule behind `reach_delivery`.
+
+### Caveats
+
+- Sensitivity: one seed, one replicate, EN only for most keys, 12 or 50 tasks that were used for tuning; noise is about 3 tasks per 50.
+- The Vietnamese pack, its tests and the 10 requests are a model draft; a Vietnamese speaker must check them before any number is
+  reported for the language. There is no `text.vi` in the bench, so no bench episodes exist for it.
+- Two order-dependent test failures (r12 / r14 agree "option off") were seen once each under load and pass alone; not investigated.
+- The base_robot tasks B6-B10 are lab drafts, not part of any released set.
+

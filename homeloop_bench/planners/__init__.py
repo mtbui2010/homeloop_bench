@@ -70,6 +70,7 @@ REGISTRY = {
     "robot_agent:sage_m2": ("robot_agent_adapter", "SageM2Planner", "robot_agent:sage_m1 + understand_schema_strict + understand_give_kind + understand_verify_verdict", True),
     "robot_agent:sage_s5": ("robot_agent_adapter", "SageS5Planner", "the sage_r3u bundle (ground2 + exec_integrity: endstate_check, wait_on_robot, reset_container, gate_strict + inventory_ask + dialog_unstick; step 5)", True),
     "robot_agent:sage_s6": ("robot_agent_adapter", "SageS6Planner", "sage_s5 + dialog_agree (an answer that agrees with a refused reading settles it; a choice between places settles the option not taken; lab round 12)", True),
+    "robot_agent:sage_s7": ("robot_agent_adapter", "SageS7Planner", "sage_s6 + dialog_agree2 (Korean dialogue facts as language-pack data, a guard against confirming through garbled names) + relook (one more look by another sense at a named / remembered / last place; lab round 14)", True),
     "robot_agent:sage_gold": ("robot_agent_adapter", "SageGoldPlanner",
                               "DIAGNOSTIC, PRIVILEGED: robot_agent:sage started from the task's gold goals (understand step skipped): the execution-only ceiling", True),
     "robot_agent:grace": ("robot_agent_adapter", "GracePlanner",

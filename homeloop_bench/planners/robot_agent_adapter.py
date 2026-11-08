@@ -560,7 +560,8 @@ class _RobotAgentPlanner:
                   "reask_anchor", "no_shared_listener", "understand_views", "understand_goals_first",   # round 7
                   "understand_schema_strict", "understand_give_kind", "understand_verify_verdict",
                   "request_coverage",                       # round 8
-                  "dialog_agree")                           # round 12
+                  "dialog_agree",                           # round 12
+                  "dialog_agree2", "relook")                # round 14
     # (round 2's flags were never recorded: their summary.json stay as they were)
     # every option the loop reads from the variant: the episodes of a variant that sets one carry ``lab_events``
     _ALL_LAB_FLAGS = _LAB_FLAGS + ("person_goals", "go_steps", "kind_anchor", "name_canon", "reask_abstain",
@@ -1057,6 +1058,26 @@ class SageS6Planner(SagePlanner):
     name = "robot_agent:sage_s6"
     loop_options = {**SageS5Planner.loop_options, "dialog_agree": "1"}
     manifest_overlay = EXEC_UNSTICK_OVERLAY
+
+
+# Round 14: the guard of ``dialog_agree2`` reads one number from the pack (manifest ``planner.agree_guard.garble_ratio``; none declared =
+# no guard). ASSUMED: 0.6 of the Unicode-decomposition similarity (Hangul by letter) between a heard word and a name it is not; chosen by
+# hand on the two garbles of the round-13 ASR-on run (a particle and a noun), no source gives it and it was not tuned on the dev slice.
+AGREE_GUARD_OVERLAY = {"planner": {"agree_guard": {"garble_ratio": 0.6}}, "assumed": True,
+                       "note": "assumed: dialog_agree2 garble similarity 0.6 (hand-picked on two round-13 ASR garbles, not tuned)"}
+S7_OVERLAY = {"planner": {**EXEC_UNSTICK_OVERLAY["planner"], **AGREE_GUARD_OVERLAY["planner"]},
+              "assumed": True, "note": EXEC_UNSTICK_OVERLAY["note"] + "; " + AGREE_GUARD_OVERLAY["note"]}
+
+
+class SageS7Planner(SagePlanner):
+    """Round 14: ``sage_s6`` + ``dialog_agree2`` (the Korean dialogue facts as language-pack data: polite endings, self-correction markers,
+    not-sure phrases, room names; a guard against confirming through garbled names, an object alone or words out of the script, which
+    asks the person once more instead) + ``relook`` (a place the person named, memory holds or the last likely one gets one more look by
+    another sense before it counts as searched). The only new pack data is the guard's number (``S7_OVERLAY``). Needs a robot_agent with
+    the round-14 options (an older one drops unknown options silently). ``sage_s6`` stays the reference."""
+    name = "robot_agent:sage_s7"
+    loop_options = {**SageS6Planner.loop_options, "dialog_agree2": "1", "relook": "1"}
+    manifest_overlay = S7_OVERLAY
 
 
 class SageGoldPlanner(SagePlanner):

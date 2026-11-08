@@ -150,6 +150,56 @@ def apply_overlay(loop, overlay: dict) -> None:
             setattr(loop.robot.manifest, section, merge(getattr(loop.robot.manifest, section, None) or {}, data))
 
 
+# Sensitivity runs of the assumed pack numbers (round 16): ``HOMELOOP_RA_SET="person_snapshot.trust_s=30,unstick.restate_frac=0.5"``
+# sets keys of the manifest ``planner`` section on top of the variant's overlay (a dotted path, a JSON value or a plain string).
+# Nothing set = the overlay as it is, so every existing run is unchanged. The effective overlay, with the string under
+# ``sensitivity_set``, is what summary.json records. ``--set`` is for the simulator's profile; the robot's pack numbers are here.
+RA_SET_ENV = "HOMELOOP_RA_SET"
+
+
+def _overlay_set(spec) -> dict:
+    out: dict = {}
+    items, depth, cur = [], 0, ""
+    for ch in str(spec or ""):                          # split on commas outside [] / {} (a JSON list value keeps its commas)
+        depth += ch in "[{"
+        depth -= ch in "]}"
+        if ch == "," and depth <= 0:
+            items.append(cur)
+            cur = ""
+        else:
+            cur += ch
+    items.append(cur)
+    for item in [x for x in items if x.strip()]:
+        key, sep, raw = item.partition("=")
+        if not sep or not key.strip():
+            raise ValueError(f"{RA_SET_ENV}: expected path=value, got {item!r}")
+        try:
+            val = json.loads(raw)
+        except ValueError:
+            val = raw.strip()
+        node = out
+        parts = key.strip().split(".")
+        for part in parts[:-1]:
+            node = node.setdefault(part, {})
+        node[parts[-1]] = val
+    return out
+
+
+def effective_overlay(overlay: dict, spec=None) -> dict:
+    """``overlay`` with the planner keys of ``HOMELOOP_RA_SET`` (or ``spec``) merged in; the overlay itself when none is set."""
+    spec = os.environ.get(RA_SET_ENV, "") if spec is None else spec
+    extra = _overlay_set(spec)
+    if not extra:
+        return overlay
+
+    def merge(base: dict, add: dict) -> dict:
+        out = dict(base or {})
+        for k, v in add.items():
+            out[k] = merge(out.get(k) or {}, v) if isinstance(v, dict) else copy.deepcopy(v)
+        return out
+    return {**merge(overlay or {}, {"planner": extra}), "assumed": True, "sensitivity_set": spec}
+
+
 # The wait schedule of the execution-integrity variants. ASSUMED: the robot pack declares no recovery wait and no
 # published spec gives one; a doubling backoff from 2 s is this variant's own assumption (a camera or detector that
 # gave no image is usually back within a few seconds), not a property of the robot. The action name is the pack's
@@ -597,7 +647,8 @@ class _RobotAgentPlanner:
                 # every loop option the variant sets, as given (also the round-2 flags), and the manifest data it adds
                 **({"loop_options": {k: str(v) for k, v in sorted(cls.loop_options.items())}}
                    if cls.loop_kind == "assist" and cls.loop_options else {}),
-                **({"manifest_overlay": copy.deepcopy(cls.manifest_overlay)} if cls.manifest_overlay else {}),
+                **({"manifest_overlay": copy.deepcopy(effective_overlay(cls.manifest_overlay))}
+                   if effective_overlay(cls.manifest_overlay) else {}),
                 # the model that reads the request, where the variant sets one (and its per-language map; "n_fallbacks" is
                 # the run's count, in summary.json under llm_stats)
                 **({"understand_model": cls.loop_options.get("understand_model")
@@ -783,8 +834,9 @@ class _RobotAgentPlanner:
             gen = self.generator or (FAKE_GENERATOR if fake else self.ra_planner)
             loop = AssistLoop(agent, emit=None, generator=gen,
                               health_wait_s=HEALTH_WAIT_S, memory_path=str(tmp / "mem.json"), **dict(self.loop_options), **common)
-            apply_overlay(loop, self.manifest_overlay)
-            if self.manifest_overlay and hasattr(loop, "_um_cfg"):      # the keys robot_agent reads once, at construction
+            overlay = effective_overlay(self.manifest_overlay)
+            apply_overlay(loop, overlay)
+            if overlay and hasattr(loop, "_um_cfg"):      # the keys robot_agent reads once, at construction
                 loop.cfg.update(loop._um_cfg(dict(self.loop_options)))
                 if hasattr(loop, "_rm_cfg"):                            # lab round 8 (role models, request_coverage)
                     loop.cfg.update(loop._rm_cfg(dict(self.loop_options)))
@@ -1065,10 +1117,23 @@ class SageS6Planner(SagePlanner):
 # Round 14: the guard of ``dialog_agree2`` reads one number from the pack (manifest ``planner.agree_guard.garble_ratio``; none declared =
 # no guard). ASSUMED: 0.6 of the Unicode-decomposition similarity (Hangul by letter) between a heard word and a name it is not; chosen by
 # hand on the two garbles of the round-13 ASR-on run (a particle and a noun), no source gives it and it was not tuned on the dev slice.
-AGREE_GUARD_OVERLAY = {"planner": {"agree_guard": {"garble_ratio": 0.6}}, "assumed": True,
-                       "note": "assumed: dialog_agree2 garble similarity 0.6 (hand-picked on two round-13 ASR garbles, not tuned)"}
-S7_OVERLAY = {"planner": {**EXEC_UNSTICK_OVERLAY["planner"], **AGREE_GUARD_OVERLAY["planner"]},
-              "assumed": True, "note": EXEC_UNSTICK_OVERLAY["note"] + "; " + AGREE_GUARD_OVERLAY["note"]}
+#
+# Round 16: the guard's two morphology numbers are pack data too (they were written in the code until round 15). ASSUMED: the
+# most case particles one name may carry (2) and the longest tail of a word that is read as a declared tail of a pack word (2
+# letters): what the Korean particle list of the pack needs for "<name><particle><particle>" and a stem plus a one or two letter
+# ending; no source, not tuned. A number that is left out turns its part of the guard off.
+# The action roles are the robot pack's own action names for four roles (put-down, move, open, close). The frozen mock robot
+# package declares none (homeloop_robot is frozen), so the overlay states them: they are the names of its own skills, not a tuned
+# value; without them reach_delivery and relook's reopen do nothing (robot_agent core/planning/action_roles.py).
+AGREE_GUARD_OVERLAY = {"planner": {"agree_guard": {"garble_ratio": 0.6, "particle_chain": 2, "tail_chars": 2}}, "assumed": True,
+                       "note": "assumed: dialog_agree2 garble similarity 0.6 (hand-picked on two round-13 ASR garbles, not tuned), "
+                               "at most 2 case particles after a name, a declared tail of at most 2 letters"}
+ACTION_ROLES_OVERLAY = {"planner": {"action_roles": {"put_down": "Place", "move": "MoveTo", "open": "Open", "close": "Close"}},
+                        "assumed": True,
+                        "note": "assumed: the mock robot pack's own action names for the put-down, move, open and close roles "
+                                "(the frozen pack declares no action_roles)"}
+S7_OVERLAY = {"planner": {**EXEC_UNSTICK_OVERLAY["planner"], **AGREE_GUARD_OVERLAY["planner"], **ACTION_ROLES_OVERLAY["planner"]},
+              "assumed": True, "note": EXEC_UNSTICK_OVERLAY["note"] + "; " + AGREE_GUARD_OVERLAY["note"] + "; " + ACTION_ROLES_OVERLAY["note"]}
 
 
 class SageS7Planner(SagePlanner):
@@ -1092,8 +1157,8 @@ PERSON_SNAPSHOT_TRUST_S = 60
 SNAPSHOT_OVERLAY = {"planner": {"person_snapshot": {"trust_s": PERSON_SNAPSHOT_TRUST_S}}, "assumed": True,
                     "note": f"assumed: a person's last-seen position is trusted for {PERSON_SNAPSHOT_TRUST_S} s (a design choice, "
                             "no source), then a delivery is a hand-over"}
-S6D_OVERLAY = {"planner": {**EXEC_UNSTICK_OVERLAY["planner"], **SNAPSHOT_OVERLAY["planner"]},
-               "assumed": True, "note": EXEC_UNSTICK_OVERLAY["note"] + "; " + SNAPSHOT_OVERLAY["note"]}
+S6D_OVERLAY = {"planner": {**EXEC_UNSTICK_OVERLAY["planner"], **SNAPSHOT_OVERLAY["planner"], **ACTION_ROLES_OVERLAY["planner"]},
+               "assumed": True, "note": EXEC_UNSTICK_OVERLAY["note"] + "; " + SNAPSHOT_OVERLAY["note"] + "; " + ACTION_ROLES_OVERLAY["note"]}
 S8_OVERLAY = {"planner": {**S7_OVERLAY["planner"], **SNAPSHOT_OVERLAY["planner"]},
               "assumed": True, "note": S7_OVERLAY["note"] + "; " + SNAPSHOT_OVERLAY["note"]}
 

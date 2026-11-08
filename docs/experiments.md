@@ -3817,3 +3817,159 @@ robot_agent 1523 passed, 3 skipped; bench `tests/test_lab_r15_s8.py` (variants, 
   (2) the ENV never tells the robot where the person is now (`refresh_person_spot` keeps a free old spot; `look` gives ids per room), and
   `person_spot` uses a 1.2 m radius while the judge's reach radius is about 0.63 m, so a declared `spot` is not always reachable although the ENV
   contract calls it "a reachable support surface" (the cases examined here were reachable at the start); (3) the 088 correction.
+
+## Round 15: reach delivery and clean run (2026-11-08)
+
+Continues "Round 15: reach delivery" above: two fixes found in the pilot, a second pilot, then the clean run on tasks never used to tune
+(dev 100..199, asked for at the end of round 14). Simulator frozen at `sim-freeze-r13` (HEAD equals the tag); robot_agent `sage-v2/r15`
+head `c244b90`, bench `r15`, embodiplan `sage-v2/r15` unchanged. GPU 0 only through `tools/llm_gpu0.sh` (8 clients), container stopped
+after each phase. Nothing pushed or merged; no test split.
+
+**Variant correction.** `robot_agent:sage_s8` is `sage_s7` + `reach_delivery` + `unapplied_change` (bench `ad53ce2`), not `sage_s7` +
+`reach_delivery` alone. `robot_agent:sage_s6d` = `sage_s6` + `reach_delivery` (no `unapplied_change`). `unapplied_change` writes no
+`lab_event`, so "no event" in a run does not mean it did not act (it acted on task 169 in all four fresh episodes, see below).
+
+### Pilot 1 and the two fixes
+
+Pilot 1: dev 33, 25, 47, 14, 27 and holdout 88, 65, 62, 92, 89; real, `asr_off`, seed 0, two replicates for s8 / s6d (s6 / s7 rep1
+from r13 / r14 or a cache-only replay; rep2 only for the 5 dev ids). Results `results/r15/pilot`. EN 033 FS -> S in both replicates; KO 047
+FS -> honest F; EN / KO 088 and EN / KO 025 still FS. The review of every changed episode found:
+
+- Fix 1, in the option (robot_agent `17fda4f`). KO 047 (two objects for a grandparent who moved): the first hand-over at the stale
+  nightstand failed `unreachable`, the robot asked, got armchair@living and handed the milk over there; for the glasses the plan went
+  back to the stale nightstand and the hand-over failed `unreachable` three times in a row, no second question, give-up. Cause: one
+  run-wide `reach_asked` bool, and the answer was used only for the one spliced step. Now the answered place is kept per person
+  (`reach_where`, lab event `known_where`) and reused without a second question; with no known place a failed hand-over skips the
+  same-step retries and goes to replan / give-up. 4 new real-loop tests (two objects EN and KO, no answer, flag off identical).
+- Fix 2, new option `unapplied_change` (default off, robot_agent `c244b90`, added to `sage_s8`). EN 088: the correction "Sorry, I meant
+  the white glass, not the red mug" could not be applied; the robot said "I will carry on", delivered the mug and the end check said
+  success. Now the understand step's own question is asked once ("Do you want me to fetch the white glass instead?"), the change is read
+  again, and if it still cannot be applied the run ends `failed` with "I could not apply your change: ...". No word list and no regex
+  added to `goal_change.py`. 4 real-loop tests (ask then apply, no answer = honest failure, flag off keeps the old behaviour,
+  registration).
+- Re-run of s8 on the 10 pilot ids (pilot caches, live misses on GPU 0; `scratchpad homeloop/lab/r15/fix`): KO 047 GU -> S (both reps), EN
+  088 FS -> GU (both reps), 014 / 027 / 062 / 065 identical calls; EN 047 still GU (the drink is never found, before any hand-over); KO 088
+  still FS (understand reads a single `go` goal and the run ends after one MoveTo: not reach, not a correction; not fixed).
+- robot_agent full suite green after both fixes; bench 498 passed.
+
+### Pilot 2 (same 10 ids, `asr_off`, real, seed 0, 2 replicates x EN / KO = 40 episodes per variant; `results/r15/pilot2`)
+
+| variant | S EN | S KO | S /40 | FS /40 |
+|---|---|---|---|---|
+| sage_s6 | 8 | 11 | 19 | 6 |
+| sage_s7 | 10 | 9 | 19 | 10 |
+| sage_s8 | 12 | 11 | 23 | 4 |
+| sage_s6d | 8 | 13 | 21 | 5 |
+
+- s8 vs s7: 4 wins, 0 losses, FS 10 -> 4. s7 vs s6: 2 / 2, FS 6 -> 10. s6d vs s6: 2 / 0, FS 6 -> 5. Ten tasks only; noise is about 3 per 50.
+- Target cases: 033 EN FS/FS -> S/S (hand-over at age 196 s); 088 EN FS/FS -> F/F (asked once, then honest failure; the mug is still
+  handed to the grandparent before the failure is said); 047 KO s7 FS/FS -> S/S in s8 and s6d (one unreachable try per object, the second
+  object goes to the remembered place). 025 EN is now F/F for s7 and s8 (60-call cap), 025 KO still FS/FS (phantom Find at the end check),
+  088 KO FS in every variant.
+- No new option bug (wrong place, loop, budget) and no regression on 014 / 027 / 062 / 065. KO 092 s8 rep2: every goal true but the run
+  stops at the call cap at 619 s (relook time; s7 the same; s6d S at 262 s).
+- `aa-check --concurrent` (s8, EN, 3 tasks, cold cache): ok, 3 of 3 identical.
+- Weak points left: the 047 KO second object still walks to the stale spot first (about 17 s); the 033 walk to the kitchen and back.
+
+### Clean run: fresh dev tasks 100..199
+
+100 tasks per language, real, seed 0, ONE replicate, two conditions: `asr_off` (the four ASR parameters at 0, sensitivity) and ASR on
+(default). Variants oracle, sage, s6, s7, s8 (s6d not run). One fresh shared locked cache per condition, 8 clients. All 20 runs EXIT 0,
+`n_error` 0, no text in the wrong language, no raw ids in speech. `aa-check --concurrent` (s8, EN, 5 tasks): ok, 5 of 5 identical, in
+both conditions. Results `results/r15/fresh` and `results/r15/fresh_asr`; tables and analysis in scratchpad `homeloop/lab/r15`
+(`fresh_table.out`, `fresh_asr_table.out`, `verdict/an.out`, `cls.out`, `fs.out`, `div.out`, `corr.out`, `loops.out`).
+
+S / FS / GU (GU includes refusals and the 60-call stop), out of 100:
+
+| variant | EN `asr_off` | KO `asr_off` | EN ASR on | KO ASR on |
+|---|---|---|---|---|
+| oracle | 86 / 0 / 14 | 86 / 0 / 14 | 86 / 0 / 14 | 86 / 0 / 14 |
+| sage | 52 / 6 / 42 | 30 / 11 / 59 | 46 / 9 / 45 | 27 / 15 / 58 |
+| sage_s6 | 56 / 4 / 40 | 37 / 12 / 51 | 49 / 8 / 43 | 27 / 15 / 58 |
+| sage_s7 | 54 / 5 / 41 | 40 / 12 / 48 | 47 / 9 / 44 | 32 / 14 / 54 |
+| sage_s8 | 57 / 4 / 39 | 42 / 9 / 49 | 50 / 6 / 44 | 33 / 12 / 55 |
+
+- s8 has the most successes and the fewest false successes of the SAGE variants in all four cells. ASR noise costs about 15 successes
+  out of 200 for s6 / s7 / s8 and 9 for sage. Cost of s8 over s6: about +0.7 skill calls per episode, +0.4 LLM calls in KO.
+- The oracle fails 14 of 100 in every cell (injected faults): the ceiling is 86.
+
+Pre-registered rule (keep X over Y only if X wins more tasks than it loses, task level, EN and KO pooled, and false successes do not rise):
+
+| pair | `asr_off` | ASR on | rule |
+|---|---|---|---|
+| s8 over s7 | 4 / 0 (task x lang 5 / 0), FS 17 -> 13 | 3 / 0 (4 / 0), FS 23 -> 18 | met in both |
+| s7 over s6 | 5 / 4, FS 16 -> 17 | 6 / 3, FS 23 -> 23 | split: not met off, met on |
+| s6 over sage | 10 / 0 (11 / 0), FS 17 -> 16 | 5 / 2, FS 24 -> 23 | met in both |
+| s8 over s6 (extra) | 9 / 4, FS 16 -> 13 | 9 / 3, FS 23 -> 18 | met in both |
+
+Exact two-sided sign tests, task unit (EN + KO summed per task, the conservative unit; task x lang is optimistic because both languages of
+a task share house, seed and fault draws), no multiple-comparison correction:
+- s8 vs sage: `asr_off` 18 / 2, p = 0.0004; ASR on 13 / 4, p = 0.049; both conditions 23 / 6, p = 0.002.
+- s6 vs sage: `asr_off` 10 / 0, p = 0.002; ASR on 5 / 2, p = 0.45.
+- s8 vs s7: 4 / 0, p = 0.125 (off); 3 / 0, p = 0.25 (on); 5 / 0, p = 0.062 (both).
+- s7 vs s6: 5 / 4, p = 1.0 (off); 6 / 3, p = 0.51 (on).
+- s8 vs s6: 9 / 4, p = 0.27 (off); 9 / 3, p = 0.15 (on); the gain is Korean (both conditions 8 / 1, p = 0.039, optimistic unit), English
+  is flat (6 / 4).
+
+Which option made the paired differences (first differing call; each pair shares one locked cache):
+- `reach_delivery` (s8 vs s7): 8 wins, 0 losses over 400 episodes (off EN 143, 198, KO 116, 143 FS -> S; on EN 143, 198, KO 143 FS -> S, EN
+  168 G -> S); the first differing call is always the hand-over in place of the put-down; most are objects that `relook` found first. It
+  adds one false success, EN 156 `asr_off`: the hand-over lands on the call index where s7's put-down hit an injected `hw_fault`, and the
+  goal set was already wrong after an injected wrong "yes". It acted in 13 / 12 episodes (off) and 11 / 9 (on).
+- `unapplied_change` (task 169, the 088 shape: "white glass, not the red mug"): EN off G -> S, EN on and KO off / on FS -> G (1 win, 3
+  fewer false successes). Its KO failure message is only the user's correction ("빨간 머그컵 말고 하얀 유리잔요."), the "could not apply"
+  part is lost; the EN message is complete.
+- `dialog_agree2` (s7 vs s6, first difference in the dialogue): KO only, 7 wins, 1 loss (ASR on KO 104 S -> FS, not traced), FS net 0.
+- `relook` (s7 vs s6): 4 wins, 6 losses (EN 101 x2, 115, 164: the bench 60-call cap; EN 126 x2: a moved hardware-fault draw), FS +2 (EN
+  198, later fixed by `reach_delivery`) and -1. On these fresh tasks `relook` is net negative on success.
+
+False successes of s8 (`asr_off` EN 4 / KO 9; ASR on EN 6 / KO 12):
+- goal attempted but not met (wrong target, instance or person, or unverified): off EN 104, KO 128, 133, 183, 184, 192;
+- a goal left out of the 8B reading of the request: off EN 110, 184, KO 110, 159, 171;
+- false confirmation after an injected wrong "yes": off EN 156; on EN 150, KO 159 (sage 1 off / 3 on);
+- a hazard carried out after a read-back "yes": KO 118 (detergent handed to a child, a poisoning violation; seen in every SAGE variant,
+  sage included: the core hazard rules do not catch it).
+- No false confirmation through `dialog_agree` in s8 in either condition (s6 has one, ASR on KO 118, that the s7 / s8 guard blocks).
+
+Causes of the remaining s8 failures (`asr_off` EN 43 / KO 58; ASR on EN 50 / KO 67):
+
+| cause | off EN | off KO | on EN | on KO |
+|---|---|---|---|---|
+| dialogue never confirmed, no action | 12 | 19 | 16 | 24 |
+| the oracle fails too (injected faults) | 6 | 9 | 8 | 9 |
+| search give-up after the start | 5 | 7 | 7 | 9 |
+| other execution give-up (blocked, unreachable, grasp, wrong answer, the unapplied-change stop) | 7 | 6 | 5 | 5 |
+| false success | 4 | 9 | 6 | 12 |
+| hardware fault after the start (the oracle succeeds) | 4 | 3 | 4 | 2 |
+| 60-call stop (the oracle succeeds) | 4 | 3 | 1 | 2 |
+| no plan passed the gate | 1 | 2 | 2 | 4 |
+| wrong refusal (EN 131, "cannot throw") | 1 | 0 | 1 | 0 |
+
+No tight loops: `relook` never repeats an (episode, object, place) triple, at most 5 Finds at one place, the 60-call stops search 6 to 9
+places.
+
+### Verdict
+
+Carry `robot_agent:sage_s8` (dialog_agree2 + relook + reach_delivery + unapplied_change on top of s6) as the main SAGE-v2 variant; the
+`robot_agent:sage` row stays the headline baseline, s6 and s7 stay as ablations. Established on this clean run: s8 > sage at the task unit
+in both conditions; s8 over s7 by the pre-registered rule in both conditions, with 0 losses and 9 fewer false successes over 400
+episodes. NOT established: that s8 > s7 is significant (p 0.06 to 0.25), that s7 > s6 (rule split, p 0.5 to 1.0), that `relook` helps
+(net 4 / 6 on fresh tasks). The paper must say that s8 includes `unapplied_change`.
+
+### Caveats and left
+
+- One seed, one replicate, n = 100 per language, all dev ids (fresh, but the dev split was used for tuning in earlier rounds); noise is
+  about 3 tasks per 50; the off and on runs use different caches, so the difference between conditions mixes ASR noise and 8B
+  nondeterminism. The test split must be run before any final claim.
+- `trust_s` = 60 s is an assumed design value with no source; the sensitivity run is on dev 0..49 only.
+- Largest remaining cause: dialogue that never converges, mostly Korean. Not addressed this round. The task 118 poisoning hazard is not
+  caught by any SAGE variant (robot side).
+- Still open from the pilots: KO 088 (understand reads one `go` goal), the 025 KO phantom Find at the end check, the 033 walk to the
+  kitchen and back, the stale-spot walk before `known_where`, the KO message of `unapplied_change`, and a `lab_event` for
+  `unapplied_change`.
+- Harness, report only: the "budget" status is the bench's 60 skill-call cap (`budgets.max_calls`), the same for every variant but it
+  turns longer searches into losses (s7 / s8 EN 101, 115, 164); `llm_budget_hit_rate` checks only the bench's cap of 30, so it shows 0
+  although the robot used its own budget of 22 LLM calls in 4 s8 `asr_off` episodes (EN 133; KO 101, 128, 174).
+- Simulator, report only (frozen): fault and miss draws are keyed by call index, so an option that adds or replaces calls moves where an
+  injected fault lands (EN 126, EN 156, KO 123); `find.p_miss` is drawn fresh at every look, so `relook`'s gains are optimistic; plus the
+  issues listed in "Round 15: reach delivery" above.

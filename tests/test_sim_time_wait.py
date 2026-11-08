@@ -19,8 +19,9 @@ def _camera_down(ep, p_clear=1.0):
 def test_sleep_advances_the_simulated_clock_not_the_wall_clock():
     import time
     ep = make_episode("senior_flat", 0, "ideal", 0)
+    w0 = time.time()                              # before SimTime freezes its base (after it, w0 > base by the gap)
     st = SimTime(ep.robot)
-    w0, t0 = time.time(), ep.clock.t
+    t0 = ep.clock.t
     st.sleep(30.0)
     assert ep.clock.t == pytest.approx(t0 + 30.0) and time.time() - w0 < 5.0
     assert st.time() - w0 >= 30.0 - 1e-6          # a deadline loop sees the wait as having happened

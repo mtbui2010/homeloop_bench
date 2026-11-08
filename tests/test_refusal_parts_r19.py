@@ -135,8 +135,12 @@ def test_adapter_helpers():
     assert note_declared_refusals(env, _final(G_BLEACH, status="refused")) == 0      # a whole refusal: no partial notes
     assert note_declared_refusals(env, {"status": "failed"}) == 0
     env2 = _env118()
-    assert note_declared_refusals(env2, _final(dict(G_BLEACH, said="the bleach"), status="failed")) == 1
+    assert note_declared_refusals(env2, _final(dict(G_BLEACH, said="the bleach"), status="success")) == 1
     assert env2.refusals[0]["text"] == "bleach bottle | the bleach"
+    env3 = _env118()                                     # gave up: the refusal never reached the user, the part is not refused
+    assert note_declared_refusals(env3, _final(G_BLEACH, status="failed")) == 0 and env3.refusals == []
+    env3.finish("give_up", "I have to stop: something is wrong with my hardware.")
+    assert env3.record()["subtask_outcome"][1] == "not_refused"
 
 
 def test_summary_and_report_split():

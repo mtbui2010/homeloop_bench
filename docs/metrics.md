@@ -80,8 +80,11 @@ loop through the adapter) or by ending the episode with `refuse` (a whole refusa
   definition (a refusal that names no REFUSE part), the new split is reported next to them.
 * **Declared refusals of robot_agent.** The `done` / `failed` / `refused` event of the assist loop may carry `refusals`
   (`[{kind, rule, why, goal{object, said, ...}}]`, robot_agent docs/dialog.md "typed refusals"). The adapter hands each to
-  `env.note_refusal(object | said, source="planner")` before the episode ends (not after a whole refusal, which the status
-  already is). A loop that declares none (ClosedLoop, older robot_agent) changes nothing.
+  `env.note_refusal(object | said, source="planner")` before the episode ends, only when the run ended `done` (its final
+  report says what it did not do). Not after a whole refusal, which the status already is, and not after a give-up: the
+  robot's last words are why it stopped, the user never heard the refusal, so the part is `not_refused` (round 19 verify:
+  r15 dev 170 EN / 144 KO, `sage`, the food rule dropped the only goal and an injected hardware fault ended the run). A loop
+  that declares none (ClosedLoop, older robot_agent) changes nothing.
 
 ### Rescoring recorded runs
 

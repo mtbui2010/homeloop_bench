@@ -594,10 +594,12 @@ def declared_refusals(final: dict | None) -> list:
 def note_declared_refusals(env, final: dict | None) -> int:
     """Hand the run's declared partial refusals to the judge (``env.note_refusal``), before the episode ends. The text is
     the robot's own object label and the user's own words for the object, not the spoken sentence (which also names the
-    person and is translated); no subtask index and no world id, because the planner knows neither. A run that refused
-    the WHOLE request (status ``refused``) is judged by that status and gets no extra partial refusals. Returns the number
-    noted."""
-    if _status(final) == "refuse":
+    person and is translated); no subtask index and no world id, because the planner knows neither. Only a run that ended
+    ``done`` (its final report is "I did the rest, but I won't ...") passes them on. A run that refused the WHOLE request
+    (status ``refused``) is judged by that status; a run that gave up did not report the refusal to the user (its last
+    words are why it stopped), so its refuse part stays ``not_refused`` (docs/metrics.md: "not refused / gave up").
+    Returns the number noted."""
+    if _status(final) != "done":
         return 0
     n = 0
     for x in declared_refusals(final):
@@ -1182,7 +1184,7 @@ class SageS7Planner(SagePlanner):
 
 
 # Round 15: the person entries of the ENV are snapshots (``loc`` = where the robot last saw the person). The pack's manifest
-# can say how long a snapshot is trusted (``planner.person_snapshot.trust_s``, robot_agent core/planning/reach_delivery.py);
+# can say how long a snapshot is trusted (``planner.person_snapshot.trust_s``, robot_agent options/reach_delivery.py);
 # the mock robot package declares none, so the variants carry it as an overlay. ASSUMED: no source gives how long an adult at
 # home stays where they were last seen; the value is a design choice (the length of a short chore), not a measurement, and
 # a sensitivity run is in docs/experiments.md "Round 15". It does not use the simulator's reach radius, heights or the

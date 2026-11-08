@@ -3325,7 +3325,7 @@ number in this round has the 4-parameter `asr_off`.
 - Not checked: the 20 earlier KO asks answered `where_is` / `not_understood`; irregular plurals; the KO `object_parts` gap (4f132c0 does
   not cover "녹색 유리"); the causes of the n50 a1 -> a2 changes on 039 EN, 025 / 027 / 032 KO.
 - Notes and scripts: scratchpad `homeloop/lab/r11` (`gate/` for n=10, `g50/` and `g50b/` for n=50, `n50_a2_table.txt`, `table_a2.txt`,
-  `audit_all.py`, `s2.py`, `s3.py`). This file is uncommitted (rounds 10 and 11).
+  `audit_all.py`, `s2.py`, `s3.py`). Rounds 10 and 11 are committed in da0a804.
 
 ## Round 12: `dialog_agree` (variant `robot_agent:sage_s6`), implemented, gate not run
 

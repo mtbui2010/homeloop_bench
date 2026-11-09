@@ -1,0 +1,32 @@
+# P2 small real run: LoRA for the understand step on a 2,000-example stratified subset of the P1 `inferable` set
+# (TRAIN split gold goals; keys lang, kind, expect, structure, noise; seed 0). Validation loss on the full P1 val split
+# (492 examples, train-split tasks held out by task id). <NAS> = the lab's NAS share.
+# Run (data-parallel, 2 processes, effective batch 16):
+#   HOMELOOP_LORA_DIR=<NAS>/homeloop_lora CUDA_VISIBLE_DEVICES=2,3 <venv>/bin/torchrun --standalone --nproc_per_node 2 \
+#     ~/.claude/skills/lora-finetune/scripts/train_lora.py --config this.yaml
+# Subset: python -I ~/.claude/skills/lora-finetune/scripts/stratified_subset.py --in <P1>/inferable/train.jsonl \
+#   --out <NAS>/homeloop_lora/data/understand_p2_small/train.jsonl --n 2000 --keys lang,kind,expect,structure,noise --seed 0
+model_path: ${HOMELOOP_LORA_DIR}/models/Qwen3-VL-8B-Instruct   # HF Qwen/Qwen3-VL-8B-Instruct @0c351dd
+output_dir: ${HOMELOOP_LORA_DIR}/runs/p2_small
+train_file: ${HOMELOOP_LORA_DIR}/data/understand_p2_small/train.jsonl
+val_file: ${HOMELOOP_LORA_DIR}/data/understand_p2_small/val_full.jsonl
+model_class: image_text_to_text      # full VL checkpoint; LoRA on the language layers only (vision frozen)
+target_modules: 'model\.language_model\.layers\.\d+\.(self_attn\.(q|k|v|o)_proj|mlp\.(gate|up|down)_proj)'
+max_len: 4096
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+lr: 2.0e-4
+scheduler: cosine
+warmup_frac: 0.03
+batch_size: 1
+grad_accum: 8            # per process; x2 processes = 16 sequences per step, 125 steps for 1 epoch
+epochs: 1
+eval_steps: 25
+save_steps: 25
+save_total_limit: 2
+logging_steps: 1
+gen_check_n: 5
+gen_max_new_tokens: 400
+seed: 0
+gpu_mem_cap_gib: 28

@@ -1,0 +1,10 @@
+{"id": "en_capital", "prompt": "What is the capital of Australia? Answer in one short sentence.", "check": {"contains_any": ["Canberra"], "not_json": true, "script": "latin"}}
+{"id": "en_list", "prompt": "Give me three tips for sleeping better, as a numbered list.", "check": {"contains_any": ["1."], "not_json": true, "script": "latin"}}
+{"id": "en_math", "prompt": "A shop sells pencils at 3 for 2 dollars. How much do 12 pencils cost? Explain briefly.", "check": {"contains_any": ["8"], "not_json": true}}
+{"id": "en_rewrite", "prompt": "Rewrite this sentence in a polite tone: 'Give me the report now.'", "check": {"contains_any": ["please", "Please", "could", "Could", "would", "Would"], "not_json": true, "script": "latin"}}
+{"id": "en_json_task", "prompt": "Return a JSON object with keys \"name\" and \"age\" for a person called Mina who is 31.", "check": {"contains_any": ["Mina"]}}
+{"id": "ko_capital", "prompt": "대한민국의 수도는 어디인가요? 한 문장으로 답해 주세요.", "check": {"contains_any": ["서울"], "not_json": true, "script": "hangul"}}
+{"id": "ko_explain", "prompt": "비가 오는 이유를 초등학생도 이해할 수 있게 두세 문장으로 설명해 주세요.", "check": {"not_json": true, "script": "hangul"}}
+{"id": "ko_translate", "prompt": "다음 문장을 영어로 번역해 주세요: 오늘 저녁에 친구와 영화를 보러 갈 거예요.", "check": {"contains_any": ["movie", "film"], "not_json": true}}
+{"id": "en_translate_ko", "prompt": "Translate into Korean: 'Could you water the plants tomorrow morning?'", "check": {"contains_any": ["물"], "not_json": true}}
+{"id": "ko_recipe", "prompt": "계란말이를 만드는 방법을 단계별로 짧게 알려 주세요.", "check": {"contains_any": ["계란", "달걀"], "not_json": true, "script": "hangul"}}

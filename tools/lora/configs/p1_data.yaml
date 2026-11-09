@@ -1,0 +1,19 @@
+# P1: LoRA data for robot_agent's UNDERSTAND step from the TRAIN split's gold goals. <NAS> = the lab's NAS share.
+# Run (CPU only): HOMELOOP_NAS=<NAS> PYTHONPATH=<bench r20>:<homeloop_robot sim-freeze-r19>:<robot_agent sage-v2/r20>:<embodiplan> \
+#   python tools/lora/build_understand_gold.py --config tools/lora/configs/p1_data.yaml --workers 16
+split: train                      # the only split the builder accepts
+planner: robot_agent:sage_s8n     # whose understand prompt is captured (first reading)
+profile: real
+seed: 0
+langs: [en, ko]
+defects_file: tools/lora/configs/benchmark_defects_train.json
+model_path: <NAS>/homeloop_lora/models/Qwen3-VL-8B-Instruct   # tokenizer + chat template only
+max_tokens: 4096
+val_frac: 0.05
+split_seed: 0
+dev_near_dup: 0.9                 # character 3-gram Jaccard against any dev text of the same language
+noise: {frac: 0.3, max_edits: 2, seed: 0}
+out_dir: <NAS>/homeloop_lora/data/understand_v1
+variants:                         # policies of understand_labels.py (POLICY_DEFAULT + these keys)
+  inferable: {clarify: inferable, conditional: drop, partial: keep_unsafe}
+  spec: {clarify: ask_all, conditional: start_world, partial: keep_unsafe}

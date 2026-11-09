@@ -4362,3 +4362,167 @@ removed by the paired design.
   dev) is not comparable; with it off (default) all existing rows stay byte-identical.
 - Largest remaining cause for s8n (215 non-successes of 400): dialogue that does not converge (80, mostly KO and clarify tasks), false
   successes (33, mostly an unmet delivery), search (29); only 31 are also failed by the oracle.
+
+## Round 18: dialogue loop and same-model bias (2026-11-09)
+
+Two questions. (1) Does the planner do better on English text written by its own model (the paraphrases)? (2) Why does the
+dialogue still not converge, and can a general policy fix it? Code: robot_agent `sage-v2/r18` (from the r16 head plus the r17
+option; r18 commits `d974060`, `990c07a`, `6d5957f`, `f1f6c27`), bench `r18` `8bc4994`, embodiplan r15 (`4080017`), simulator frozen
+at `sim-freeze-r13` (not touched). Nothing pushed or merged. Data discipline: design and diagnosis used dev 0..99 only (already tuned
+on); dev 100..199 (rounds 15-17) were not opened; dev 200..299 and the test split were not read and not run. GPU 0 only, in the pilot
+phase only, at most 8 clients, container stopped after it. Scripts and outputs: scratchpad `homeloop/lab/r18` (`bias.md`,
+`bias_results.json`, `dialogue_diagnosis.md`, `ideas_0..3.md`, `proposals.md`, `offline18/`, `replay18/`, `pilot*/`,
+`pilot2_gate/`); run outputs under `results/r18/`.
+
+### Part 1. Same-model bias (offline, recorded runs only, no GPU)
+
+Design facts (`gen/paraphrase.py`, `data/quality/paraphrase_run.json`):
+- EN: the paraphrase writer and the same-meaning judge are both `qwen3-vl:8b-instruct`, the planner model.
+- KO: the writer is exaone3.5; the judge and back-translator is `qwen3-vl:30b-a3b` (same family as the planner). KO controls for
+  the writer only, not the judge.
+- The choice of tasks to paraphrase is random (seeded 60 % within split x structure x kind). The flag Z was rebuilt from the
+  caches: 127 / 200 dev tasks. Which paraphrases were kept is not random (EN 107 / 127, KO 114 / 127; a rejected one falls back to
+  the template), so the Z comparison is the clean one.
+- Negative control: the oracle ignores the text; its success does not differ by source (EN -0.008 [-0.11, +0.10], KO +0.007).
+- EN paraphrases are shorter (length ratio 0.92, chrF 59 to the template); KO ones are longer (1.15, chrF 37).
+
+Success and false success, paraphrase vs template, one episode per task, stratified by kind x structure x oracle success:
+
+| planner | lang | S para | S tpl | S diff [95 % CI] | p | FS para | FS tpl | FS diff [95 % CI] | p |
+|---|---|---|---|---|---|---|---|---|---|
+| oracle | en | 90/107 | 79/93 | -0.008 [-0.112, +0.096] | 1.00 | | | | |
+| oracle | ko | 97/114 | 72/86 | +0.007 [-0.097, +0.110] | 1.00 | | | | |
+| sage | en | 54/107 | 47/93 | -0.048 [-0.186, +0.089] | 0.53 | 11 | 5 | +0.064 [-0.020, +0.148] | 0.17 |
+| sage | ko | 44/114 | 23/86 | +0.080 [-0.054, +0.213] | 0.32 | 16 | 11 | +0.025 [-0.076, +0.127] | 0.66 |
+| s6 | en | 59/107 | 55/93 | -0.094 [-0.233, +0.045] | 0.21 | 9 | 2 | +0.075 [+0.004, +0.146] | 0.047 (Holm 0.57) |
+| s6 | ko | 48/114 | 34/86 | -0.020 [-0.165, +0.125] | 0.88 | 14 | 11 | +0.024 [-0.070, +0.117] | 0.81 |
+| s8 | en | 33/57 | 24/43 | -0.028 [-0.232, +0.177] | 0.82 | 4 | 0 | +0.072 [-0.002, +0.146] | 0.19 |
+| s8 | ko | 30/62 | 12/38 | +0.151 [-0.057, +0.358] | 0.19 | 4 | 5 | -0.034 [-0.164, +0.096] | 0.71 |
+
+- By Z and pooled over all episodes (cluster bootstrap) the success differences are about -0.04 to +0.04 in EN; every CI
+  includes 0. All pooled FS differences have p_perm >= 0.088.
+- Understanding step only (970 clean readings; train 0..299 + dev 0..199; n = 394 feasible per language): exact goal-set match,
+  paraphrase vs template, EN -0.035 [-0.125, +0.055], KO -0.054 [-0.147, +0.039]; EN-KO difference-in-differences +0.021
+  [-0.091, +0.138], p 0.74. This is the most powerful test; it rules out an EN advantage above about +5.5 points.
+- The two suggestive results point against the hypothesis and do not survive: s6 EN false successes (9/107 vs 2/93, p 0.047,
+  Holm 0.57; pooled p_perm 0.27; sign reverses under ASR noise; 2 of the cases have template text), and the within-task EN-KO
+  difference for sage (-0.198 [-0.367, -0.008], p 0.046), which comes from KO paraphrases beating KO templates. Smallest Holm p
+  over the 12 main tests: 0.57. No stratum is significant (smallest Fisher p 0.13).
+- Data finding: 8 of 107 dev EN paraphrases drop the speaker as the recipient of a delivery (dev 021, 054, 083, 090, 091, 110,
+  119, 156; e.g. "fetch the yellow book for me" became "Go get that yellow book"), and dev 184 changes who is addressed. All were
+  accepted by the same-model judge; the gold goals still follow the template. These tasks also fail in KO (sage S 2 / 13), so
+  their failures cannot be blamed on the drift.
+- Power: with about 100 tasks per arm only differences of about 0.2 in success (0.1 in false success) are detectable.
+
+Verdict: not established in either direction. No same-model advantage is seen, and an understanding advantage above about 5.5
+points is ruled out; smaller effects cannot be claimed either way. The finding that holds is about the data build: in EN, writer,
+judge and planner are one model, and that judge accepted meaning changes in about 7.5 % of the dev EN paraphrases. The paper must
+disclose this.
+
+Step 2 (designed, not run; `step2.sh`, `step2_ids.txt`, offline dry run green on 20 tasks): 600 train tasks never used for
+tuning (hl-train-001000..001599). Arms: template; packaged text; qwen writer + phi4 judge; mistral-nemo writer + phi4 judge;
+exaone writer + gemma2 judge (KO). Readers qwen (all arms) and mistral-nemo (`understand-eval --understand-model`) give a
+writer x reader 2 x 2 with one third-family judge. H1: the interaction on exact match (paired sign-flip test, bootstrap CI). H2:
+the cross-family judge's verdicts on the packaged texts, plus a blind audit of 200 EN and 200 KO pairs. H3: `sage_s8` end to end
+on 200 ids. Detectable: about 0.07 (single contrast) and 0.10 (interaction). Cost about 7.5 to 10.5 GPU-0 hours in three phases.
+Model tags must be checked first, and the 5-task generation pilot read before the full run.
+
+### Part 2. Dialogue diagnosis (dev 0..99 only, no GPU)
+
+Data: r13 dev 0..49 (2 replicates), holdout 50..99, ASR on; r14 dev50 of s7; r15 pilots (10 tasks). Every id was asserted below
+100. The simulator's labels are used to score episodes only, never as a robot rule.
+
+- Dialogue give-ups per 100 episodes (dev 0..49, `asr_off`): sage EN 9 / KO 27, s6 3 / 22, s7 3 / 17. 48 of the 55 s6 + s7 cases
+  are KO.
+- Patience is only the stop reason: all 28 no-answer stops came at the 8th or 9th question, each after an earlier loss plus
+  repeated or long questions; none from one silence. s6 / s7 give-ups use 5.8 (KO) to 7.1 (EN) questions, sage 4.7.
+- No dialogue give-up came from a translation failure.
+- 033 KO gives up in all 30 of its episodes. 023, 029 (dev) and 072, 084 (holdout) are also oracle failures (no success upside).
+
+Root type = the first loss event (episodes, main variants, all sets):
+
+| type | EN | KO | decisive answer content-free | info after the loss | irreducible |
+|---|---|---|---|---|---|
+| 1 wrong No to a right read-back | 8 | 41 | 45 / 49 (bare No) | 49 / 49 | 0 |
+| 2 not-sure to a right read-back | 11 | 11 | 22 / 22 | 19 / 22 | 3 (EN 003) |
+| 3 wrong where / which answer | 2 | 2 | 0 | 3 / 4 | 1 (EN 037, ASR on) |
+| 4 object read back with another word | 0 | 14 | 0 | 14 / 14 | 0 |
+| 5 corrected part comes back | 0 | 25 | 0 | 25 / 25 | 0 |
+| 6 which-part loop | 0 | 6 | 0 | 6 / 6 | 0 |
+| 7 not-sure on other questions | 2 | 4 | - | 6 / 6 | 0 |
+| 8 ASR-garbled answer (ASR on) | 3 | 2 | 0 | 4 / 5 | 1 (EN 037) |
+
+About 5 of 131 episodes (4 %) had no truthful information after the first loss; in all others the person's later words
+determined the goal with 5 to 7 questions left. Offline check (`proposals.md` F1): in KO, 58 of 100 wrong read-backs carry a
+wrong object label (the 8B misreads the Korean noun), so type 4 is mostly an understanding error, not a wording one.
+
+### Part 3. Ideas and what was built
+
+Four idea lenses (`ideas_0..3.md`), clustered and red-teamed with offline counts (`proposals.md`). Killed: reading back her noun
+over the robot's label (it would sound right while acting on the wrong object; F1), skipping the read-back (KO first readings
+wrong 35 / 93), retrieval of repair turns and a within-episode reliability estimate (both drift toward the simulator's rates).
+Counting "an identical re-reading" or "her nouns occur in the read-back" as support was dropped (precision 50 % and 0 %, F3 /
+F4). Built as one option `dialog_hold` (default off; off is byte-identical):
+- H1, hold the reading: a ledger of the reading's parts; a part is settled only by a yes to a read-back naming it or by her
+  answer to an open slot question; a later 8B reading changes an unsettled slot only on positive evidence in her new words (pack
+  particles, ENV aliases), never by re-drawing; a correction edits only the part it names; one two-way choice on a conflict.
+- H2, after a content-free answer (bare No, not-sure): read back one part with the existing template, then one open slot
+  question with the existing `which_object` / `which_place`; never the same question twice; no where-question after "I don't
+  know where" when a sense skill exists; honest stop with the existing `say_not_confirmed`. No new strings, no patience number,
+  language facts in `lang/*.json` (one KO pack entry added), fail open.
+- Wild card `noun_relabel` (her noun relabels the object through the translator), separate flag.
+- Bench variants (`8bc4994`): `sage_s10` = `sage_s9` + `dialog_hold`; `sage_s10h1` = ledger only; `sage_s10w` = s10 +
+  `noun_relabel`. robot_agent: `dialog_hold.py`, `dialog_hold_flow.py`, about 2000 lines with 2 new test files.
+- Offline replay (cache only, dead LLM port, dev 0..99): s6 vs recorded r13 400 / 400 identical (128 byte-identical, the rest
+  differ only in the cache tally); s8 vs the r16 merged-code replay 384 / 384 byte-identical. s10 vs s9: 295 same, 78 stop at a
+  cache miss, so the replay could not decide; the pilot was needed. s10w changed nothing offline (96 shared misses).
+
+### Part 4. Pilot (GPU 0, dev 0..99 slices, `asr_off`, 2 replicates, 28 EN + 37 KO tasks)
+
+Slices from the diagnosis: core (20 task x lang with a dialogue give-up), control (31, succeeded every time), watch (9, false
+confirmation risk), plus extended and near-miss. Kill rules fixed before any run (`proposals.md` section 3): kill if core
+give-ups fall by fewer than 4, watch FS rise by 2 or more, control S fall by 2 or more, or KO questions per dialogue episode rise
+by more than 0.3.
+
+| run (s10 code) | base | EN S base / s10 | KO S base / s10 | EN conv | KO conv | false confirm EN / KO | note |
+|---|---|---|---|---|---|---|---|
+| pilot 1 (`990c07a`) | s8 | 38 / 30 | 42 / 34 | 0.89 -> 0.69 | 0.67 -> 0.52 | 5/49 -> 1/38, 2/45 -> 2/35 | s10 0 wins, 16 losses |
+| pilot 2b (`f1f6c27`) | s9 (prev run) | 36 / 33 | 42 / 40 | 0.89 -> 0.76 | 0.67 -> 0.58 | 5/49 -> 6/42, 2/45 -> 6/39 | KO FS 6 -> 2 |
+| pilot 2 (`f1f6c27`, fresh) | s9 | 34 / 32 | 37 / 34 | 0.84 -> 0.75 | 0.60 -> 0.56 | 4/47 -> 7/42, 2/42 -> 8/39 | |
+
+Successes are out of 56 EN and 74 KO episodes. After pilot 1 every changed episode was read (`pilot_review/diff.txt`); fixes A..H
+(`6d5957f`) and the repeated-read-back fix (`f1f6c27`) followed. The main loss shape: a wrong No to a one-part read-back of a
+right part (e.g. EN 001 "open the kitchen fridge"), after which that part is lost. This is the exposure the red team predicted:
+more yes / no questions give more chances for an unreliable answer.
+
+Gate (`pilot2_gate/gate.py`):
+
+| run | core give-ups s9 -> s10 | all give-ups | watch FS | control S (of 62) | KO q / dialogue ep | kill |
+|---|---|---|---|---|---|---|
+| pilot 2 prev (`6d5957f`) | 24 -> 26 | 26 -> 44 | 11 -> 9 | 60 -> 51 | 3.91 -> 3.73 | yes (give-ups, control) |
+| pilot 2 (`f1f6c27`) | 28 -> 25 | 35 -> 40 | 11 -> 11 | 56 -> 52 | 3.97 -> 3.46 | yes (give-ups fall only 3, control -4) |
+
+The only gain is fewer KO questions per dialogue episode (-0.5). The same s9 code in two runs moved by 4 in control S and core
+give-ups and by 5 in KO S, so the gate thresholds sit inside run-to-run noise; still, s10 is lower than s9 in every pilot on
+success and convergence, with no pilot in its favour.
+
+### Part 5. Final evaluation and verdict
+
+Pre-registered: the final run on dev 200..299 happens only if the pilot passes. It did not, twice. So the final evaluation was
+not run: there are no dev 200..299 tables for sage, s8, s10 and oracle in this round, and dev 200..299 stay untouched for a
+later round. Verdict: `dialog_hold` (H1 + H2) is a negative result on the tuned slices and stays default off; `sage_s10h1` and
+`sage_s10w` were not piloted and make no claim. The main variant does not change.
+
+### Caveats and left
+
+- Pilot numbers: one seed, dev 0..99 only (tuned on), small slices (28 EN / 37 KO tasks), 2 replicates; run-to-run noise is
+  about 4 to 5 episodes, as large as the kill thresholds. A final run would also be one seed and one replicate at n = 100 per
+  language.
+- Part of the loss is user noise that no policy can remove: about 4 % of the dialogue failures had no truthful information
+  after the first loss. A wrong No to a right part, given to a one-part question, is indistinguishable from a true No for the
+  robot; a policy that asks more yes / no questions pays for it.
+- The ledger cannot fix type 4: the KO object label is wrong in the reading itself. `noun_relabel` targets it but is untested
+  live (translator noun accuracy unknown).
+- Bias study: no new runs; r13 and r15 used different robot_agent heads; the understanding records are from round-6 code; step 2
+  is needed before claiming there is no bias.
+- The pilot table script labels the s9 column "s8" in `pilot2/table_out.txt` (cosmetic).

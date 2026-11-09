@@ -1,0 +1,22 @@
+# P0 smoke test of the LoRA chain for the understand step (quality irrelevant). <NAS> = the lab's NAS share.
+# Run: HOMELOOP_LORA_DIR=<NAS>/homeloop_lora CUDA_VISIBLE_DEVICES=2 <venv>/bin/python ~/.claude/skills/lora-finetune/scripts/train_lora.py --config this.yaml
+model_path: ${HOMELOOP_LORA_DIR}/models/Qwen3-VL-8B-Instruct   # HF Qwen/Qwen3-VL-8B-Instruct @0c351dd
+output_dir: ${HOMELOOP_LORA_DIR}/runs/p0_smoke
+train_file: ${HOMELOOP_LORA_DIR}/data/smoke_p0/train.jsonl
+val_file: ${HOMELOOP_LORA_DIR}/data/smoke_p0/val.jsonl
+model_class: image_text_to_text      # load the full VL checkpoint; LoRA only on the language layers (vision frozen)
+target_modules: 'model\.language_model\.layers\.\d+\.(self_attn\.(q|k|v|o)_proj|mlp\.(gate|up|down)_proj)'
+max_len: 4096
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+lr: 1.0e-4
+batch_size: 1
+grad_accum: 8
+max_steps: 40
+eval_steps: 20
+logging_steps: 1
+gen_check_n: 5
+gen_max_new_tokens: 400
+seed: 0
+gpu_mem_cap_gib: 28

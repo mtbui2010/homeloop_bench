@@ -12,6 +12,8 @@
 #    separate temporary ollama container mounted read-write, then mount it here read-only)
 #   otherwise the helper's own named volume `homeloop_ollama_models` (read-write): fill it with
 #   `tools/llm_gpu0.sh pull qwen3-vl:8b-instruct` (and the other models of docs/generation.md)
+#   OLLAMA_EXTRA_RO="/dir1 /dir2"  extra host dirs mounted read-only at the SAME path (an overlay store whose blobs are
+#   symlinks into another store, e.g. a fine-tuned model's store that reuses the base models' blobs; docs/lora.md)
 # GPU: HOMELOOP_GPU (default 0) -> --gpus device=$HOMELOOP_GPU. Port: HOMELOOP_LLM_PORT (default 11536).
 # Image: pinned by digest (OLLAMA_IMAGE overrides). The helper never touches the shared `ollama` container itself,
 # localhost:11535 / :8001 / :5577 / :8003, or any ROS domain. Stop it when you are done.
@@ -23,6 +25,11 @@ IMAGE=${OLLAMA_IMAGE:-ollama/ollama@sha256:2a6e883b917fc543389599dae79918f5cac9e
 OWN_VOLUME=homeloop_ollama_models
 PARALLEL=${OLLAMA_NUM_PARALLEL:-4}
 cmd=${1:-status}
+
+extra_mounts() {   # -> "-v D:D:ro ..." for OLLAMA_EXTRA_RO
+  local d
+  for d in ${OLLAMA_EXTRA_RO:-}; do printf -- '-v %s:%s:ro ' "$d" "$d"; done
+}
 
 models_mount() {   # -> "-v SRC:/root/.ollama[:ro]"
   if [ -n "${OLLAMA_MODELS_DIR:-}" ]; then echo "-v ${OLLAMA_MODELS_DIR}:/root/.ollama:ro"; return; fi
@@ -36,7 +43,7 @@ models_mount() {   # -> "-v SRC:/root/.ollama[:ro]"
 case "$cmd" in
   start)
     if curl -sf "http://127.0.0.1:$PORT/api/tags" >/dev/null 2>&1; then echo "already up on :$PORT"; exit 0; fi
-    MOUNT=$(models_mount)
+    MOUNT="$(models_mount) $(extra_mounts)"
     docker rm -f "$NAME" >/dev/null 2>&1
     # shellcheck disable=SC2086
     docker run -d --name "$NAME" --gpus device="$GPU" -e OLLAMA_NUM_PARALLEL="$PARALLEL" -e OLLAMA_KEEP_ALIVE=${OLLAMA_KEEP_ALIVE:-3m} -e OLLAMA_MAX_LOADED_MODELS=${OLLAMA_MAX_LOADED_MODELS:-2} \

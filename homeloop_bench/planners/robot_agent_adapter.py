@@ -1221,6 +1221,17 @@ class SageS8nPlanner(SagePlanner):
     options_off = ("relook",)
 
 
+class SageS8nFtPlanner(SagePlanner):
+    """Round 21 (lab): ``sage_s8n`` with a fine-tuned reader for the understand step (``understand_model`` = the model named by the
+    environment variable ``HOMELOOP_FT_UNDERSTAND_MODEL``, default ``hl-understand-p3-s700``). Everything else is identical to
+    ``sage_s8n``; the learned arm is reported on its own row, never merged into ``sage``. Labels came from the TRAIN split only."""
+    name = "robot_agent:sage_s8n_ft"
+    loop_options = {**SageS8nPlanner.loop_options,
+                    "understand_model": os.environ.get("HOMELOOP_FT_UNDERSTAND_MODEL", "hl-understand-p3-s700")}
+    manifest_overlay = S8_OVERLAY
+    options_off = ("relook",)
+
+
 class SageS9Planner(SagePlanner):
     """Round 17: ``sage_s8n`` + ``hazard_receiver`` (a hazardous product is not handed to a vulnerable person: product class x
     receiver class, both from language-pack data and the ENV's names; robot_agent ``core/safety/receiver_class.py``). No new manifest

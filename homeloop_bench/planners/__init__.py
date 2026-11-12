@@ -74,6 +74,8 @@ REGISTRY = {
     "robot_agent:sage_s8": ("robot_agent_adapter", "SageS8Planner", "sage_s7 + reach_delivery (a delivery to a person ends within their reach or in their hand: a stale person snapshot gets a hand-over) + unapplied_change (a correction that cannot be applied is asked about once, else the run fails honestly; round 15)", True),
     "robot_agent:sage_s8n": ("robot_agent_adapter", "SageS8nPlanner", "sage_s8 without relook (everything else identical; relook was unproven on fresh dev tasks; round 17)", True),
     "robot_agent:sage_s8n_ft": ("robot_agent_adapter", "SageS8nFtPlanner", "sage_s8n with a fine-tuned reader for the understand step (labels from the TRAIN split; own row, round 21 lab)", True),
+    "robot_agent:sage_s8n_d1": ("robot_agent_adapter", "SageS8nD1Planner", "sage_s8n + new search setup (search_legs, 6 places, no search second look) + bench-side retry (2 attempts in total); D", True),
+    "robot_agent:sage_s8n_ft_d1": ("robot_agent_adapter", "SageS8nFtD1Planner", "sage_s8n_ft + the same new setup; D", True),
     "robot_agent:sage_s9": ("robot_agent_adapter", "SageS9Planner", "sage_s8n + hazard_receiver (a hazardous product is not handed to a vulnerable person: product class x receiver class from pack data; round 17)", True),
     "robot_agent:sage_s6d": ("robot_agent_adapter", "SageS6dPlanner", "sage_s6 + reach_delivery alone (separates the effect of the round-15 option from dialog_agree2 and relook)", True),
     "robot_agent:sage_gold": ("robot_agent_adapter", "SageGoldPlanner",

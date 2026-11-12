@@ -32,12 +32,12 @@ def test_transient_failure_retried_once_in_total_two():
 
 def test_unsafe_or_final_failures_not_retried():
     for skill, code in (("pick", FailureCode.HW_FAULT), ("place", FailureCode.TIMEOUT), ("move", FailureCode.ESTOP),
-                        ("move", FailureCode.CANCELLED), ("ask", FailureCode.TIMEOUT), ("look", FailureCode.ABSENT)):
+                        ("move", FailureCode.CANCELLED), ("ask", FailureCode.TIMEOUT), ("look", FailureCode.ABSENT), ("find", FailureCode.ABSENT)):
         p = _proxy([code, None], 2)
         p.call(skill)
         assert len(p.calls) == 1, (skill, code)
-    p = _proxy([FailureCode.ABSENT, None], 2)
-    assert p.call("find", obj="x").ok
+    p = _proxy([FailureCode.HW_FAULT, None], 2)
+    assert p.call("dock").ok and len(p.calls) == 2
 
 
 def test_variant_setup_is_declared_and_base_unchanged():

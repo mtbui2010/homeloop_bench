@@ -42,7 +42,7 @@ class RobotProxy:
 
     # Bench-only retry (variants with ``skill_attempts`` > 1; default 1 = a single call, as before). ``attempts`` counts the first call.
     # Only skills that are safe to repeat, and only failures that can be transient; each repeat is a real call and uses the episode budget.
-    RETRY_SKILLS = ("move", "find", "look", "open", "close", "vlm_check")
+    RETRY_SKILLS = ("move", "find", "look", "open", "close", "vlm_check", "dock")
     RETRY_CODES = ("hw_fault", "timeout", "perception_unavailable", "unreachable", "blocked")
 
     def __init__(self, env, attempts: int = 1):
@@ -65,7 +65,7 @@ class RobotProxy:
         if getattr(r, "ok", True) or skill not in self.RETRY_SKILLS or getattr(r, "msg", "") == "episode budget exhausted":
             return False
         code = str(getattr(getattr(r, "code", None), "value", getattr(r, "code", None)))
-        return code in self.RETRY_CODES or (skill == "find" and code == "absent")
+        return code in self.RETRY_CODES      # "absent" is an answer, not a fault: never repeated (a repeat would be a second look)
 
     def _call_once(self, skill: str, **args):
         from homeloop_robot.types import FailureCode, SkillResult

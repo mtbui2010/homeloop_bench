@@ -536,8 +536,6 @@ def seed_memory(env, path) -> int:
     benchmark's other planners get the same list in their observation. Names: the class names and colour +
     class name in English and Korean; a name shared by objects with different usual places is left out.
     Returns the number of names written."""
-    import time
-
     from robot_agent.core.planning.assist_loop import words
 
     from homeloop_robot.catalog import COLORS, class_names
@@ -556,7 +554,7 @@ def seed_memory(env, path) -> int:
             for n in names:
                 places.setdefault(words(n), set()).add(o.usual_place)
                 who.setdefault(words(n), set()).add(o.id)
-    now = time.time()
+    now = float(env.robot.clock.t)      # the episode's simulated clock (the loop's clock), never the wall clock: a ranking prompt's "N s ago" must not depend on machine speed
     # H2: a record names the object it is about (``instance``) when the name means exactly one. robot_agent's
     # ``inventory_ask`` counts remembered INSTANCES (goal_fix.instances: the same instance id, or the pack's aliases),
     # not names; without the id "black mug" and "black coffee mug" of one mug were two candidates, the which-question

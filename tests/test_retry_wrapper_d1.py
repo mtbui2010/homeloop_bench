@@ -45,3 +45,10 @@ def test_variant_setup_is_declared_and_base_unchanged():
     o = SageS8nD1Planner.loop_options
     assert (o["search_legs"], o["search_total"], o["detector_miss_rate"]) == (1, 6, 0)
     assert not hasattr(SageS8nPlanner, "skill_attempts") and "search_total" not in SageS8nPlanner.loop_options
+
+
+def test_d1_confirms_a_sighting_that_followed_a_miss_base_unchanged():
+    from homeloop_bench.planners.robot_agent_adapter import SageS8nFtD1Planner, SageS8nFtPlanner
+    for d1, base in ((SageS8nD1Planner, SageS8nPlanner), (SageS8nFtD1Planner, SageS8nFtPlanner)):
+        assert d1.loop_options["confirm_look"] == "1" and "confirm_look" not in base.loop_options
+        assert d1.run_config()["loop_options"]["confirm_look"] == "1"        # recorded in the run config

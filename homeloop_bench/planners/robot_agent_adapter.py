@@ -663,7 +663,8 @@ class _RobotAgentPlanner:
                   "dialog_agree",                           # round 12
                   "dialog_agree2", "relook",                # round 14
                   "reach_delivery",                         # round 15
-                  "hazard_receiver")                        # round 17
+                  "hazard_receiver",                        # round 17
+                  "confirm_look")                           # D1: third look for a sighting after a miss
     # (round 2's flags were never recorded: their summary.json stay as they were)
     # every option the loop reads from the variant: the episodes of a variant that sets one carry ``lab_events``
     _ALL_LAB_FLAGS = _LAB_FLAGS + ("person_goals", "go_steps", "kind_anchor", "name_canon", "reask_abstain",
@@ -1254,21 +1255,25 @@ class SageS8nFtPlanner(SagePlanner):
 
 
 _D1_SEARCH = {"search_legs": 1, "search_total": 6, "detector_miss_rate": 0}
+# false-success class: the goal check believed one sighting that followed a miss (the camera sees what is not there). With robot_agent's
+# option ``confirm_look`` (default off) a third look decides: believed only when the object is seen again (two sightings in a row).
+_D1_CONFIRM = {"confirm_look": "1"}
 
 
 class SageS8nD1Planner(SageS8nPlanner):
     """D (pre-registered): ``sage_s8n`` with the new search setup: continue over the likely places (``search_legs``), at most 6 places
     per search (``search_total``), no search second look (``detector_miss_rate`` 0), and each safe-to-repeat skill tried up to 2 times
-    in total (bench-side wrapper in ``RobotProxy``). The goal-check second look and every other option stay as in ``sage_s8n``."""
+    in total (bench-side wrapper in ``RobotProxy``), and ``confirm_look`` (a sighting after a miss at the goal check needs a third look).
+    Every other option stays as in ``sage_s8n``."""
     name = "robot_agent:sage_s8n_d1"
-    loop_options = {**SageS8nPlanner.loop_options, **_D1_SEARCH}
+    loop_options = {**SageS8nPlanner.loop_options, **_D1_SEARCH, **_D1_CONFIRM}
     skill_attempts = 2
 
 
 class SageS8nFtD1Planner(SageS8nFtPlanner):
     """D (pre-registered): ``sage_s8n_ft`` with the same new setup as ``sage_s8n_d1``."""
     name = "robot_agent:sage_s8n_ft_d1"
-    loop_options = {**SageS8nFtPlanner.loop_options, **_D1_SEARCH}
+    loop_options = {**SageS8nFtPlanner.loop_options, **_D1_SEARCH, **_D1_CONFIRM}
     skill_attempts = 2
 
 
